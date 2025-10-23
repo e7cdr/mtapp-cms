@@ -1,1 +1,136 @@
-"__pycache__/*.pycvenv/.env" 
+# -----------------------------
+# 1. Node.js / npm / yarn
+# -----------------------------
+node_modules/
+npm-debug.log
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# -----------------------------
+# 2. Python (if you have any)
+# -----------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pytest_cache/
+
+# -----------------------------
+# 3. Build / Dist / Output
+# -----------------------------
+dist/
+build/
+out/
+*.min.js
+*.min.css
+
+# -----------------------------
+# 4. Environment & Secrets
+# -----------------------------
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+*.env
+
+# -----------------------------
+# 5. IDE / Editor
+# -----------------------------
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# PyCharm / IntelliJ
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Vim
+*.swp
+*.swo
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+.elc
+
+# -----------------------------
+# 6. OS / OneDrive / Windows
+# -----------------------------
+# Windows thumbnail cache
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# OneDrive sync files
+*.one
+*.tmp
+*.log
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+
+# -----------------------------
+# 7. Logs & Temp
+# -----------------------------
+*.log
+logs/
+temp/
+tmp/
+
+# -----------------------------
+# 8. Database (if local)
+# -----------------------------
+*.db
+*.sqlite3
+*.sqlite
+
+# -----------------------------
+# 9. Optional: Large files / Media (uncomment if needed)
+# -----------------------------
+# /media/
+# /uploads/
+# *.mp4
+# *.zip
+# *.tar.gz
+
+# -----------------------------
+# 10. Custom for your project (add your own below)
+# -----------------------------
+# Example: exclude a local dev script
+dev-local.sh
+# Example: exclude a huge data folder
+data/raw/
