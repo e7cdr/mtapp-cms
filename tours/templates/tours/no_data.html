@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "No Data" %} - Milano Travel{% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+        <h2>{% trans "No Data to Show" %}</h2>
+        <p>{{ message|default:"It seems there's nothing to display here yet." }}</p>
+        <a href="{% url 'tours_list' %}" class="btn btn-primary">{% trans "Back to Tours" %}</a>
+    </div>
+{% endblock %}

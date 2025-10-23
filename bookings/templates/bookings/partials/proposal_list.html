@@ -1,0 +1,49 @@
+{% load i18n %}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>{% trans "ID" %}</th>
+            <th>{% trans "Customer" %}</th>
+            <th>{% trans "Tour" %}</th>
+            <th>{% trans "Travel Date" %}</th>
+            <th>{% trans "Status" %}</th>
+            <th>{% trans "Actions" %}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for proposal in proposals %}
+            <tr>
+                <td>{{ proposal.id }}</td>
+                <td>{{ proposal.customer_name }}</td>
+                <td>{{ proposal.tour }}</td>
+                <td>{{ proposal.travel_date }}</td>
+                <td>{{ proposal.get_status_display }}</td>
+                <td>
+                    {% if proposal.status == 'PENDING_SUPPLIER' %}
+                        <a href="{% url 'bookings:confirm_proposal' proposal.id %}" class="btn btn-success btn-sm">{% trans "Confirm" %}</a>
+                        <a href="{% url 'bookings:reject_proposal' proposal.id %}" class="btn btn-danger btn-sm">{% trans "Reject" %}</a>
+                    {% endif %}
+                </td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="6">{% trans "No proposals found." %}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% if proposals.has_other_pages %}
+    <nav aria-label="Page navigation">
+        <ul class="pagination">
+            {% if proposals.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ proposals.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">{% trans "Previous" %}</a></li>
+            {% endif %}
+            {% for num in proposals.paginator.page_range %}
+                <li class="page-item {% if proposals.number == num %}active{% endif %}"><a class="page-link" href="?page={{ num }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">{{ num }}</a></li>
+            {% endfor %}
+            {% if proposals.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ proposals.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">{% trans "Next" %}</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+{% endif %}

@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Proposal Confirmed" %} - Milano Travel{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-4">{% trans "Proposal Confirmed" %}</h2>
+        <div class="alert alert-success text-center">
+            {% trans "The proposal has been successfully confirmed. The customer has been notified with a payment link." %}
+        </div>
+        <p class="text-center">
+            <strong>{% trans "Proposal ID" %}:</strong> {{ proposal.id }}<br>
+            <strong>{% trans "Tour" %}:</strong> {{ proposal.tour }}<br>
+            <strong>{% trans "Customer" %}:</strong> {{ proposal.customer_name }}<br>
+            <strong>{% trans "Travel Date" %}:</strong> {{ proposal.travel_date }}
+        </p>
+        <p class="text-center">
+            <a href="{{ site_url }}/bookings/manage-proposals/" class="btn btn-primary">{% trans "Manage Proposals" %}</a>
+        </p>
+    </div>
+</section>
+{% endblock %}

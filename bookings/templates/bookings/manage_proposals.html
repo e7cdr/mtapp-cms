@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}{% trans "Manage Proposals" %} - Milano Travel{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-4">{% trans "Manage Proposals" %}</h2>
+        <div class="mb-3">
+            <a href="?status=PENDING_SUPPLIER" class="btn btn-primary btn-sm">{% trans "Pending" %}</a>
+            <a href="?status=SUPPLIER_CONFIRMED" class="btn btn-primary btn-sm">{% trans "Confirmed" %}</a>
+            <a href="?status=REJECTED" class="btn btn-primary btn-sm">{% trans "Rejected" %}</a>
+            <a href="?status=PAID" class="btn btn-primary btn-sm">{% trans "Paid" %}</a>
+        </div>
+        {% include 'bookings/partials/proposal_list.html' %}
+    </div>
+</section>
+{% endblock %}

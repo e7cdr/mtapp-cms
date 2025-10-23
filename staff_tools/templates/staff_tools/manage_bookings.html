@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load static i18n compress %}
+
+{% block title %}{% trans "Manage Bookings" %} - Milano Travel{% endblock %}
+
+{% block content %}
+
+<section class="my-5">
+    <h2 class="text-center mb-4">{% trans "Manage Bookings" %}</h2>
+    <div class="card">
+        <div class="card-body">
+            <div class="mb-3">
+                <select hx-get="{% url 'manage_bookings' %}" hx-target="#booking-table" hx-include="[name='status']" name="status">
+                    <option value="">{% trans "All Statuses" %}</option>
+                    <option value="PENDING">{% trans "Pending" %}</option>
+                    <option value="CONFIRMED">{% trans "Confirmed" %}</option>
+                    <option value="CANCELLED">{% trans "Cancelled" %}</option>
+                </select>
+            </div>
+            <div id="booking-table">
+                {% include 'staff_tools//partials/booking_list.html' %}
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

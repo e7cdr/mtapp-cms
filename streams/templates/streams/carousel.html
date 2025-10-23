@@ -1,0 +1,45 @@
+{% load static i18n dict_tags navbar_tags wagtailcore_tags wagtailimages_tags %}
+
+<link rel="stylesheet" href="{% static 'css/carousel.css' %}" />
+<section class="carousel-container">
+ <div class="slider-wrapper">
+  <div class="carousel-title">
+   <h2>Travel Agency</h2>
+   <h1>Milano Travel</h1>
+      <!--Search Bar -->
+    {% include 'search/search_bar.html' %}
+  <h6 style="color:white">Don't know what to look for? Go to >> <a style="text-shadow: 0px 0px 1px white" href="tours/land-tours">Land Tours</a></h6>
+  </div>
+  <div class="slider">
+  {% for item in value.carousel %}
+  <div class="slide-overlay-block">
+   {% image item.image fill-1265x712 as img %}
+   {% if item.link %}
+    <a href="{{ item.link.url }}">
+   {% endif %}
+    <img
+     src="{{ img.url }}"
+     alt="{{ item.caption|default:'Carousel image' }}"
+     id="slide-{{ forloop.counter }}"
+    />
+    {% if item.link %}</a>{% endif %}
+   <div class="slide-overlay"></div>
+  </div>
+  {% empty %}
+   <div class="slide-overlay-block">
+    <img src="{% static 'default_media/azuay.jpg' %}" alt="Default" id="slide-1">
+    <div class="slide-overlay"></div>
+   </div>
+  {% endfor %}
+</div>
+
+<div class="slider-nav nav-fade-in">
+    {% for item in value.carousel %}
+    <a href="#slide-{{ forloop.counter }}"></a>
+    {% empty %}
+    <a href="#slide-1"></a>
+    {% endfor %}
+   </div>
+ </div>
+</section>
+<script src="{% static 'js/carousel.js' %}"></script>

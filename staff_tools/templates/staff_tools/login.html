@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% trans "Staff Login" %} - Milano Travel{% endblock %}
+
+{% block content %}
+    <section class="my-5">
+        <h2 class="text-center mb-4">{% trans "Staff Login" %}</h2>
+        <form method="post" class="card p-4 mx-auto" style="max-width: 400px;">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary">{% trans "Login" %}</button>
+        </form>
+    </section>
+{% endblock %}

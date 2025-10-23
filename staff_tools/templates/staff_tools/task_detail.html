@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% trans "Task" %}: {{ task.title }} - Milano Travel{% endblock %}
+
+{% block content %}
+    <section class="my-5">
+        <h2 class="text-center mb-4">{% trans "Edit Task" %}: {{ task.title }}</h2>
+        <div class="card p-4 mx-auto" style="max-width: 600px;">
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary">{% trans "Save Changes" %}</button>
+                <a href="{% url 'manage_tasks' %}" class="btn btn-secondary">{% trans "Back" %}</a>
+            </form>
+        </div>
+    </section>
+{% endblock %}

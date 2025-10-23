@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Manage Partners" %} - Milano Travel{% endblock %}
+
+{% block content %}
+    <h2 class="mb-4 my-2">{% trans "Manage Partners" %}</h2>
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>{% trans "Name" %}</th>
+                        <th>{% trans "Contact Person" %}</th>
+                        <th>{% trans "Email" %}</th>
+                        <th>{% trans "Phone" %}</th>
+                        <th>{% trans "Action" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for partner in partners %}
+                        <tr>
+                            <td>{{ partner.name }}</td>
+                            <td>{{ partner.contact_person }}</td>
+                            <td>{{ partner.email }}</td>
+                            <td>{{ partner.phone }}</td>
+                            <td><a href="{% url 'partner_detail' partner_id=partner.pk %}" class="btn btn-sm btn-primary">{% trans "Edit" %}</a></td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="5">{% trans "No partners found" %}.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

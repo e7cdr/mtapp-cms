@@ -1,0 +1,129 @@
+@import url('variables.css');
+
+
+ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+.navbar{
+
+    background-color: rgba(0, 0, 0, 0.5);
+    width: 100%;
+    position: fixed;
+    z-index: 5;
+    display: flex;
+    padding: 0 1rem;
+    box-shadow: 1px 1px 2px black;
+    flex-wrap: nowrap;
+
+    
+
+}
+
+.navbar-logo {
+    height: 4rem;
+    display: inline;
+    transition: transform 0.3s ease;
+    float: left;
+    margin-right: 1.5rem;
+    position: relative;
+    object-fit: contain;
+
+}
+
+.navbar-logo:hover {
+    transform: scale(1.1);
+}
+
+.navbar-menu {
+    column-gap: 2rem;
+}
+
+.navbar ul {
+    display: inline-flex;
+    list-style: none;
+}
+
+.navbar ul li a {
+    text-decoration: none;
+    color: white;
+}
+
+
+.navbar ul li a:active{
+    color: red;
+}
+
+.navbar ul li a:hover {
+    color: #ffd500;
+    text-shadow: black 0 0 1px;
+}
+
+.dropdown {
+    display: none; 
+
+}
+
+.navbar ul li:hover .dropdown {
+    display: block;
+    position: absolute;
+    background: rgba(0, 0, 0, 0.5);
+    padding-top: 1rem;
+    border-radius: 1rem;
+    box-shadow: 2px 4px 9px black;
+}
+
+.navbar ul li:hover .dropdown ul {
+    display: block;
+    margin-left: 1rem;
+}
+
+.navbar ul li:hover .dropdown ul li {
+    width: 11rem;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px dotted #fff;
+    background: transparent;
+    text-align: left;
+    
+}
+
+.navbar ul li:hover .dropdown ul li:last-child{
+    border-bottom: none;
+}
+
+.navbar ul li:hover .dropdown ul li a:hover {
+    color: #ffd500;
+
+}
+
+.sub-menu {
+    display: none;
+    border-radius: 1rem;
+}
+
+.sub-dropdown:hover .sub-menu  {
+    position: absolute;
+    display: block;
+    background: rgba(0, 0, 0, 0.5);
+    left: 12.01rem;
+    top: 7.37rem;
+} 
+
+
+
+
+.content {
+    margin-top: 5rem;
+}
+
+@media (max-width:400px) {
+    .navbar ul {
+    font-size: x-small;
+}
+    .navbar-logo {
+        height: 2rem;
+    }
+}

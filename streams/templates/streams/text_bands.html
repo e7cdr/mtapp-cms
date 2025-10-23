@@ -1,0 +1,27 @@
+{% load static i18n dict_tags navbar_tags wagtailcore_tags wagtailimages_tags %} 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/text_bands.css' %}" />
+{% endblock %}
+
+<section>
+
+{% if self.background_image %}
+ <div class="content-flex-1" style="background: linear-gradient( var({{self.background_color}}));">
+   {% image self.background_image original as img%}
+   <img id="flex2-coverimg" src="{{img.url}}" alt="Background image for the textblock" />
+  <div class="item">
+   <h2>{{self.band_title}}</h2>
+  </div>
+  <div class="item">{{self.textbox_1|richtext}}</div>
+  <div class="item">{{self.textbox_2|richtext}}</div>
+ </div>
+ {% else %}
+  <div class="content-flex-2" style="background: linear-gradient(var({{self.background_color}}));">
+  <div class="item">
+   <h2>{{self.band_title}}</h2>
+  </div>
+  <div class="item">{{self.textbox_1|richtext}}</div>
+  <div class="item">{{self.textbox_2|richtext}}</div>
+ </div>
+ {% endif %}
+</section>

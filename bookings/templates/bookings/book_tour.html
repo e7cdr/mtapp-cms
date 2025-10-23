@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}{% trans "Request a Tour" %} - Milano Travel{% endblock %}
+
+{% block content %}
+<style>
+    .navbar {
+        position: fixed !important;
+    }
+</style>
+<section class="booking-section py-5">
+    <div class="container">
+        <h2 class="text-center mb-4">{% trans "Request Your Tour" %}</h2>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        <div id="booking-form-container" data-duration="{{ tour_duration|default:0 }}">
+            <form id="bookingForm" method="post" 
+                  action="{% url 'book_tour' tour_type|default:'none' tour_id|default:0 %}" 
+                  class="booking-form card p-4" 
+                  hx-post="{% url 'book_tour' tour_type|default:'none' tour_id|default:0 %}" 
+                  hx-target="#booking-form-container">
+                {% csrf_token %}
+
+                <!-- Hidden inputs for tour_type and tour_id -->
+                <input type="hidden" name="tour_type" value="{{ tour_type|default:'' }}" id="id_tour_type">
+                <input type="hidden" name="tour_id" value="{{ tour_id|default:'' }}" id="id_tour_id">
+
+                <!-- Hidden element for error message -->
+                <div id="htmx-error-message" style="display: none;">
+                    {% trans "An error occurred. Please try again or contact support." %}
+                </div>
+
+                <!-- Display form errors -->
+                {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <ul>
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                    <li>{{ field }}: {{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
+                <!-- Display tour selection warning or confirmation -->
+                {% if not tour %}
+                    <div class="alert alert-warning text-center">
+                        {% trans "No tour selected. Please choose a tour from the tours page." %}
+                        <a href="{% url 'tours_list' %}" class="btn btn-primary btn-sm ms-2">{% trans "View Tours" %}</a>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info text-center">
+                        {% trans "Selected Tour" %}: <strong>{{ booking_data.tourName|default:"Loading..." }}</strong>
+                    </div>
+                {% endif %}
+
+                <!-- Tour Information Section -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>{% trans "Tour Information" %}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Column 1: Tour Image and Title -->
+                            <div class="col-md-6">
+                                <div class="tour-display">
+                                    <div class="tour-image mb-3">
+                                        {% if tour.image and tour.image.image %}
+                                            <img src="{{ tour.image.image.url }}" class="tour-card-img" alt="{{ tour.title|default:'Tour Image' }}" loading="lazy">
+                                        {% elif default_tours %}
+                                            <img src="{{ default_tours.image.url }}" class="tour-card-img" alt="{% trans 'Default Tour Image' %}" loading="lazy">
+                                        {% else %}
+                                            <img src="{% static 'images/default_tour.jpg' %}" class="tour-card-img" alt="{% trans 'Default Tour Image' %}" loading="lazy">
+                                        {% endif %}
+                                    </div>
+                                    <h6 class="tour-title" id="tourTitle">{{ booking_data.tourName|default:'Select a Tour' }}</h6>
+                                </div>
+                            </div>
+                            <!-- Column 2: Travel Date, End Date, Estimated Price -->
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.travel_date.id_for_label }}" class="form-label">{% trans "Travel Start Date" %}</label>
+                                    {{ form.travel_date }}
+                                    {% if form.travel_date.errors %}
+                                        <div class="text-danger small">{{ form.travel_date.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label for="end_date" class="form-label">{% trans "Travel End Date" %}</label>
+                                    <input type="text" class="form-control {% if tour_type == 'full' or tour_type == 'land' %}visible{% else %}d-none{% endif %}" id="end_date" readonly>
+                                </div>
+                                <div class="total-price-group mb-3">
+                                    <label class="form-label">{% trans "Estimated Price" %}</label>
+                                    <input type="text" class="form-control" id="total_price" value="..." readonly>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customer Information Section -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>{% trans "Customer Information" %}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Column 1: Name, Email, Phone -->
+                            <div class="col-md-4">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.customer_name.id_for_label }}" class="form-label">{% trans "Name" %}</label>
+                                    {{ form.customer_name }}
+                                    {% if form.customer_name.errors %}
+                                        <div class="text-danger small">{{ form.customer_name.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.customer_email.id_for_label }}" class="form-label">{% trans "Email" %}</label>
+                                    {{ form.customer_email }}
+                                    {% if form.customer_email.errors %}
+                                        <div class="text-danger small">{{ form.customer_email.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.customer_phone.id_for_label }}" class="form-label">{% trans "Phone" %}</label>
+                                    {{ form.customer_phone }}
+                                    {% if form.customer_phone.errors %}
+                                        <div class="text-danger small">{{ form.customer_phone.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <!-- Column 2: Address, Nationality, Adults -->
+                            <div class="col-md-4">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.customer_address.id_for_label }}" class="form-label">{% trans "Address" %}</label>
+                                    {{ form.customer_address }}
+                                    {% if form.customer_address.errors %}
+                                        <div class="text-danger small">{{ form.customer_address.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.nationality.id_for_label }}" class="form-label">{% trans "Nationality" %}</label>
+                                    {{ form.nationality }}
+                                    {% if form.nationality.errors %}
+                                        <div class="text-danger small">{{ form.nationality.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.number_of_adults.id_for_label }}" class="form-label">{% trans "Number of Adults" %}</label>
+                                    {{ form.number_of_adults }}
+                                    {% if form.number_of_adults.errors %}
+                                        <div class="text-danger small">{{ form.number_of_adults.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <!-- Column 3: Children, Notes -->
+                            <div class="col-md-4">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.number_of_children.id_for_label }}" class="form-label">{% trans "Number of Children" %}</label>
+                                    {{ form.number_of_children }}
+                                    {% if form.number_of_children.errors %}
+                                        <div class="text-danger small">{{ form.number_of_children.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.notes.id_for_label }}" class="form-label">{% trans "Notes" %}</label>
+                                    {{ form.notes }}
+                                    {% if form.notes.errors %}
+                                        <div class="text-danger small">{{ form.notes.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary">{% trans "Submit Proposal" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+<!-- JSON data for JavaScript -->
+<script id="booking-data" type="application/json">
+    {
+        "tourType": "{{ tour_type_val|escapejs }}",
+        "tourId": "{{ tour.id|escapejs }}",
+        "tourName": "{{ tour.name|escapejs }}",
+        "languagePrefix": "{{ LANGUAGE_CODE|escapejs }}",
+        "cancellationPolicy": "{{ cancellation_policy|escapejs }}"
+    }
+    </script>
+
+<!-- HTMX Error Handling -->
+{% comment %} <script>
+    document.body.addEventListener('htmx:afterRequest', function(event) {
+        if (event.detail.xhr.status >= 500) {
+            console.error('HTMX error:', event.detail.xhr.status, event.detail.xhr.responseText);
+            const errorMessage = document.getElementById('htmx-error-message').textContent;
+            event.detail.elt.innerHTML = `<div class="alert alert-danger">${errorMessage}</div>`;
+        }
+    });
+</script> {% endcomment %}
+
+<!-- Flatpickr CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<!-- Flatpickr JS -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<!-- Custom JS -->
+<script src="{% static 'js/script.js' %}"></script>
+{% endblock %}

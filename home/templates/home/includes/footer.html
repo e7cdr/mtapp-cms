@@ -1,0 +1,42 @@
+{% load static i18n dict_tags navbar_tags wagtailcore_tags %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/footer.css' %}" />
+{% endblock %}
+<footer>
+ <div class="footer-container">
+  <div>
+   <a href="/">
+    <img src="{% static 'default_media/logo.png' %}" alt="Milano Travel Logo" />
+   </a>
+   <div class="social-media-wrap">
+    <!-- Wagtail settings calling the app site_settings to retrieve the social media links -->
+    {% if settings.site_settings.FooterLinks.facebook %}
+    <button type="button">
+     <a href="{{settings.site_settings.FooterLinks.facebook}}" class="fab fa-facebook-square"></a>
+    </button>
+    {% endif %} {% if settings.site_settings.FooterLinks.instagram %}
+    <button type="button">
+     <a class="fab fa-instagram"></a>
+    </button>
+    {% endif %} {% if settings.site_settings.FooterLinks.tiktok %}
+    <button type="button">
+     <a class="fab fa-tiktok"></a>
+    </button>
+    {% endif %} {% if settings.site_settings.FooterLinks.youtube %}
+    <button type="button">
+     <a class="fab fa-youtube" style="color: red"></a>
+    </button>
+    {% endif %} {% if settings.site_settings.FooterLinks.whatsapp %}
+    <button type="button">
+     <a class="fab fa-whatsapp" style="color: green"></a>
+    </button>
+    {% endif %}
+   </div>
+  </div>
+  <hr />
+  <div class="footer-copyright">
+   <p>© Copyright 2025. All Rights Reserved.</p>
+  </div>
+ </div>
+</footer>

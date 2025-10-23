@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Manage Availability" %} - Milano Travel{% endblock %}
+
+{% block content %}
+    <section class="my-5">
+        <h2 class="text-center mb-4">{% trans "Manage Tour Availability" %}</h2>
+        <div class="row">
+            <div class="col-md-4">
+                <h3>{% trans "Update Availability" %}</h3>
+                <form method="post" class="card p-3" id="availabilityForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        {{ form.tour_type.label_tag }} {{ form.tour_type }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.tour_id.label_tag }} {{ form.tour_id }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.current_slots.label_tag }} {{ form.current_slots }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.notes.label_tag }} {{ form.notes }}
+                    </div>
+                    <button type="submit" class="btn btn-primary">{% trans "Update" %}</button>
+                </form>
+            </div>
+            <div class="col-md-8">
+                <h3>{% trans "Current Availability" %}</h3>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Tour" %}</th>
+                            <th>{% trans "Slots" %}</th>
+                            <th>{% trans "Last Updated" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for avail in availabilities %}
+                            <tr>
+                                <td>{{ avail.tour }}</td>
+                                <td>{{ avail.current_slots }}</td>
+                                <td>{{ avail.last_updated }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="3">{% trans "No availability records" %}.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        document.getElementById('id_tour_type').addEventListener('change', function() {
+            const tourType = this.value;
+            fetch(`{% url 'get_tours_by_type' %}?tour_type=${tourType}`)
+                .then(response => response.json())
+                .then(data => {
+                    const tourSelect = document.getElementById('id_tour_id');
+                    tourSelect.innerHTML = '<option value="">Select a tour</option>';
+                    data.tours.forEach(tour => {
+                        const option = document.createElement('option');
+                        option.value = tour.id;
+                        option.text = tour.name;
+                        tourSelect.appendChild(option);
+                    });
+                });
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% load static i18n %}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>{% trans "Entity" %}</th>
+            <th>{% trans "Method" %}</th>
+            <th>{% trans "Message" %}</th>
+            <th>{% trans "Date" %}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for comm in recent_communications %}
+            <tr>
+                <td>{{ comm.entity }}</td>
+                <td>{{ comm.get_method_display }}</td>
+                <td>{{ comm.message|truncatewords:10 }}</td>
+                <td>{{ comm.contact_date }}</td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="4">{% trans "No recent communications" %}.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>

@@ -1,0 +1,14 @@
+
+{% load static i18n %}
+
+{% for alert in recent_alerts %}
+    <div class="card mb-3 {% if alert.alert_type == 'OVERDUE_TASK' %}bg-warning{% endif %}">
+        <div class="card-body">
+            <h5 class="card-title">{{ alert.get_alert_type_display }}</h5>
+            <p>{{ alert.message }}</p>
+            <p><strong>{% trans "Triggered" %}:</strong> {{ alert.triggered_date }}</p>
+        </div>
+    </div>
+{% empty %}
+    <p>{% trans "No active alerts" %}.</p>
+{% endfor %}

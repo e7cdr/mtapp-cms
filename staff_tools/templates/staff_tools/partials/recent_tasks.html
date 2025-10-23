@@ -1,0 +1,13 @@
+{% load static i18n %}
+
+{% for task in recent_tasks %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title">{{ task.title }}</h5>
+            <p><strong>{% trans "Due" %}:</strong> {{ task.due_date }}</p>
+            <p><strong>{% trans "Status" %}:</strong> {{ task.get_status_display }}</p>
+        </div>
+    </div>
+{% empty %}
+    <p>{% trans "No tasks assigned" %}.</p>
+{% endfor %}

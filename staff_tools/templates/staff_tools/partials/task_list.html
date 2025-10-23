@@ -1,0 +1,25 @@
+{% load static i18n %}
+<table class="table">
+    <thead>
+        <tr>
+            <th>{% trans "Title" %}</th>
+            <th>{% trans "Due Date" %}</th>
+            <th>{% trans "Priority" %}</th>
+            <th>{% trans "Status" %}</th>
+            <th>{% trans "Action" %}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for task in tasks %}
+            <tr>
+                <td>{{ task.title }}</td>
+                <td>{{ task.due_date }}</td>
+                <td>{{ task.get_priority_display }}</td>
+                <td>{{ task.get_status_display }}</td>
+                <td><a href="{% url 'task_detail' task_id=task.pk %}" class="btn btn-sm btn-primary">{% trans "Edit" %}</a></td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="5">{% trans "No tasks assigned" %}.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>

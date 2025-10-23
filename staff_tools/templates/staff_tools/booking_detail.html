@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load static i18n %}
+
+{% block title %}{% trans "Booking" %}: {{ booking.pk }} - Milano Travel{% endblock %}
+
+{% block content %}
+    <section class="my-5">
+        <h2 class="text-center mb-4">{% trans "Edit Booking" %} #{{ booking.pk }}</h2>
+        <div class="card p-4 mx-auto" style="max-width: 600px;">
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label>{% trans "Customer" %}:</label> {{ booking.customer_name }} ({{ booking.customer_email }})
+                </div>
+                <div class="mb-3">
+                    <label>{% trans "Tour" %}:</label> {{ booking.tour }}
+                </div>
+                <div class="mb-3">
+                    {{ form.status.label_tag }} {{ form.status }}
+                </div>
+                <div class="mb-3">
+                    {{ form.payment_method.label_tag }} {{ form.payment_method }}
+                </div>
+                <div class="mb-3">
+                    {{ form.notes.label_tag }} {{ form.notes }}
+                </div>
+                <button type="submit" class="btn btn-primary">{% trans "Save Changes" %}</button>
+                <a href="{% url 'manage_bookings' %}" class="btn btn-secondary">{% trans "Back" %}</a>
+            </form>
+        </div>
+    </section>
+{% endblock %}

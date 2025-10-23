@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Create Tour" %} - Milano Travel{% endblock %}
+
+{% block content %}
+    <h2 class="mb-4 my-6">{% trans "Create a New Tour" %}</h2>
+    {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+    <div class="card p-4">
+        <form method="post" id="tourForm">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="tour_type" class="form-label">{% trans "Tour Type" %}</label>
+                <select name="tour_type" id="tour_type" class="form-control">
+                    <option value="full">{% trans "Full Tour" %}</option>
+                    <option value="land">{% trans "Land Tour" %}</option>
+                    <option value="day">{% trans "Day Tour" %}</option>
+                </select>
+            </div>
+            <div id="fullTourForm" class="tour-form">
+                {{ full_form.as_p }}
+            </div>
+            <div id="landTourForm" class="tour-form" style="display: none;">
+                {{ land_form.as_p }}
+            </div>
+            <div id="dayTourForm" class="tour-form" style="display: none;">
+                {{ day_form.as_p }}
+            </div>
+            <button type="submit" class="btn btn-primary">{% trans "Create Tour" %}</button>
+            <a href="{% url 'staff_dashboard' %}" class="btn btn-secondary">{% trans "Cancel" %}</a>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('tour_type').addEventListener('change', function() {
+            const forms = document.querySelectorAll('.tour-form');
+            forms.forEach(form => form.style.display = 'none');
+            document.getElementById(this.value + 'TourForm').style.display = 'block';
+        });
+    </script>
+{% endblock %}

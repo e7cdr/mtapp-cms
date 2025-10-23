@@ -1,0 +1,263 @@
+{% load static i18n custom_filters booking_tags %}
+
+<div id="booking-form-container" data-duration="{{ tour_duration|default:0 }}">
+<form id="bookingForm" method="post" action="{% url 'bookings:confirm_proposal_submission' tour_type=tour_type tour_id=tour.id %}" hx-post="{% url 'bookings:confirm_proposal_submission' tour_type=tour_type tour_id=tour.id %}" hx-target="#success-modal-content" hx-swap="innerHTML" class="booking-form card p-4" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="confirm" value="true">
+    <input type="hidden" name="form_submission" value="booking">
+    <input type="hidden" id="id_selected_configuration" name="selected_configuration" value="{{ selected_configuration_index|default:'0' }}">
+    <!-- Hidden element for error message -->
+    <div id="htmx-error-message" class="hidden text-red-500 text-sm">
+        {% trans "An error occurred. Please try again or contact support." %}
+    </div>
+
+    <!-- Display messages (e.g., pricing errors) -->
+    {% if messages %}
+        <div class="alert alert-danger rounded-md p-3 bg-red-100 text-red-700">
+            <ul>
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <!-- Display tour selection confirmation -->
+    {% if tour %}
+        <div class="alert alert-info text-center">
+            {% trans "Selected Tour" %}: <strong>{{ booking_data_json.tourName }}</strong>
+        </div>
+    {% else %}
+        <div class="alert alert-warning text-center">
+            {% trans "No tour selected. Please choose a tour from the tours page." %}
+            <a href="{% url 'tours_list' %}" class="btn btn-primary btn-sm ms-2">{% trans "View Tours" %}</a>
+        </div>
+    {% endif %}
+
+    <!-- Tour Information Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>{% trans "Tour Information" %}</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <!-- Column 1: Tour Image and Title -->
+                <div class="col-md-6">
+                    <div class="tour-display">
+                        <div class="tour-image mb-3">
+                            {% if tour.image and tour.image.image %}
+                                <img src="{{ tour.image.image.url }}" class="tour-card-img" alt="{{ tour.title|default:'Tour Image' }}" loading="lazy">
+                            {% elif default_tours %}
+                                <img src="{{ default_tours.image.url }}" class="tour-card-img" alt="{% trans 'Default Tour Image' %}" loading="lazy">
+                            {% else %}
+                                <img src="{% static 'images/default_tour.jpg' %}" class="tour-card-img" alt="{% trans 'Default Tour Image' %}" loading="lazy">
+                            {% endif %}
+                        </div>
+                        <h6 class="tour-title" id="tourTitle">{{ booking_data_json.tourName|default:'Select a Tour' }}</h6>
+                    </div>
+                </div>
+                <!-- Column 2: Travel Date, End Date, Estimated Price -->
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label class="form-label">{% trans "Travel Start Date" %}</label>
+                        <p>{{ form_data.travel_date|default:'N/A' }}</p>
+                    </div>
+                    {% if tour_type != 'day' %}
+                        <div class="form-group mb-3">
+                            <label class="form-label">{% trans "Travel End Date" %}</label>
+                            <p>
+                                {% if form_data.end_date %}
+                                    {{ form_data.end_date }}
+                                {% else %}
+                                    {% trans "N/A" %}
+                                {% endif %}
+                            </p>
+                        </div>
+                    {% endif %}
+                    <div class="total-price-group mb-3">
+                        <label class="form-label">{% trans "Estimated Price" %}</label>
+                        <p>
+                            {% if configurations %}
+                                {% with idx=selected_configuration_index|default:'0' %}
+                                    {% with config=configurations|index:idx %}
+                                        {% if config %}
+                                            {{ config.currency|default:'USD' }} {{ config.total_price|floatformat:2 }}
+                                        {% else %}
+                                            {% with first_config=configurations|first %}
+                                                {% if first_config %}
+                                                    {{ first_config.currency|default:'USD' }} {{ first_config.total_price|floatformat:2 }} (Default)
+                                                {% else %}
+                                                    {% trans "N/A (No valid configuration)" %}
+                                                {% endif %}
+                                            {% endwith %}
+                                        {% endif %}
+                                    {% endwith %}
+                                {% endwith %}
+                            {% else %}
+                                {% trans "N/A (No configurations available)" %}
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Information Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>{% trans "Customer Information" %}</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <!-- Column 1: Name, Email, Phone -->
+                <div class="col-md-4">
+                    <div class="form-group mb-3">
+                        <label class="form-label">{% trans "Name" %}</label>
+                        <p>{{ form_data.customer_name|default:'N/A' }}</p>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">{% trans "Email" %}</label>
+                        <p>{{ form_data.customer_email|default:'N/A' }}</p>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">{% trans "Phone" %}</label>
+                        <p>{{ form_data.customer_phone|default:'N/A' }}</p>
+                    </div>
+                </div>
+                <!-- Column 2: Address, Nationality, Adults -->
+                <div class="col-md-4">
+                    <div class="form-group mb-3">
+                        <label class="form-label">{% trans "Address" %}</label>
+                        <p>{{ form_data.customer_address|default:'N/A' }}</p>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">{% trans "Nationality" %}</label>
+                        <p>{{ form_data.nationality|default:'N/A' }}</p>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">{% trans "Number of Adults" %}</label>
+                        <p>{{ form_data.number_of_adults|default:'N/A' }}</p>
+                    </div>
+                </div>
+                <!-- Column 3: Children, Child Ages, Notes -->
+                <div class="col-md-4">
+                    <div class="form-group mb-3">
+                        <label class="form-label">{% trans "Number of Children" %}</label>
+                        <p>{{ form_data.number_of_children|default:'N/A' }}</p>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">{% trans "Child Ages" %}</label>
+                        <p>
+                            {% if form_data.child_ages %}
+                                {{ form_data.child_ages|join:", " }}
+                            {% else %}
+                                {% trans "None" %}
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">{% trans "Notes" %}</label>
+                        <p>{{ form_data.notes|default:'N/A' }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Room Configuration -->
+    {% if configurations and tour_type != 'day' %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>{% trans "Room Configuration" %}</h5>
+            </div>
+            <div class="card-body">
+                {% with idx=selected_configuration_index|default:'0' %}
+                    {% with config=configurations|index:idx %}
+                        {% if config %}
+                            <p>
+                                {% if config.singles %}
+                                    {% trans "Singles" %}: {{ config.singles }}<br>
+                                {% endif %}
+                                {% if config.doubles %}
+                                    {% trans "Doubles" %}: {{ config.doubles }}<br>
+                                {% endif %}
+                                {% if config.triples %}
+                                    {% trans "Triples" %}: {{ config.triples }}<br>
+                                {% endif %}
+                                {% if config.children %}
+                                    {% trans "Children" %}: {{ config.children }} (Ages: {{ config.child_ages|join:", " }})<br>
+                                {% endif %}
+                                {% if config.infants %}
+                                    {% trans "Infants" %}: {{ config.infants }}
+                                {% endif %}
+                            </p>
+                        {% else %}
+                            {% with first_config=configurations|first %}
+                                {% if first_config %}
+                                    <p>
+                                        {% if first_config.singles %}
+                                            {% trans "Singles" %}: {{ first_config.singles }}<br>
+                                        {% endif %}
+                                        {% if first_config.doubles %}
+                                            {% trans "Doubles" %}: {{ first_config.doubles }}<br>
+                                        {% endif %}
+                                        {% if first_config.triples %}
+                                            {% trans "Triples" %}: {{ first_config.triples }}<br>
+                                        {% endif %}
+                                        {% if first_config.children %}
+                                            {% trans "Children" %}: {{ first_config.children }} (Ages: {{ first_config.child_ages|join:", " }})<br>
+                                        {% endif %}
+                                        {% if first_config.infants %}
+                                            {% trans "Infants" %}: {{ first_config.infants }}
+                                        {% endif %}
+                                        <em>(Default configuration)</em>
+                                    </p>
+                                {% else %}
+                                    <p>{% trans "No valid configuration selected" %}</p>
+                                {% endif %}
+                            {% endwith %}
+                        {% endif %}
+                    {% endwith %}
+                {% endwith %}
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="text-center">
+        <button type="submit" id="confirm-proposal" class="btn btn-primary me-2">{% trans "Confirm Proposal" %}</button>
+        <button type="button" name="go_back"
+                hx-post="{% url 'bookings:revert_to_booking_form' tour_type=tour_type tour_id=tour_id %}"
+                hx-target="#booking-form-container"
+                hx-swap="outerHTML"
+                class="btn btn-secondary">{% trans "Go Back to Edit" %}</button>
+    </div>
+</form>
+</div>
+
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="successModalLabel">{% trans "Proposal Submitted" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="success-modal-content">
+                <!-- Success content will be injected here -->
+            </div>
+            <div class="modal-footer">
+                <a href="{% url 'tours:tours_list' %}" class="btn btn-primary">{% trans "Back to Tours" %}</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('htmx:afterSwap', function(evt) {
+        if (evt.detail.target.id === 'success-modal-content') {
+            const modal = new bootstrap.Modal(document.getElementById('successModal'));
+            modal.show();
+        }
+    });
+</script>

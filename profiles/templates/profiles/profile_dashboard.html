@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block extra_head %}
+<style>
+    .navbar {
+        position: relative !important;
+    }
+</style>
+{% endblock %}
+
+{% block title %}{% trans "Your Dashboard" %} - Milano Travel{% endblock %}
+
+{% block content %}
+
+
+<section class="my-10 px-4 sm:px-6 lg:px-8">
+    <h2 class="text-3xl font-bold text-center mb-6 text-white text-shadow dark:text-gray-100">
+        {% trans "Welcome" %}, {{ user.username }}!
+    </h2>
+    <h3 class="text-xl font-semibold text-center mb-8 text-white text-shadow dark:text-gray-200">
+        {% trans "Your Dashboard" %}
+    </h3>
+    <hr>
+    <!-- Summary Cards -->
+    <div class="flex grid-cols-1 sm:grid-cols-2  my-4 gap-6 mb-8">
+        <div class="bg-darkBg p-6 rounded-lg shadow-md white-shadow text-center">
+            <h4 class="text-lg font-medium text-gray-700 px-4 dark:text-gray-200 mb-2">{% trans "Total Bookings" %}</h4>
+            <p class="text-2xl font-bold mb-2 text-yellow-400">{{ total_bookings }}</p>
+        </div>
+        <div class="light:bg-gray-100 dark:bg-darkBg p-6 rounded-lg shadow-md white-shadow text-center">
+            <h4 class="text-lg font-medium text-gray-700 px-4 dark:text-gray-200 mb-2">{% trans "Total Commission" %}</h4>
+            <p class="text-2xl font-bold mb-2 text-yellow-400">${{ total_commission|floatformat:2 }}</p>
+        </div>
+    </div>
+
+    <!-- Recent Bookings -->
+    <div class="bg-darkBg p-6 rounded-lg shadow-md white-shadow mb-8">
+        <h3 class="text-xl font-semibold mb-2 p-2 dark:text-gray-200">{% trans "Recent Bookings" %}</h3>
+        <hr class="pb-2">
+        <ul class="space-y-4">
+            {% for booking in bookings %}
+                <li class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition">
+                    <span class="text-gray-800 dark:text-gray-200">
+                        {{ booking.booking_date|date:"Y-m-d H:i" }} - {% trans "Booking" %} #{{ booking.book_id }}
+                    </span>
+                    <span class="text-yellow-400 font-medium">${{ booking.total_price|floatformat:2 }}</span>
+                </li>
+            {% empty %}
+                <li class="text-gray-600 dark:text-gray-400">{% trans "No bookings yet." %}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- Notices -->
+    <div class="bg-darkBg my-4 rounded-lg shadow-md white-shadow ">
+        <h3 class="text-xl font-semibold mb-4 text-gray-700 p-2 dark:text-gray-200">{% trans "Notices" %}</h3>
+        <hr class="pb-2">
+        <ul class="space-y-4">
+            {% for notice in notices %}
+                <li class="p-4 bg-gray-50 dark:bg-gray-700 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition">
+                    <span class="text-gray-800 dark:text-gray-200">
+                        {{ notice.title }}: {{ notice.message }}
+                        {% if notice.is_important %}
+                            <span class="text-red-500 font-medium">({% trans "Important" %})</span>
+                        {% endif %}
+                    </span>
+                </li>
+            {% empty %}
+                <li class="text-gray-600 p-2 dark:text-gray-400">{% trans "No notices." %}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</section>
+{% endblock %}

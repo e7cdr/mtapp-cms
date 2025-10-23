@@ -1,0 +1,55 @@
+{% load static wagtailimages_tags custom_filters wagtailcore_tags %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/video_text_content.css' %}">
+{% endblock extra_css %}
+
+<section>
+ <div class="video-container">
+  <h1 class="video-title">
+   {% with words=self.title|striptags|split:" " %} {% for word in words %} {% if forloop.counter0 == 2 %}
+   <!-- Third word (0-based index) -->
+   <span class="highlight">{{ word }}</span>
+   {% else %} {{ word }} {% endif %} {% if not forloop.last %} {% endif %}
+   <!-- Space between words -->
+   {% endfor %} {% endwith %}
+  </h1>
+
+  <iframe
+   src="{{self.video}}"
+   title="YouTube video player"
+   frameborder="0"
+   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+   referrerpolicy="strict-origin-when-cross-origin"
+   allowfullscreen
+  ></iframe>
+
+  <div class="video-grid">
+   <div class="video-text-container">
+    {% for item in block.value.body %}
+    <div>
+     <div>
+      <span>
+       {% image item.icon_1 fill-100x100 format-gif %}
+      </span>
+      <h1 class="subtitle">{{ item.subtitle_1}}</h1>
+      <p>{{ item.text_1 }}</p>
+     </div>
+    </div>
+    {% endfor %}
+   </div>
+   <div class="video-text-container">
+    {% for item in block.value.body %}
+    <div>
+     <div>
+      <span>
+       {% image item.icon_1 fill-100x100 format-gif class="w-8 h-8" %}
+      </span>
+      <h1 class="subtitle">{{ item.subtitle_2}}</h1>
+      <p>{{ item.text_2 }}</p>
+     </div>
+    </div>
+    {% endfor %}
+   </div>
+  </div>
+ </div>
+</section>

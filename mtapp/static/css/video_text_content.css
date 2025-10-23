@@ -1,0 +1,137 @@
+@keyframes scale-in {
+    from{
+        scale: 0.7;
+        filter: blur(10px);
+        transform: translate(20%);
+    }
+
+    to {
+        scale: 1;
+        filter: blur(0);
+
+    }
+}
+
+.video-container {
+    --bs-gutter-x: 1.5rem;
+    margin-right: auto;
+    margin-left: auto;
+    padding-right: calc(var(--bs-gutter-x) * .5);
+    padding-left: calc(var(--bs-gutter-x) * .5);
+    box-shadow: 0px 2px 7px black;
+    border-radius: 1rem;
+    margin: 0.5rem;
+    animation: 800ms linear scale-in;
+    animation-range: entry 0% cover 5%;
+    animation-timeline: view();
+}
+
+.video-title {
+    text-align: center;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    line-height: 1.2;
+    font-size: xx-large;
+    animation: 800ms linear scale-in;
+    animation-range: entry 0% cover 30%;
+    animation-timeline: view();
+}
+
+.video-container iframe {
+    overflow: hidden;
+    border-radius: 0.75rem;
+    height: 20rem;
+    margin-top: 1rem;
+    width: 100%;
+    animation: 800ms linear scale-in;
+    animation-range: entry 0% cover 30%;
+    animation-timeline: view();
+}
+
+.video-grid {
+    gap: 2rem;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    display: grid;
+    margin-top: 2rem;
+    animation: 800ms linear scale-in;
+    animation-range: entry 0% cover 10%;
+    animation-timeline: view();
+
+}
+
+.video-text-container {
+    border: 1px solid #dee2e6;
+    border-radius: 0.75rem;
+    display: flex;
+
+}
+
+.video-text-container div div {
+    margin-top: 1.5rem;
+    animation: 800ms linear scale-in;
+    animation-range: entry 0% cover 40%;
+    animation-timeline: view();
+
+}
+
+.video-text-container div div p {
+    text-align:justify;
+    margin-inline: 0.5rem;
+    animation: 800ms linear scale-in;
+    animation-range: entry 0% cover 20%;
+    animation-timeline: view();
+}
+
+.video-text-container div div span {
+    padding: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    display: inline-block;
+    border-radius: 1rem;
+        animation: 800ms linear scale-in;
+    animation-range: entry 0% cover 10%;
+    animation-timeline: view();
+
+}
+
+.video-text-container div div span img {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 6px;
+        animation: 800ms linear scale-in;
+    animation-range: entry 0% cover 10%;
+    animation-timeline: view();
+}
+
+.subtitle {
+    text-transform: capitalize;
+    margin-inline: 1rem;
+
+}
+
+
+ @media (max-width: 600px) {
+
+    .video-grid {
+        text-align: center;
+    }
+    
+    .video-title {
+        font-size: large;
+    }
+
+    .video-text-container p {
+        font-size: small;
+    }
+
+    .video-text-container h1 {
+        font-size: medium;
+    }
+
+
+}
+
+
+@media (max-width: 360px) {
+        .video-container  {
+    width: 105%;
+}

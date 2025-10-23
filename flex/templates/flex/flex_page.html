@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load static i18n wagtailcore_tags wagtailimages_tags %}
+
+
+{% block content %} 
+<style>
+    .navbar {
+        position: relative;
+    }
+
+    .page-title {
+        margin: 3rem;
+        font-size: 22px;
+        text-align: justify;
+        font-family: "Roboto", sans-serif;
+
+    }
+
+    .image-container, .page-title {
+        position: relative;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+
+    }
+
+    .image-container {
+        box-shadow: 1px 2px 11px black;
+
+    }
+</style>
+<div class="page-title">
+    <h1>{{self.title}}</h1>
+</div>
+{% if self.page_image %}
+<div class="image-container">
+{% image self.page_image original as img%}
+<img id="page-image" src="{{img.url}}" alt="Background image for the textblock" />
+{% endif %}
+</div>
+{% for block in page.content %} 
+{% include_block block %} 
+{% endfor %} 
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}{% trans "Customer Portal" %} - Milano Travel{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-4">{% trans "Your Proposals and Bookings" %}</h2>
+        <form method="get" class="mb-4">
+            <div class="row">
+                <div class="col-md-6">
+                    <label for="email" class="form-label">{% trans "Enter Your Email" %}</label>
+                    <input type="email" name="email" id="email" class="form-control" value="{{ email }}">
+                    <label for="prop_id" class="form-label">{% trans "Enter Your prop_id" %}</label>
+                    <input type="text" name="prop_id" id="prop_id" class="form-control" value="{{ prop_id }}">
+
+                </div>
+                <div class="col-md-2 align-self-end">
+                    <button type="submit" class="btn btn-primary">{% trans "Search" %}</button>
+                </div>
+            </div>
+        </form>
+        {% if proposals or bookings %}
+            <h3>{% trans "Proposals" %}</h3>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>{% trans "ID" %}</th>
+                        <th>{% trans "Tour" %}</th>
+                        <th>{% trans "Travel Date" %}</th>
+                        <th>{% trans "Adults" %}</th>
+                        <th>{% trans "Children" %}</th>
+                        <th>{% trans "Estimated Price" %}</th>
+                        <th>{% trans "Status" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for proposal in proposals %}
+                        <tr>
+                            <td>{{ proposal.prop_id }}</td>
+                            <td>{{ proposal.tour }}</td>
+                            <td>{{ proposal.travel_date }}</td>
+                            <td>{{ proposal.number_of_adults }}</td>
+                            <td>{{ proposal.number_of_children }}</td>
+                            <td>${{ proposal.estimated_price }}</td>
+                            <td>{{ proposal.get_status_display }}</td>
+
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="8">{% trans "No proposals found." %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <h3>{% trans "Bookings" %}</h3>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>{% trans "ID" %}</th>
+                        <th>{% trans "Tour" %}</th>
+                        <th>{% trans "Travel Date" %}</th>
+                        <th>{% trans "Status" %}</th>
+                        <th>{% trans "Total Price" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                        <tr>
+                            <td>{{ booking.id }}</td>
+                            <td>{{ booking.tour }}</td>
+                            <td>{{ booking.travel_date }}</td>
+                            <td>{{ booking.get_status_display }}</td>
+                            <td>${{ booking.total_price }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5">{% trans "No bookings found." %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% elif email %}
+            <p class="text-center">{% trans "No records found for" %} {{ email }}.</p>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

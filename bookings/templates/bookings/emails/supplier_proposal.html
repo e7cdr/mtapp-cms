@@ -1,0 +1,48 @@
+{% load i18n %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% trans "New Tour Proposal" %}</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        h2 { color: #e6c558; }
+        ul { list-style-type: none; padding: 0; }
+        li { margin-bottom: 10px; }
+        .button { display: inline-block; padding: 10px 20px; background-color: #e6c558; color: #fff; text-decoration: none; border-radius: 5px; }
+        .button:hover { background-color: #d4b347; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>{% trans "New Tour Proposal" %}</h2>
+        <p>{% trans "Dear Supplier," %}</p>
+        <p>{% trans "A new tour proposal has been submitted for your review:" %}</p>
+        <ul>
+            <li><strong>{% trans "Tour" %}:</strong> {{ tour }}</li>
+            <li><strong>{% trans "Customer Name" %}:</strong> {{ proposal.customer_name }}</li>
+            <li><strong>{% trans "Travel Date" %}:</strong> {{ proposal.travel_date }}</li>
+            <li><strong>{% trans "End Date" %}:</strong> {{ end_date }}</li>
+            <li><strong>{% trans "Adults" %}:</strong> {{ proposal.number_of_adults }}</li>
+            <li><strong>{% trans "Children" %}:</strong> {{ proposal.number_of_children }}</li>
+            <li><strong>{% trans "Estimated Price" %}:</strong> ${{ proposal.estimated_price }}</li>
+            <li><strong>{% trans "Email" %}:</strong> {{ proposal.customer_email }}</li>
+            <li><strong>{% trans "Phone" %}:</strong> {{ proposal.customer_phone|default:"N/A" }}</li>
+            <li><strong>{% trans "Notes" %}:</strong> {{ proposal.notes|default:"None" }}</li>
+        </ul>
+        <p>
+            {% trans "Please confirm the proposal by clicking the button below:" %}
+        </p>
+        <p>
+            <a href="{{ confirm_url }}" class="button">{% trans "Confirm Proposal" %}</a>
+        </p>
+        <p>
+            {% trans "Alternatively, manage all proposals at:" %}
+            <a href="{{ site_url }}/bookings/manage/proposals/">{% trans "Manage Proposals" %}</a>
+        </p>
+        <p>{% trans "This link expires in 48 hours." %}</p>
+        <p>{% trans "Thank you," %}</p>
+        <p>{% trans "Milano Travel Team" %}</p>
+    </div>
+</body>
+</html>

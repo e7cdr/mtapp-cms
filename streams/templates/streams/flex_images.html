@@ -1,0 +1,25 @@
+{% load static wagtailimages_tags custom_filters wagtailcore_tags %}
+
+<link rel="stylesheet" href="{% static 'css/flex_images.css' %}"/>
+
+<!-- Images that appears based on the destination -->
+<section>
+    <div id="flex-images-container" class="flex-images-container">
+        <h1>{{page.title}}</h1>
+        <div id="image">
+            {% for item in block.value.image_caption  %}
+            <div id="image-cont" class="image-cont transparent-lines image-container-0">
+                {% image item.image original as img%}
+                <img src="{{img.url}}" class="flex-image" alt="Picture of {{item.caption}}">
+                <p class="caption">
+                    <a href="{% if request.GET.destination == '{{item.caption}}'%}http://127.0.0.1:8000/en/tours/?tour_type=&status=&destination={{item.caption}}{% endif %}">
+                        {{item.caption}}
+                    </a>
+                </p>
+                <div class="lines"></div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+{% comment %} <script src="js/flex_images.js"></script> {% endcomment %}
+</section>

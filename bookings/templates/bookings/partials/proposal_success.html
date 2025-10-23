@@ -1,0 +1,120 @@
+{% load i18n %}
+
+<!DOCTYPE html>
+<html lang="{{ request.LANGUAGE_CODE|default:'en' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% trans "Proposal Submitted Successfully" %}</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow-y: auto;
+        }
+        .container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding-bottom: 2rem;
+        }
+        .card {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body hx-on::after-swap="window.scrollTo(0, 0)">
+    <div class="container mt-5">
+        <div class="card">
+            <div class="card-header">
+                <h3>{% trans "Proposal Submitted Successfully" %}</h3>
+            </div>
+            <div class="card-body">
+                <p>{% trans "Thank you for your booking!" %}</p>
+                <p>{% trans "Your proposal for" %} <strong>{{ tour.safe_translation_getter|default:tour.title|default:"Untitled" }}</strong> {% trans "has been submitted and is awaiting supplier confirmation." %}</p>
+                <p>{% trans "You will receive an email with further details soon." %}</p>
+                <p><strong>{% trans "Proposal Tracking Code" %}</strong>: {{ proposal.prop_id }}</p>
+                <p>{% trans "Use this code to check the status of your proposal on our website." %}</p>
+
+                <!-- Tour Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>{% trans "Tour Information" %}</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            <li><strong>{% trans "Tour" %}</strong>: {{ tour.safe_translation_getter|default:tour.title|default:"Untitled" }}</li>
+                            <li><strong>{% trans "Travel Start Date" %}</strong>: {{ proposal.travel_date|date:"Y-m-d"|default:"N/A" }}</li>
+                            {% if proposal.end_date %}
+                                <li><strong>{% trans "Travel End Date" %}</strong>: {{ proposal.end_date|date:"Y-m-d"|default:"N/A" }}</li>
+                            {% endif %}
+                            <li><strong>{% trans "Estimated Price" %}</strong>: {{ proposal.currency|default:"USD" }} {{ proposal.estimated_price|floatformat:2 }}</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Customer Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>{% trans "Customer Information" %}</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            <li><strong>{% trans "Name" %}</strong>: {{ proposal.customer_name|default:"N/A" }}</li>
+                            <li><strong>{% trans "Email" %}</strong>: {{ proposal.customer_email|default:"N/A" }}</li>
+                            <li><strong>{% trans "Phone" %}</strong>: {{ proposal.customer_phone|default:"N/A" }}</li>
+                            <li><strong>{% trans "Address" %}</strong>: {{ proposal.customer_address|default:"N/A" }}</li>
+                            <li><strong>{% trans "Nationality" %}</strong>: {{ proposal.nationality|default:"N/A" }}</li>
+                            <li><strong>{% trans "Number of Adults" %}</strong>: {{ proposal.number_of_adults|default:"N/A" }}</li>
+                            <li><strong>{% trans "Number of Children" %}</strong>: {{ proposal.number_of_children|default:"N/A" }}</li>
+                            <li><strong>{% trans "Child Ages" %}</strong>: 
+                                {% if proposal.children_ages %}
+                                    {{ proposal.children_ages|join:", " }}
+                                {% else %}
+                                    {% trans "None" %}
+                                {% endif %}
+                            </li>
+                            <li><strong>{% trans "Notes" %}</strong>: {{ proposal.notes|default:"N/A" }}</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Room Configuration -->
+                {% if tour_type != 'day' and proposal.room_config %}
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5>{% trans "Room Configuration" %}</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled">
+                                {% if proposal.room_config.singles %}
+                                    <li><strong>{% trans "Singles" %}</strong>: {{ proposal.room_config.singles }}</li>
+                                {% endif %}
+                                {% if proposal.room_config.doubles %}
+                                    <li><strong>{% trans "Doubles" %}</strong>: {{ proposal.room_config.doubles }}</li>
+                                {% endif %}
+                                {% if proposal.room_config.triples %}
+                                    <li><strong>{% trans "Triples" %}</strong>: {{ proposal.room_config.triples }}</li>
+                                {% endif %}
+                                {% if proposal.room_config.children %}
+                                    <li><strong>{% trans "Children" %}</strong>: {{ proposal.room_config.children }}</li>
+                                {% endif %}
+                                {% if proposal.room_config.infants %}
+                                    <li><strong>{% trans "Infants" %}</strong>: {{ proposal.room_config.infants }}</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div class="text-center mt-4">
+                    <a href="{% url 'tours:tours_list' %}" class="btn btn-primary">{% trans "Back to Tours" %}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

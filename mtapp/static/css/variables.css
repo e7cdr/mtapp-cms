@@ -1,0 +1,131 @@
+:root {
+    /* Colora Variables */
+    --yellow-0: #FFD700;   /* Vibrant accent */
+    --yellow-10: #FFDB19;
+    --yellow-20: #FFDF33;
+    --yellow-30: #FFE34C;
+    --yellow-40: #FFE766;
+    --yellow-50: #FFEB7F;
+    --yellow-60: #FFEF99;
+    --yellow-70: #FFF3B2;
+    --yellow-80: #FFF7CC;
+    --yellow-90: #FFFBE5;
+    --yellow-100: #FFFFFF;  /* Neutral bg */
+
+    /* Darker variants (to black for shadows/dark mode) */
+    --yellow-dark-0: #FFD700;
+    --yellow-dark-10: #E5C100;
+    --yellow-dark-20: #CCAC00;
+    --yellow-dark-30: #B29600;
+    --yellow-dark-40: #998100;
+    --yellow-dark-50: #7F6B00;
+    --yellow-dark-60: #665600;
+    --yellow-dark-70: #4C4000;
+    --yellow-dark-80: #332B00;
+    --yellow-dark-90: #191500;
+    --yellow-dark-100: #000000;
+
+    --yellow-transp: #ffd90055;
+
+    /* Dark to light scale (to white for light mode) */
+  --green2-0: #39DA35;   /* Lively accent */
+  --green2-10: #4DDE49;
+  --green2-20: #61E15D;
+  --green2-30: #74E572;
+  --green2-40: #88E986;
+  --green2-50: #9CED9A;
+  --green2-60: #B0F0AE;
+  --green2-70: #C4F4C2;
+  --green2-80: #D7F8D7;
+  --green2-90: #EBFBEB;
+  --green2-100: #FFFFFF;  /* Neutral bg */
+
+  --green-transp: #10b80d7b;   /* Lively accent */
+
+
+  /* Darker variants (to black for shadows/dark mode) */
+  --green2-dark-0: #39DA35;
+  --green2-dark-10: #33C430;
+  --green2-dark-20: #2EAE2A;
+  --green2-dark-30: #289925;
+  --green2-dark-40: #228320;
+  --green2-dark-50: #1D6D1B;
+  --green2-dark-60: #175715;
+  --green2-dark-70: #114110;
+  --green2-dark-80: #0B2C0B;
+  --green2-dark-90: #061605;
+  --green2-dark-100: #000000;
+
+  --red-0: #DA3535;      /* Strong accent */
+  --red-10: #DE4949;
+  --red-20: #E15D5D;
+  --red-30: #E57272;
+  --red-40: #E98686;
+  --red-50: #ED9A9A;
+  --red-60: #F0AEAE;
+  --red-70: #F4C2C2;
+  --red-80: #F8D7D7;
+  --red-90: #FBEBEB;
+  --red-100: #FFFFFF;     /* Neutral bg */
+
+  /* Darker variants (to black for shadows/dark mode) */
+  --red-dark-0: #DA3535;
+  --red-dark-10: #C43030;
+  --red-dark-20: #AE2A2A;
+  --red-dark-30: #992525;
+  --red-dark-40: #832020;
+  --red-dark-50: #6D1B1B;
+  --red-dark-60: #571515;
+  --red-dark-70: #411010;
+  --red-dark-80: #2C0B0B;
+  --red-dark-90: #160505;
+  --red-dark-100: #000000;
+
+  --red-transp: #ff000055;
+
+  --cyan-0: #35CBDA;     /* Vibrant accent */
+  --cyan-10: #49D0DE;
+  --cyan-20: #5DD5E1;
+  --cyan-30: #72DBE5;
+  --cyan-40: #86E0E9;
+  --cyan-50: #9AE5ED;
+  --cyan-60: #AEEAF0;
+  --cyan-70: #C2EFF4;
+  --cyan-80: #D7F5F8;
+  --cyan-90: #EBFAFB;
+  --cyan-100: #FFFFFF;    /* Neutral bg */
+
+  /* Darker variants (to black for shadows/dark mode) */
+  --cyan-dark-0: #35CBDA;
+  --cyan-dark-10: #30B7C4;
+  --cyan-dark-20: #2AA2AE;
+  --cyan-dark-30: #258E99;
+  --cyan-dark-40: #207A83;
+  --cyan-dark-50: #1B666D;
+  --cyan-dark-60: #155157;
+  --cyan-dark-70: #103D41;
+  --cyan-dark-80: #0B292C;
+  --cyan-dark-90: #051416;
+  --cyan-dark-100: #000000;
+
+  /* Card Variables */
+  --card-height: 25rem;
+  --card-width: 18rem;
+  --card-padding: calc(var(--card-height) - var(--card-width));
+  --card-background: rgb(217, 217, 217);
+  --warning-color: rgba(255, 0, 0, 0.60);
+  --notice-color: rgba(255, 255, 0, 0.667);
+  --note-color: rgba(24, 201, 35, 0.406);
+  --w-h-size: 10rem;
+  --container-height: 70rem;
+
+
+  /* Footer Variables */
+  --color-gray-900: #101828
+  --spacing: 0.25rem;
+
+  /* Navbar variables */
+  --nav-bar-hover-color: #ffd500;
+
+
+} 

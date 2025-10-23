@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block extra_head %}
+    <script src="https://cdn.tailwindcss.com"></script>
+{% endblock %}
+
+{% block title %}{% trans "Manage Tasks" %} - Milano Travel{% endblock %}
+
+{% block content %}
+<section class="my-10 px-4 sm:px-6 lg:px-8">
+    <h2 class="text-3xl font-bold text-center mb-6 text-gray-800 text-shadow dark:text-gray-100">{% trans "Manage Tasks" %}</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="md:col-span-1">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                <h3 class="text-xl font-semibold mb-4 text-gray-700 text-shadow text-center dark:text-gray-200">{% trans "Add New Task" %}</h3>
+                <hr class="pb-2">
+                {% include 'staff_tools/partials/task_form.html' %}
+            </div>
+        </div>
+        <div class="md:col-span-2">
+            <div id="task-table" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                <h3 class="text-xl font-semibold mb-4 text-gray-700 text-shadow text-center dark:text-gray-200">{% trans "Your Tasks" %}</h3>
+                <hr class="pb-2">
+
+                {% include 'staff_tools/partials/task_list.html' %}
+            </div>
+            {% if tasks.has_other_pages %}
+                <nav class="mt-6">
+                    <ul class="flex justify-center space-x-2">
+                        {% if tasks.has_previous %}
+                            <li>
+                                <a class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-md hover:bg-yellow-400 dark:hover:bg-yellow-400 hover:text-gray-900 dark:hover:text-gray-900 transition" 
+                                   href="?page={{ tasks.previous_page_number }}" 
+                                   hx-get="{% url 'manage_tasks' %}?page={{ tasks.previous_page_number }}" 
+                                   hx-target="#task-table">
+                                    {% trans "Previous" %}
+                                </a>
+                            </li>
+                        {% endif %}
+                        {% for num in tasks.paginator.page_range %}
+                            <li>
+                                <a class="px-4 py-2 {% if tasks.number == num %}bg-yellow-400 text-gray-900{% else %}bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200{% endif %} rounded-md hover:bg-yellow-400 dark:hover:bg-yellow-400 hover:text-gray-900 dark:hover:text-gray-900 transition" 
+                                   href="?page={{ num }}" 
+                                   hx-get="{% url 'manage_tasks' %}?page={{ num }}" 
+                                   hx-target="#task-table">
+                                    {{ num }}
+                                </a>
+                            </li>
+                        {% endfor %}
+                        {% if tasks.has_next %}
+                            <li>
+                                <a class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-md hover:bg-yellow-400 dark:hover:bg-yellow-400 hover:text-gray-900 dark:hover:text-gray-900 transition" 
+                                   href="?page={{ tasks.next_page_number }}" 
+                                   hx-get="{% url 'manage_tasks' %}?page={{ tasks.next_page_number }}" 
+                                   hx-target="#task-table">
+                                    {% trans "Next" %}
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}

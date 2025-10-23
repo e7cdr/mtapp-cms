@@ -1,0 +1,339 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}{% trans "Staff Dashboard" %} - Milano Travel{% endblock %}
+
+{% block content %}
+<style>
+.fixed-top {
+    position: None;
+}
+</style>
+<section class="my-2 p-2">
+    <h2 class="mb-4 text-center">{% trans "Staff Dashboard" %}</h2>
+    <div class="d-flex justify-content-between mb-4">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#communicationModal">{% trans "Send Communication" %}</button>
+        <a href="{% url 'create_tour' %}" class="btn btn-primary">{% trans "Create New Tour" %}</a>
+    </div>
+
+    <!-- Analytics Charts -->
+    <div class="row mb-4" id="chart-row-1">
+        <div class="col-md-4 draggable" data-id="bookingsChartCard" hx-get="{% url 'chart_data' chart_type='bookings' %}" hx-trigger="load" hx-target="#bookingsChartContainer">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title" data-bs-toggle="tooltip" title="Number of bookings over the last 30 days">{% trans "Bookings (Last 30 Days)" %}</h3>
+                    <div id="bookingsChartContainer"><canvas id="bookingsChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 draggable" data-id="revenueChartCard" hx-get="{% url 'chart_data' chart_type='revenue' %}" hx-trigger="load" hx-target="#revenueChartContainer">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title" data-bs-toggle="tooltip" title="Revenue from confirmed bookings over the last 30 days">{% trans "Revenue (Last 30 Days)" %}</h3>
+                    <div id="revenueChartContainer"><canvas id="revenueChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 draggable" data-id="tourPopularityChartCard" hx-get="{% url 'chart_data' chart_type='tour_popularity' %}" hx-trigger="load" hx-target="#tourPopularityChartContainer">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title" data-bs-toggle="tooltip" title="Top 5 most booked tours">{% trans "Tour Popularity" %}</h3>
+                    <div id="tourPopularityChartContainer"><canvas id="tourPopularityChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-4" id="chart-row-2">
+        <div class="col-md-4 draggable" data-id="ageDemographicsChartCard" hx-get="{% url 'chart_data' chart_type='age_groups' %}" hx-trigger="load" hx-target="#ageDemographicsChartContainer">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title" data-bs-toggle="tooltip" title="Customer distribution by age group">{% trans "Age Demographics" %}</h3>
+                    <div id="ageDemographicsChartContainer"><canvas id="ageDemographicsChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 draggable" data-id="nationalityDemographicsChartCard" hx-get="{% url 'chart_data' chart_type='nationalities' %}" hx-trigger="load" hx-target="#nationalityDemographicsChartContainer">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title" data-bs-toggle="tooltip" title="Top 5 customer nationalities">{% trans "Nationality Demographics" %}</h3>
+                    <div id="nationalityDemographicsChartContainer"><canvas id="nationalityDemographicsChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 draggable" data-id="paymentMethodsChartCard" hx-get="{% url 'chart_data' chart_type='payment_methods' %}" hx-trigger="load" hx-target="#paymentMethodsChartContainer">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title" data-bs-toggle="tooltip" title="Payment method usage and revenue over the last 30 days">{% trans "Payment Methods" %}</h3>
+                    <div id="paymentMethodsChartContainer"><canvas id="paymentMethodsChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 draggable" data-id="bookingStatusChartCard" hx-get="{% url 'chart_data' chart_type='booking_status' %}" hx-trigger="load" hx-target="#bookingStatusChartContainer">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title" data-bs-toggle="tooltip" title="Breakdown of booking statuses over the last 30 days">{% trans "Booking Status" %}</h3>
+                    <div id="bookingStatusChartContainer"><canvas id="bookingStatusChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <h3>{% trans "Key Metrics" %}</h3>
+            {% for data in dashboard_data %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ data.metric }}</h5>
+                        <p class="card-text">{{ data.value }}</p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="col-md-4">
+            <h3>{% trans "Recent Tasks" %}</h3>
+            <div id="recent-tasks" hx-get="{% url 'staff_dashboard' %}?section=tasks" hx-trigger="every 30s">
+                {% include 'staff_tools/partials/recent_tasks.html' %}
+            </div>
+            {% if recent_tasks.has_other_pages %}
+                <nav>
+                    <ul class="pagination">
+                        {% if recent_tasks.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?task_page={{ recent_tasks.previous_page_number }}" hx-get="{% url 'staff_dashboard' %}?section=tasks&task_page={{ recent_tasks.previous_page_number }}" hx-target="#recent-tasks">Previous</a></li>
+                        {% endif %}
+                        {% for num in recent_tasks.paginator.page_range %}
+                            <li class="page-item {% if recent_tasks.number == num %}active{% endif %}">
+                                <a class="page-link" href="?task_page={{ num }}" hx-get="{% url 'staff_dashboard' %}?section=tasks&task_page={{ num }}" hx-target="#recent-tasks">{{ num }}</a>
+                            </li>
+                        {% endfor %}
+                        {% if recent_tasks.has_next %}
+                            <li class="page-item"><a class="page-link" href="?task_page={{ recent_tasks.next_page_number }}" hx-get="{% url 'staff_dashboard' %}?section=tasks&task_page={{ recent_tasks.next_page_number }}" hx-target="#recent-tasks">Next</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        </div>
+        <div class="col-md-4">
+            <h3>{% trans "Active Alerts" %}</h3>
+            <div id="recent-alerts" hx-get="{% url 'staff_dashboard' %}?section=alerts" hx-trigger="every 30s">
+                {% include 'staff_tools/partials/recent_alerts.html' %}
+            </div>
+        </div>
+    </div>
+    <div class="row mt-4">
+        <div class="col-12">
+            <h3>{% trans "Recent Communications" %}</h3>
+            <div id="recent-communications" hx-get="{% url 'staff_dashboard' %}?section=communications" hx-trigger="every 30s">
+                {% include 'staff_tools/partials/recent_communications.html' %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4" hx-get="/api/analytics/" hx-trigger="load" hx-target="#bookingsChartContainer">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title">{% trans "Bookings (Last 30 Days)" %}</h3>
+                <div id="bookingsChartContainer"><canvas id="bookingsChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('htmx:afterSwap', function(event) {
+                        if (event.target.id === 'bookingsChartContainer') {
+                    const data = JSON.parse(event.detail.xhr.response).bookings_by_date;
+                    new Chart(document.getElementById('bookingsChart'), {
+                        type: 'line',
+                        data: {
+                            labels: data.map(b => b.date),
+                            datasets: [{ label: 'Bookings', data: data.map(b => b.count), borderColor: '#007bff', fill: false }]
+                        },
+                        options: { scales: { y: { beginAtZero: true } } }
+                    });
+                }
+            if (event.target.id === 'revenueChartContainer') {
+                const data = JSON.parse(event.detail.xhr.response).data;
+                new Chart(document.getElementById('revenueChart'), {
+                    type: 'line',
+                    data: {
+                        labels: data.map(r => r.date),
+                        datasets: [{
+                            label: 'Revenue ($)',
+                            data: data.map(r => parseFloat(r.total).toFixed(2)),
+                            borderColor: '#28a745',
+                            fill: false,
+                        }]
+                    },
+                    options: { scales: { y: { beginAtZero: true } } }
+                });
+            }
+            if (event.target.id === 'tourPopularityChartContainer') {
+                const data = JSON.parse(event.detail.xhr.response).data;
+                new Chart(document.getElementById('tourPopularityChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: data.map(t => t.tour),
+                        datasets: [{
+                            label: 'Bookings',
+                            data: data.map(t => t.count),
+                            backgroundColor: '#007bff',
+                        }]
+                    },
+                    options: {
+                        scales: { y: { beginAtZero: true } },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+            if (event.target.id === 'ageDemographicsChartContainer') {
+                const data = JSON.parse(event.detail.xhr.response).data;
+                new Chart(document.getElementById('ageDemographicsChart'), {
+                    type: 'pie',
+                    data: {
+                        labels: Object.keys(data),
+                        datasets: [{
+                            data: Object.values(data),
+                            backgroundColor: ['#007bff', '#28a745', '#dc3545', '#ffc107'],
+                        }]
+                    },
+                    options: { plugins: { legend: { position: 'bottom' } } }
+                });
+            }
+            if (event.target.id === 'nationalityDemographicsChartContainer') {
+                const data = JSON.parse(event.detail.xhr.response).data;
+                new Chart(document.getElementById('nationalityDemographicsChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: data.map(n => n.translations__nationality || 'Unknown'),
+                        datasets: [{
+                            label: 'Bookings',
+                            data: data.map(n => n.count),
+                            backgroundColor: '#28a745',
+                        }]
+                    },
+                    options: {
+                        scales: { y: { beginAtZero: true } },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+            if (event.target.id === 'paymentMethodsChartContainer') {
+                const data = JSON.parse(event.detail.xhr.response).data;
+                new Chart(document.getElementById('paymentMethodsChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: data.map(p => p.payment_method || 'Unspecified'),
+                        datasets: [
+                            {
+                                label: 'Bookings',
+                                data: data.map(p => p.count),
+                                backgroundColor: '#dc3545',
+                                yAxisID: 'y',
+                            },
+                            {
+                                label: 'Revenue ($)',
+                                data: data.map(p => parseFloat(p.total_revenue).toFixed(2)),
+                                backgroundColor: '#ffc107',
+                                yAxisID: 'y1',
+                            }
+                        ]
+                    },
+                    options: {
+                        scales: {
+                            y: { beginAtZero: true, position: 'left', title: { display: true, text: 'Bookings' } },
+                            y1: { beginAtZero: true, position: 'right', title: { display: true, text: 'Revenue ($)' }, grid: { drawOnChartArea: false } }
+                        }
+                    }
+                });
+            }
+            if (event.target.id === 'bookingStatusChartContainer') {
+                const data = JSON.parse(event.detail.xhr.response).data;
+                new Chart(document.getElementById('bookingStatusChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: data.map(s => s.status),
+                        datasets: [{
+                            data: data.map(s => s.count),
+                            backgroundColor: ['#007bff', '#28a745', '#dc3545'],
+                        }]
+                    },
+                    options: { plugins: { legend: { position: 'bottom' } } }
+                });
+            }
+        });
+
+        // Draggable Widgets with Persistence
+        document.addEventListener('DOMContentLoaded', function() {
+            const draggables = document.querySelectorAll('.draggable');
+            const containers = document.querySelectorAll('.row[id^="chart-row-"]');
+
+            // Load saved positions
+            const savedPositions = JSON.parse(localStorage.getItem('dashboardWidgetPositions')) || {};
+            Object.keys(savedPositions).forEach(rowId => {
+                const row = document.getElementById(rowId);
+                if (row) {
+                    savedPositions[rowId].forEach(widgetId => {
+                        const widget = document.querySelector(`[data-id="${widgetId}"]`);
+                        if (widget) row.appendChild(widget);
+                    });
+                }
+            });
+
+            draggables.forEach(draggable => {
+                draggable.setAttribute('draggable', true);
+                draggable.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', draggable.dataset.id);
+                    draggable.classList.add('dragging');
+                });
+                draggable.addEventListener('dragend', () => {
+                    draggable.classList.remove('dragging');
+                    savePositions();
+                });
+            });
+
+            containers.forEach(container => {
+                container.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                });
+                container.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const id = e.dataTransfer.getData('text/plain');
+                    const draggable = document.querySelector(`[data-id="${id}"]`);
+                    const afterElement = getDragAfterElement(container, e.clientY);
+                    if (afterElement == null) {
+                        container.appendChild(draggable);
+                    } else {
+                        container.insertBefore(draggable, afterElement);
+                    }
+                });
+            });
+
+            function getDragAfterElement(container, y) {
+                const draggableElements = [...container.querySelectorAll('.draggable:not(.dragging)')];
+                return draggableElements.reduce((closest, child) => {
+                    const box = child.getBoundingClientRect();
+                    const offset = y - box.top - box.height / 2;
+                    if (offset < 0 && offset > closest.offset) {
+                        return { offset: offset, element: child };
+                    } else {
+                        return closest;
+                    }
+                }, { offset: Number.NEGATIVE_INFINITY }).element;
+            }
+
+            function savePositions() {
+                const positions = {};
+                containers.forEach(container => {
+                    const rowId = container.id;
+                    positions[rowId] = Array.from(container.querySelectorAll('.draggable')).map(d => d.dataset.id);
+                });
+                localStorage.setItem('dashboardWidgetPositions', JSON.stringify(positions));
+            }
+
+            // Enable Tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+{% endblock %}

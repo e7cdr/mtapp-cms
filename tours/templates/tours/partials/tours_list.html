@@ -1,0 +1,107 @@
+{% load static wagtailcore_tags wagtailimages_tags i18n %}
+
+<div class="row g-4">
+    {% for tour in tours %}
+        <div class="col-md-4">
+            <div class="card h-100">
+                {% if tour.specific.cover_image %}
+                    {% image tour.specific.cover_image fill-300x200 class="card-img-top" %}
+                {% else %}
+                    <img src="{% static 'images/placeholder.jpg' %}" class="card-img-top" alt="Placeholder">
+                {% endif %}
+                <div class="card-body">
+                    <div class="mb-2">
+                        <!-- Tour Type -->
+                        <span class="badge bg-primary">{% trans "Land Tour" %}</span>
+                        <!-- Status Badges -->
+                        {% if tour.specific.is_on_discount %}
+                            <span class="badge bg-success">{% trans "On Discount" %}</span>
+                        {% endif %}
+                        {% if tour.specific.is_special_offer %}
+                            <span class="badge bg-info">{% trans "Special Offer" %}</span>
+                        {% endif %}
+                        {% if tour.specific.is_sold_out %}
+                            <span class="badge bg-danger">{% trans "Sold Out" %}</span>
+                        {% endif %}
+                        {% if tour.specific.is_all_inclusive %}
+                            <span class="badge bg-warning">{% trans "All Inclusive" %}</span>
+                        {% endif %}
+                    </div>
+                    <ul class="list-unstyled">
+                        <li>
+                            {% if tour.specific.destination %}
+                                {{ tour.specific.location }}, {{ tour.specific.get_destination_display|upper }}
+                            {% else %}
+                                {{ tour.specific.location }}
+                            {% endif %}
+                        </li>
+                        <li>
+                            {{ tour.specific.duration_days }} {% trans "days" %}, {{ tour.specific.nights }} {% trans "nights" %}
+                        </li>
+                        <li>
+                            {{ tour.specific.start_date|date:"M Y" }}
+                        </li>
+                        <li class="font-weight-bold">
+                            {{ tour.specific.name }}
+                        </li>
+                    </ul>
+                    <div>
+                        <strong>{% trans "Price p.p. from" %}:</strong>
+                        {% if tour.specific.is_on_discount %}
+                            <span class="text-decoration-line-through">
+                                {{ tour.specific.price_dbl|floatformat:0 }} {{ currency|default:"USD" }}
+                            </span>
+                            <span>
+                                {{ tour.specific.price_dbl|floatformat:0|add:"-10"|floatformat:0 }} {{ currency|default:"USD" }}
+                            </span>
+                        {% else %}
+                            {{ tour.specific.price_dbl|floatformat:0 }} {{ currency|default:"USD" }}
+                        {% endif %}
+                        (€)
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#tourModal{{ tour.id }}">
+                        {% trans "View Details" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12 text-center">
+            <h3>{% trans "No Tours Available" %}</h3>
+            <p>{% trans "Try adjusting your filters or check back later!" %}</p>
+        </div>
+    {% endfor %}
+</div>
+
+<!-- Modal Section -->
+{% for tour in tours %}
+    <div class="modal fade" id="tourModal{{ tour.id }}" tabindex="-1" aria-labelledby="tourModalLabel{{ tour.id }}" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="tourModalLabel{{ tour.id }}">{{ tour.specific.name }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+                </div>
+                <div class="modal-body">
+                    {% if tour.specific.cover_image %}
+                        {% image tour.specific.cover_image fill-600x400 class="img-fluid mb-3" %}
+                    {% endif %}
+                    <p>{{ tour.specific.description|default:"Explore this exciting tour! Contact us for more details." }}</p>
+                    <ul class="list-unstyled">
+                        <li><strong>{% trans "Destination" %}:</strong> {{ tour.specific.get_destination_display|default:tour.specific.destination }}</li>
+                        <li><strong>{% trans "Duration" %}:</strong> 
+                            {{ tour.specific.duration_days }} {% trans "days" %}, {{ tour.specific.nights }} {% trans "nights" %}
+                        </li>
+                        <li><strong>{% trans "Price from" %}:</strong> {{ tour.specific.price_dbl|floatformat:0 }} {{ currency|default:"USD" }}</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
+                    <a href="{% pageurl tour %}" class="btn btn-primary">{% trans "View Full Details" %}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endfor %}

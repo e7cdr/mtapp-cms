@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+{% load static i18n tour_filters custom_filters wagtailimages_tags%}
+
+{% block title %}{{ tour.title }} - Milano Travel{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/detail_page.css' %}" />
+
+ <body>
+  <div class="detail-container">
+   <div class="cover-image-container">
+    <div class="cover-image">
+      {% image self.cover_image original as img %}
+     <img src="{{img.url}}" alt="Tour cover image" loading="lazy" />
+    </div>
+    <div class="cover-text">
+     <h1>{{self.name}}</h1>
+     <h2 class="cover-text-duration">{% if self.duration_days > 1 %}{{self.duration_days}} days,{% else %}{{self.duration_days}} day {% endif %} {% if not self.duration_days == 1 %}{{self.nights}} nights{% endif %}</h2>
+     <a href="{{self.yt_vid}}" class="tour-video">Watch Tour Video</a>
+     {% comment %} <div class="tour-itinerary">View PDF Itinerary</div> {% endcomment %}
+     <br />
+      {% if not tour.is_sold_out %}
+      <button class="book-button conic-gradient-animation">
+        <a href="https://api.whatsapp.com/send/?phone=593967359549&text=Hello%2C+I+am+interested+in+{{self.name}}+from+your+webpage&type=phone_number&app_absent=0">Book</a></button>
+     {% else %}
+      <button class="book-button">Sold Out</button>
+      {% endif %}
+    </div>
+    <div class="flex-container">
+        {% if self.is_sold_out  %}
+       <div class="stickers sticker-1">SOLD OUT</div>
+     {% endif %}
+       {% if self.is_special_offer  %}
+     <div class="stickers sticker-2">Special Offer</div>
+     {% endif %}
+    </div>
+   </div>
+   <div class="data-container">
+    <div class="tab-section">
+     <div>
+      <div class="tab-card">
+       <nav class="section-nav">
+        <ul id="tourTabs" role="tablist">
+         <li class="nav-item" role="presentation">
+          <a
+           class="nav-link active"
+           id="description-tab"
+           data-bs-toggle="tab"
+           href="#description"
+           role="tab"
+           aria-selected="true"
+           >Description</a
+          >
+         </li>
+
+         <li class="nav-item" role="presentation">
+          <a
+           class="nav-link"
+           id="itinerary-tab"
+           data-bs-toggle="tab"
+           href="#itinerary"
+           role="tab"
+           aria-selected="false"
+           tabindex="-1"
+           >Itinerary</a
+          >
+         </li>
+
+          <li class="nav-item" role="presentation">
+          <a class="nav-link" id="amenities-tab" data-bs-toggle="tab" href="#amenities" role="tab" aria-selected="false" tabindex="-1"
+           >Amenities</a>
+         </li>
+
+         <li class="nav-item" role="presentation">
+          <a class="nav-link" id="notes-tab" data-bs-toggle="tab" href="#notes" role="tab" aria-selected="false" tabindex="-1"
+           >Additional Notes</a>
+         </li>
+
+         
+
+         {% comment %} <li class="nav-item" role="presentation">
+          <a
+           class="nav-link"
+           id="pricing-tab"
+           data-bs-toggle="tab"
+           href="#pricing"
+           role="tab"
+           aria-selected="false"
+           tabindex="-1"
+           >Pricing &amp; Details</a
+          >
+         </li> {% endcomment %}
+        </ul>
+       </nav>
+       <hr />
+       <div class="tab-content">
+        <!-- Description -->
+        <div class="tab-pane fade show active" id="description" role="tabpanel" aria-labelledby="description-tab">
+         <h2>Description</h2>
+         <p>{{self.description}}</p>
+         <p><strong>Destination:</strong> {{self.destination}}</p>
+         <p><strong>Hotel:</strong> {{self.hotel}}</p>
+         <p><strong>Dates:</strong> {{self.start_date}} - {{self.end_date}}</p>
+
+         <p><strong>Not Included:</strong>{{self.no_inclusions}} </p>
+        </div>
+        <!-- Itinerary -->
+        {% for block in self.itinerary  %}
+        <div class="tab-pane fade hidden" id="itinerary" role="tabpanel" aria-labelledby="itinerary-tab">
+         <nav class="section-nav">
+          <ul id="itinerary-days" role="tablist">
+           <li class="nav-item" role="presentation">
+            <a
+             class="nav-link active"
+             id="day-{{block.value.day}}-tab"
+             data-bs-toggle="tab"
+             href="#day-{{block.value.day}}"
+             role="tab"
+             aria-selected="false"
+             tabindex="-1"
+             >Day {{block.value.day}}</a
+            >
+           </li>
+          </ul>
+         </nav>
+         <h2>Itinerary</h2>
+         <div class="fade show active" id="day-{{block.value.day}}">
+          <h3>Day {{block.value.day}}</h3>
+          <p>{{block.value.description}}</p>
+               <h4>Highlights</h4>
+               <ul>
+                  <li>{{block.value.highlight}}</li>
+               </ul>
+            </div>
+          </div>
+         {% endfor %}
+
+
+        <!-- Amenities -->
+         {% if self.amenity %}
+        <div class="tab-pane fade hidden" id="amenities" role="tabpanel" aria-labelledby="amenities-tab">
+         <h2>Amenities</h2>
+
+         {% if amenity_labels %}
+          <ul>
+              {% for label in amenity_labels %}
+                  <li>{{ label }}</li>
+              {% endfor %}
+          </ul>
+      {% else %}
+          <p>No amenities.</p>
+      {% endif %}
+      {% endif %}
+
+        </div>
+        <!-- Optional Activities -->
+        <div class="tab-pane fade hidden" id="notes" role="tabpanel" aria-labelledby="notes-tab">
+         <h2>Additional Notes</h2>
+         <p>{{self.additional_notes}}</p>
+        </div>
+
+        <!-- Flight Details -->
+
+        <!-- Pricing & Details -->
+        <div class="tab-pane fade hidden" id="pricing" role="tabpanel" aria-labelledby="pricing-tab">
+         <h2>Pricing &amp; Details</h2>
+         <table class="pricing-table" aria-describedby="pricing-details">
+          <thead>
+           <tr>
+            <th scope="col">Category</th>
+            <th scope="col">Details</th>
+            <th scope="col">Notes</th>
+           </tr>
+          </thead>
+          <tbody>
+           <tr>
+            <th scope="row">Duration</th>
+            <td>9 days, 8 nights</td>
+            <td></td>
+           </tr>
+
+           <tr>
+            <th scope="row">Status</th>
+            <td>Special Offer</td>
+            <td></td>
+           </tr>
+
+           <tr>
+            <th scope="row">Price per person</th>
+            <td>
+             <span class="price">
+              2500 USD
+              <span class="currency-symbol"></span>
+             </span>
+            </td>
+            <td></td>
+           </tr>
+
+           <tr>
+            <th scope="row">Single</th>
+            <td>1 USD <span class="currency-symbol"></span></td>
+            <td></td>
+           </tr>
+           <tr>
+            <th scope="row">Triple</th>
+            <td>1 USD <span class="currency-symbol"></span></td>
+            <td></td>
+           </tr>
+           <tr>
+            <th scope="row">Child</th>
+            <td>30 USD <span class="currency-symbol"></span></td>
+            <td></td>
+           </tr>
+
+           <tr>
+            <th scope="row">Currency</th>
+            <td>USD</td>
+            <td></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+        <!-- Cancellation Policy -->
+       </div>
+      </div>
+     </div>
+    </div>
+   </div>
+  </div>
+ </body>
+ <script src="{% static 'js/tour_detail.js' %}"></script>
+
+    {% endblock %}

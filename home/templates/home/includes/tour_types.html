@@ -1,0 +1,23 @@
+{% load static i18n wagtailcore_tags wagtailroutablepage_tags tour_filters %}
+
+    
+    <!-- Tour Types Section -->
+    <div class="mb-8">
+        <h2 class="text-2xl font-semibold mb-4">{% trans "Explore Tours by Type" %}</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="p-4 border rounded-lg">
+                <h3 class="text-xl font-medium">{% trans "Full Tours" %}</h3>
+                <p>{% trans "Includes hotel accommodations and air tickets for a complete travel experience." %}</p>
+            </div>
+            <div class="p-4 border rounded-lg bg-gray-100">
+                <a href="tours/land-tours">
+                <h3 class="text-xl font-medium">{% trans "Land Tours" %}</h3>
+                <p>{% trans "Includes hotel accommodations but no air tickets, ideal for local or regional travel." %}</p>
+            </a>
+            </div>
+            <div class="p-4 border rounded-lg">
+                <h3 class="text-xl font-medium">{% trans "Day Tours" %}</h3>
+                <p>{% trans "Covers a single day of activities, with no hotel or air tickets included." %}</p>
+            </div>
+        </div>
+    </div>

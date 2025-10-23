@@ -1,0 +1,37 @@
+
+{% load static i18n %}
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>{% trans "ID" %}</th>
+            <th>{% trans "Customer" %}</th>
+            <th>{% trans "Tour" %}</th>
+            <th>{% trans "Travel Date" %}</th>
+            <th>{% trans "Status" %}</th>
+            <th>{% trans "Action" %}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for booking in bookings %}
+            <tr>
+                <td>{{ booking.pk }}</td>
+                <td>{{ booking.customer_name }}</td>
+                <td>{{ booking.tour }}</td>
+                <td>{{ booking.travel_date }}</td>
+                <td>{{ booking.status }}</td>
+                <td><a href="{% url 'booking_detail' booking_id=booking.pk %}" class="btn btn-sm btn-primary">{% trans "Edit" %}</a></td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="6">{% trans "No bookings found" %}.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+<div class="pagination">
+    {% if bookings.has_previous %}
+        <a hx-get="{% url 'manage_bookings' %}?page={{ bookings.previous_page_number }}" hx-target="#booking-table">{% trans "Previous" %}</a>
+    {% endif %}
+    {% if bookings.has_next %}
+        <a hx-get="{% url 'manage_bookings' %}?page={{ bookings.next_page_number }}" hx-target="#booking-table">{% trans "Next" %}</a>
+    {% endif %}
+</div>

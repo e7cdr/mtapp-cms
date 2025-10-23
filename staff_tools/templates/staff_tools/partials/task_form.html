@@ -1,0 +1,6 @@
+{% load static i18n %}
+<form method="post" hx-post="{% url 'manage_tasks' %}" hx-target="#task-form" hx-swap="outerHTML">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">{% trans "Add Task" %}</button>
+</form>

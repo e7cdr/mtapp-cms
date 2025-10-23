@@ -1,0 +1,202 @@
+{% load static i18n custom_filters booking_tags %}
+<div id="booking-form-container" data-duration="{{ tour_duration|default:4 }}">
+    <script id="booking-data" type="application/json" hx-preserve>
+        {{ booking_data_json|safe }}
+    </script>
+    <form id="bookingForm" method="post" class="booking-form space-y-6"
+          hx-post="{% url 'bookings:book_tour' tour_type_val tour.id %}"
+          hx-target="#booking-form-container" hx-swap="outerHTML" x-data="bookingFormData"
+          hx-on::response-error="document.getElementById('htmx-error-message').classList.remove('hidden');" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="tour_type" value="{{ tour_type_val }}" id="id_tour_type">
+        <input type="hidden" name="tour_id" value="{{ tour.id }}" id="id_tour_id">
+        <input type="hidden" name="child_ages" id="id_child_ages" value="{{ child_ages|to_json|safe }}">
+        <input type="hidden" name="selected_configuration" id="id_selected_configuration" value="{{ form.selected_configuration.value|default:'0' }}">
+        <input type="hidden" name="form_submission" id="id_form_submission" value="booking">
+
+        <div id="htmx-error-message" class="hidden text-red-500 text-sm">
+            {% trans "An error occurred. Please try again or contact support." %}
+        </div>
+
+        <div class="booking-form-grid grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label for="id_customer_name" class="block font-lora text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">{% trans "Name" %}</label>
+                <input type="text" name="customer_name" id="id_customer_name" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 dark:bg-gray-700 dark:border-gray-600 placeholder-gray-400" placeholder="{% trans 'Enter your name' %}" value="{{ form.customer_name.value|default:'' }}">
+                {% if form.customer_name.errors %}
+                    <div class="text-red-500 text-sm">{{ form.customer_name.errors }}</div>
+                {% endif %}
+            </div>
+            <div>
+                <label for="id_customer_email" class="block font-lora text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">{% trans "Email" %}</label>
+                <input type="email" name="customer_email" id="id_customer_email" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 dark:bg-gray-700 dark:border-gray-600 placeholder-gray-400" placeholder="{% trans 'Enter your email' %}" value="{{ form.customer_email.value|default:'' }}">
+                {% if form.customer_email.errors %}
+                    <div class="text-red-500 text-sm">{{ form.customer_email.errors }}</div>
+                {% endif %}
+            </div>
+            <div>
+                <label for="id_customer_phone" class="block font-lora text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">{% trans "Phone" %}</label>
+                <input type="text" name="customer_phone" id="id_customer_phone" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 dark:bg-gray-700 dark:border-gray-600 placeholder-gray-400" placeholder="{% trans 'Enter your phone' %}" value="{{ form.customer_phone.value|default:'' }}">
+                {% if form.customer_phone.errors %}
+                    <div class="text-red-500 text-sm">{{ form.customer_phone.errors }}</div>
+                {% endif %}
+            </div>
+            <div>
+                <label for="id_nationality" class="block font-lora text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">{% trans "Nationality" %}</label>
+                <input type="text" name="nationality" id="id_nationality" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 dark:bg-gray-700 dark:border-gray-600 placeholder-gray-400" placeholder="{% trans 'Enter your nationality' %}" value="{{ form.nationality.value|default:'' }}">
+                {% if form.nationality.errors %}
+                    <div class="text-red-500 text-sm">{{ form.nationality.errors }}</div>
+                {% endif %}
+            </div>
+            <div>
+                <label for="id_travel_date" class="block font-lora text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Travel Start Date</label>
+                <input type="text" name="travel_date" id="id_travel_date" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 dark:bg-gray-700 dark:border-gray-600 flatpickr placeholder-gray-400" placeholder="Select a date to see pricing" value="{{ form.travel_date.value|default:'2025-05-11' }}" required>
+                {% if form.travel_date.errors %}
+                    <div class="text-red-500 text-sm">{{ form.travel_date.errors }}</div>
+                {% endif %}
+            </div>
+            <div>
+                <label for="id_end_date" class="block font-lora text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">{% trans "Travel End Date" %}</label>
+                <input type="text" name="end_date" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 dark:bg-gray-700 dark:border-gray-600 block visible" id="id_end_date" readonly value="{{ form.end_date.value|default:'' }}">
+            </div>
+        </div>
+        <div>
+            <label for="id_number_of_adults" class="block font-lora text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">{% trans "Number of Adults" %}</label>
+            <input type="number" name="number_of_adults" id="id_number_of_adults" min="1" required oninput="this.value = Math.max(1, parseInt(this.value) || 1)" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 dark:bg-gray-700 dark:border-gray-600" value="{{ form.number_of_adults.value|default:'1' }}">
+            {% if form.number_of_adults.errors %}
+                <div class="text-red-500 text-sm">{{ form.number_of_adults.errors }}</div>
+            {% endif %}
+        </div>
+        <div>
+            <label for="id_number_of_children" class="block font-lora text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                {% blocktrans with min_age=child_age_min max_age=child_age_max|default:12 %}
+                    Number of Children ({{ min_age }} – {{ max_age }})
+                {% endblocktrans %}
+            </label>
+            <input type="number" name="number_of_children" id="id_number_of_children" min="0" required oninput="this.value = Math.max(0, parseInt(this.value) || 0)" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 dark:bg-gray-700 dark:border-gray-600" value="{{ form.number_of_children.value|default:'0' }}">
+            {% if form.number_of_children.errors %}
+                <div class="text-red-500 text-sm">{{ form.number_of_children.errors }}</div>
+            {% endif %}
+        </div>
+        <div class="col-span-1 md:col-span-2">
+            <div id="child-ages-container"
+                 hx-get="{% url 'bookings:child_ages' %}?number_of_children={{ form.number_of_children.value|default:0|urlencode }}&child_ages={{ child_ages|to_json|urlencode }}&tour_type={{ tour_type_val|urlencode }}&tour_id={{ tour.id|urlencode }}"
+                 hx-trigger="childAgesUpdate from:body"
+                 hx-target="#child-age-fields"
+                 hx-swap="innerHTML"
+                 hx-on="htmx:beforeRequest: if (this.id === 'child-ages-container' && !event.detail.elt.dataset.allowRequest) { console.log('Blocking unexpected child-ages-container request in booking_form', event); event.preventDefault(); }"
+                 class="{% if form.number_of_children.value|default:0 > 0 %}d-block{% else %}d-none{% endif %}"
+                 data-last-hx-get="{% url 'bookings:child_ages' %}?number_of_children={{ form.number_of_children.value|default:0|urlencode }}&child_ages={{ child_ages|to_json|urlencode }}&tour_type={{ tour_type_val|urlencode }}&tour_id={{ tour.id|urlencode }}">
+                <details id="child-ages-details" class="mb-2 border border-gray-200 dark:border-gray-700 rounded-md" open>
+                    <summary class="font-lora text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-800 px-3 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700">
+                        {% trans "Child Ages" %} <span class="text-xs text-red-600 dark:text-gray-400">({% trans "Click to edit" %})</span>
+                    </summary>
+                    <div class="p-3">
+                        <p class="text-xs text-gray-700 dark:text-gray-400 mb-2">{% trans "Maximum Children per Room" %}: {{ max_children_per_room }}</p>
+                        <div id="child-age-fields" hx-disinherit="*">
+                            {% if form.number_of_children.value|default:0 > 0 %}
+                                {% for i in form.number_of_children.value|times %}
+                                    <div class="mb-2">
+                                        <label for="child_age_{{ i }}" class="block font-lora text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                                            {% trans "Child" %} {{ forloop.counter }} {% trans "Age" %}
+                                        </label>
+                                        <select name="child_age_{{ i }}" id="child_age_{{ i }}" class="child-age-input w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 dark:bg-gray-700 dark:border-gray-600">
+                                            {% for age in select_age_range %}
+                                                <option value="{{ age }}" {% if child_ages|index:i == age %}selected{% endif %}>{{ age }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </details>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label for="id_customer_address" class="block font-lora text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">{% trans "Address" %}</label>
+            <textarea name="customer_address" id="id_customer_address" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 dark:bg-gray-700 dark:border-gray-600 placeholder-gray-400" placeholder="{% trans 'Enter your address' %}">{{ form.customer_address.value|default:'' }}</textarea>
+            {% if form.customer_address.errors %}
+                <div class="text-red-500 text-sm">{{ form.customer_address.errors }}</div>
+            {% endif %}
+        </div>
+        <div class="mb-4">
+            <label for="id_notes" class="block font-lora text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">{% trans "Notes" %}</label>
+            <textarea name="notes" id="id_notes" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 dark:bg-gray-700 dark:border-gray-600 placeholder-gray-400" placeholder="{% trans 'Any additional notes' %}">{{ form.notes.value|default:'' }}</textarea>
+            {% if form.notes.errors %}
+                <div class="text-red-500 text-sm">{{ form.notes.errors }}</div>
+            {% endif %}
+        </div>
+        <!-- Currency Form -->
+        <form id="currencyForm" class="currency-toggle mb-4" hx-post="{% url 'bookings:render_pricing' tour_type_val tour.id %}" hx-target="#pricing-options" hx-swap="innerHTML">
+            <input type="hidden" name="currency" id="currencyInput" value="{{ form.currency.value|default:'USD' }}">
+            <div class="relative">
+                <div id="currencyDropdown" class="hidden absolute bottom-12 left-0 bg-primary/10 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-2 z-50 w-32">
+                    {% for rate in exchange_rates %}
+                        <button type="button" class="currency-option block w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded {% if rate.currency_code == form.currency.value|default:'USD' %}font-semibold{% endif %}" data-currency="{{ rate.currency_code }}">
+                            {{ rate.currency_code }}
+                        </button>
+                    {% endfor %}
+                </div>
+            </div>
+        </form>
+        <form>
+            <div id="pricing-options" class="mb-4">
+                {% include 'bookings/partials/pricing_options.html' with configurations=configurations configurations_json=configurations_json tour=tour child_age_min=child_age_min max_children_per_room=max_children_per_room currency=form.currency.value|default:'USD' number_of_adults=form.number_of_adults.value|default:1 number_of_infants=0 child_ages=child_ages number_of_children=form.number_of_children.value|default:0 %}
+            </div>
+            <div class="flex justify-end gap-2">
+                <button type="button" id="recalculateButton" class="bg-primary text-white text-shadow py-2 px-4 rounded-md font-lora hover:bg-yellow-300 hover:scale-105 transition-transform text-sm"
+                        hx-post="{% url 'bookings:render_pricing' tour_type_val tour.id %}"
+                        hx-target="#pricing-options" hx-swap="innerHTML"
+                        hx-include="[name='tour_type'],[name='tour_id'],[name='number_of_adults'],[name='number_of_children'],[name='child_ages'],[name='travel_date'],[name='currency'],[name='selected_configuration']">
+                    {% trans "Recalculate Pricing" %}
+                </button>
+                <button type="submit" id="submit-proposal" class="bg-green-600 text-white text-shadow py-2 px-4 rounded-md font-lora hover:bg-green-500 hover:scale-105 transition-transform text-sm">{% trans "Submit Proposal" %}</button>
+            </div>
+        </form>
+    </form>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Flatpickr for travel_date
+    flatpickr('#id_travel_date', {
+        dateFormat: 'Y-m-d',
+        minDate: 'today',
+        defaultDate: '{{ form.travel_date.value|default:"2025-05-11" }}',
+        onChange: function(selectedDates, dateStr, instance) {
+            console.log('Selected travel date:', dateStr);
+        }
+    });
+
+    // Initialize selected configuration button
+    const selectedConfigInput = document.getElementById('id_selected_configuration');
+    const initialConfigIndex = selectedConfigInput ? selectedConfigInput.value : '0';
+    console.log('Initial selected configuration:', initialConfigIndex);
+    document.querySelectorAll('.select-config-btn').forEach(button => {
+        if (button.dataset.configIndex === initialConfigIndex) {
+            button.classList.add('btn-success');
+        } else {
+            button.classList.remove('btn-success');
+        }
+    });
+
+    // Handle configuration button clicks
+    document.querySelectorAll('.select-config-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            selectedConfigInput.value = button.dataset.configIndex;
+            console.log('Selected configuration updated:', selectedConfigInput.value);
+            document.querySelectorAll('.select-config-btn').forEach(btn => btn.classList.remove('btn-success'));
+            button.classList.add('btn-success');
+        });
+    });
+
+    // Update child ages on number_of_children change
+    const numberOfChildrenInput = document.getElementById('id_number_of_children');
+    if (numberOfChildrenInput) {
+        numberOfChildrenInput.addEventListener('change', () => {
+            const numberOfChildren = parseInt(numberOfChildrenInput.value) || 0;
+            console.log('Number of children changed:', numberOfChildren);
+            htmx.trigger('#child-ages-container', 'childAgesUpdate');
+        });
+    }
+});
+</script>

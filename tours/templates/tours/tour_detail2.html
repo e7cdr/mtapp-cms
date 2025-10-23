@@ -1,0 +1,643 @@
+{% extends 'base.html' %}
+{% load static i18n tour_filters custom_filters %}
+<script src="{% static 'js/script.js' %}"></script>
+
+{% block title %}{{ tour.title }} - Milano Travel{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/flatpickr.min.css' %}">
+{% comment %} <style>
+    /* Fallback for grid if Tailwind fails */
+    .booking-form-grid {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+    }
+    @media (min-width: 768px) {
+        .booking-form-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 1rem !important;
+        }
+    }
+    /* Enhance tab card and modal */
+    .tab-card, .modal-content {
+        transition: all 0.3s ease;
+    }
+    .tab-card .nav-link {
+        transition: all 0.2s ease;
+    }
+    /* Carousel slide styling */
+    .carousel-item .content-overlay {
+        background: rgba(0, 0, 0, 0.5);
+        padding: 1rem;
+        border-radius: 0.5rem;
+    }
+    /* Enhanced tab padding */
+    .tab-content {
+        padding: 2rem !important;
+    }
+    .tab-content p, .tab-content ul, .tab-content h3, .tab-content h43, .tab-content h4 {
+        margin-bottom: 1rem !important;
+    }
+    /* Pricing Table Styling */
+    .pricing-table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #f3f3f3;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.7);
+    }
+    .pricing-table th,
+    .pricing-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid #e5e7eb;
+        font-family: 'Lora', serif;
+    }
+    .pricing-table th {
+        background-color: #f3f4f6;
+        color: #374151;
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+    .pricing-table td {
+        color: #374151;
+        font-weight: 500;
+    }
+    .pricing-table tr:hover {
+        background-color: #c6a20048;
+        color: #1a1a1a;
+    }
+    .pricing-table .price {
+        color: #FFD700;
+        font-weight: 700;
+        font-size: 1.25rem;
+    }
+    .pricing-table .price-before {
+        color: #6b7280;
+        text-decoration: line-through;
+        font-size: 1rem;
+        margin-right: 0.5rem;
+    }
+    .pricing-table .currency-symbol {
+        font-size: 0.9rem;
+        color: #FFD700;
+    }
+    /* Dark Theme */
+    body.dark .pricing-table {
+        background-color: #2d3748;
+        box-shadow: 0 2px 5px 5px rgba(0, 0, 0, 0.3);
+    }
+    body.dark .pricing-table th {
+        background-color: #1f2937;
+        color: #e0e0e0;
+    }
+    body.dark .pricing-table td {
+        color: #e0e0e0;
+        border-bottom: 1px solid #4b5563;
+    }
+    body.dark .pricing-table tr:hover {
+        background-color: #c6a20048;
+        color: #1a1a1a;
+    }
+    body.dark .pricing-table .price-before {
+        color: #9ca3af;
+    }
+    /* Responsive Table */
+    @media (max-width: 640px) {
+        .pricing-table {
+            display: block;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+    }
+</style> {% endcomment %}
+{% endblock %}
+
+{% block content %}
+<div class="tour-detail bg-gray-100 dark:bg-gray-900">
+    <div class="relative h-screen">
+        <!-- Carousel Gallery -->
+        <div id="tourCarousel" class="carousel slide h-full" data-bs-ride="carousel">
+            <div class="carousel-inner h-full">
+                {% if tour.image and tour.image.image %}
+                    <div class="carousel-item active h-full">
+                        <img src="{{ tour.image.image.url }}" class="w-full h-full object-cover" alt="{{ tour.title }}" loading="lazy">
+                    </div>
+                {% else %}
+                    <div class="carousel-item active h-full">
+                        {% if default_tours %}
+                            <img src="{{ default_tours.image.url }}" class="w-full h-full object-cover" alt="{% trans 'Default Tour Image' %}" loading="lazy">
+                        {% else %}
+                            <img src="{% static 'images/default_tour.jpg' %}" class="w-full h-full object-cover" alt="{% trans 'Default Tour Image' %}" loading="lazy">
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="carousel-overlay">
+                <div class="text-center">
+                    <h1 class="text-white font-lora text-6xl md:text-6xl pb-4 text-shadow">{{ tour.title }}</h1>
+                    <p class="text-white font-lora text-2xl md:text-3xl text-shadow mb-6">
+                        {% if tour_type_val == 'full' or tour_type_val == 'land' %}
+                            {{ tour.duration_days }} {% trans "days" %}, {{ tour.nights }} {% trans "nights" %}
+                        {% else %}
+                            {{ tour.duration_hours }} {% trans "hours" %}
+                            ({{ tour.date|date:"SHORT_DATE_FORMAT" }})
+                        {% endif %}
+                    </p>
+                    <div class="justify-center space-x-4">
+                        <button type="button" class="bg-primary/40 sticker-card text-gray-900 px-6 py-3 rounded-md font-lora hover:bg-primary transition-colors" data-bs-toggle="modal" data-bs-target="#videoModal">
+                            {% trans "Watch Tour Video" %}
+                        </button>
+                        <button type="button" class="bg-primary/40 sticker-card text-gray-900 px-6 py-3 rounded-md font-lora hover:bg-primary transition-colors" data-bs-toggle="modal" data-bs-target="#pdfModal">
+                            {% trans "View Itinerary" %}
+                        </button>
+                        <br>
+                        <br>
+                        {% if not tour.is_sold_out %}
+                            <button type="button" class="bg-red-600/40 sticker-card text-gray-900 px-6 py-3 rounded-md font-lora hover:bg-primary transition-colors" data-bs-toggle="modal" data-bs-target="#bookingModal">
+                                {% trans "Book Now" %}
+                            </button>
+                        {% endif %}
+                    </div>
+                    <div class="absolute bottom-8 left-5 flex space-x-4">
+                        <span class="bg-primary/40 text-xs sticker-card text-gray-900 px-2 py-1 rounded font-bold uppercase text-shadow">
+                            {% if tour_type_val == 'full' %}{% trans "Full Tour" %}
+                            {% elif tour_type_val == 'land' %}{% trans "Land Tour" %}
+                            {% else %}{% trans "Day Tour" %}{% endif %}
+                        </span>
+                        {% if tour.is_on_discount %}
+                            <span class="bg-red-600/70 text-white mx-2 px-2 py-1 rounded text-sm font-bold uppercase text-shadow">{% trans "On Discount" %}</span>
+                        {% elif tour.is_special_offer %}
+                            <span class="bg-red-600/70 text-white mx-2 px-2 py-1 rounded text-sm font-bold uppercase text-shadow">{% trans "Special Offer" %}</span>
+                        {% elif tour.is_sold_out %}
+                            <span class="bg-red-600/70 text-white mx-2 px-2 py-1 rounded text-sm font-bold uppercase text-shadow">{% trans "Sold Out" %}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#tourCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="sr-only">{% trans "Previous" %}</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#tourCarousel" data-bs-slide="next">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="sr-only">{% trans "Next" %}</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="container mx-auto pt-4">
+        <!-- Tabs Section -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+            <div class="md:col-span-12 pb-4">
+                <div class="tab-card dark:bg-gray-800 shadow-lg rounded-lg max-w-4xl mx-auto border-t-4 border-yellow-400">
+                    <nav class="section-nav dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-4 rounded-t-lg">
+                        <ul class="nav nav-pills flex flex-wrap space-x-2" id="tourTabs" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active font-lora text-gray-700 dark:text-gray-200 px-4 py-2 rounded-md bg-yellow-400 hover:bg-primary hover:text-gray-900 active:bg-yellow-500 active:text-gray-900" id="description-tab" data-bs-toggle="tab" href="#description" role="tab">{% trans "Description" %}</a>
+                            </li>
+                            {% if tour.get_itinerary_days %}
+                                <li class="nav-item">
+                                    <a class="nav-link font-lora text-gray-700 dark:text-gray-200 px-4 py-2 rounded-md bg-yellow-400 hover:bg-primary hover:text-gray-900 active:bg-yellow-500 active:text-gray-900" id="itinerary-tab" data-bs-toggle="tab" href="#itinerary" role="tab">{% trans "Itinerary" %}</a>
+                                </li>
+                            {% endif %}
+                            {% if tour.amenities.all %}
+                                <li class="nav-item">
+                                    <a class="nav-link font-lora text-gray-700 dark:text-gray-200 px-4 py-2 rounded-md bg-yellow-400 hover:bg-primary hover:text-gray-900 active:bg-yellow-500 active:text-gray-900" id="amenities-tab" data-bs-toggle="tab" href="#amenities" role="tab">{% trans "Amenities" %}</a>
+                                </li>
+                            {% endif %}
+                            {% if tour.optional_activities %}
+                                <li class="nav-item">
+                                    <a class="nav-link font-lora text-gray-700 dark:text-gray-200 px-4 py-2 rounded-md bg-yellow-400 hover:bg-primary hover:text-gray-900 active:bg-yellow-500 active:text-gray-900" id="optional-tab" data-bs-toggle="tab" href="#optional" role="tab">{% trans "Optional Activities" %}</a>
+                                </li>
+                            {% endif %}
+                            {% if tour.additional_notes %}
+                                <li class="nav-item">
+                                    <a class="nav-link font-lora text-gray-700 dark:text-gray-200 px-4 py-2 rounded-md bg-yellow-400 hover:bg-primary hover:text-gray-900 active:bg-yellow-500 active:text-gray-900" id="notes-tab" data-bs-toggle="tab" href="#notes" role="tab">{% trans "Additional Notes" %}</a>
+                                </li>
+                            {% endif %}
+                            {% if tour_type_val == 'full' and tour.flight_details %}
+                                <li class="nav-item">
+                                    <a class="nav-link font-lora text-gray-700 dark:text-gray-200 px-4 py-2 rounded-md bg-yellow-400 hover:bg-primary hover:text-gray-900 active:bg-yellow-500 active:text-gray-900" id="flight-tab" data-bs-toggle="tab" href="#flight" role="tab">{% trans "Flight Details" %}</a>
+                                </li>
+                            {% endif %}
+                            <li class="nav-item">
+                                <a class="nav-link font-lora text-gray-700 dark:text-gray-200 px-4 py-2 rounded-md bg-yellow-400 hover:bg-primary hover:text-gray-900 active:bg-yellow-500 active:text-gray-900" id="pricing-tab" data-bs-toggle="tab" href="#pricing" role="tab">{% trans "Pricing & Details" %}</a>
+                            </li>
+                            {% if tour.cancellation_policy %}
+                                <li class="nav-item">
+                                    <a class="nav-link font-lora text-gray-700 dark:text-gray-200 px-4 py-2 rounded-md bg-yellow-400 hover:bg-primary hover:text-gray-900 active:bg-yellow-500 active:text-gray-900" id="cancellation-tab" data-bs-toggle="tab" href="#cancellation" role="tab">{% trans "Cancellation Policy" %}</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    <hr>
+                    <div class="tab-content p-6 rounded-b-lg bg-gray-50 dark:bg-gray-800">
+                        <!-- Description -->
+                        <div class="tab-pane fade show active" id="description" role="tabpanel">
+                            <h2 class="font-lora text-2xl text-gray-700 dark:text-gray-200 mb-4">{% trans "Description" %}</h2>
+                            <p class="text-gray-700 dark:text-gray-200 mb-2">{{ tour.description }}</p>
+                            <p class="text-gray-700 dark:text-gray-200 mb-2"><strong>{% trans "Destination" %}:</strong> {{ tour.get_destination_display }}</p>
+                            {% if tour_type_val == 'full' or tour_type_val == 'land' %}
+                                <p class="text-gray-700 dark:text-gray-200 mb-2"><strong>{% trans "Hotel" %}:</strong> {{ tour.hotel }}</p>
+                                <p class="text-gray-700 dark:text-gray-200 mb-2"><strong>{% trans "Dates" %}:</strong> {{ tour.start_date|date:"SHORT_DATE_FORMAT" }} - {{ tour.end_date|date:"SHORT_DATE_FORMAT" }}</p>
+                            {% else %}
+                                <p class="text-gray-700 dark:text-gray-200 mb-2"><strong>{% trans "Date" %}:</strong> {{ tour.date|date:"SHORT_DATE_FORMAT" }}</p>
+                            {% endif %}
+                            {% if tour.courtesies %}
+                                <p class="text-gray-700 dark:text-gray-200 mb-2"><strong>{% trans "Inclusions" %}:</strong> {{ tour.courtesies }}</p>
+                            {% endif %}
+                            {% if tour.no_inclusions %}
+                                <p class="text-gray-700 dark:text-gray-200 mb-2"><strong>{% trans "Not Included" %}:</strong> {{ tour.no_inclusions }}</p>
+                            {% endif %}
+                        </div>
+                        <!-- Itinerary -->
+                        {% if tour.get_itinerary_days %}
+                            <div class="tab-pane fade" id="itinerary" role="tabpanel">
+                                <h2 class="font-lora text-2xl text-gray-700 dark:text-gray-200 mb-4">{% trans "Itinerary" %}</h2>
+                                {% for item in tour.get_itinerary_days %}
+                                    <div class="mb-4">
+                                        <h3 class="font-lora text-xl text-gray-700 dark:text-gray-200">{% trans "Day" %} {{ item.day }}</h3>
+                                        <p class="text-gray-700 dark:text-gray-200">{{ item.description }}</p>
+                                        {% if item.highlights %}
+                                            <h4 class="font-lora text-lg text-gray-700 dark:text-gray-200 mt-2">{% trans "Highlights" %}</h4>
+                                            <ul class="list-disc pl-5 text-gray-700 dark:text-gray-200">
+                                                {% for highlight in item.highlights|split:"," %}
+                                                    <li>{{ highlight|strip }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <!-- Amenities -->
+                        {% if tour.amenities.all %}
+                            <div class="tab-pane fade" id="amenities" role="tabpanel">
+                                <h2 class="font-lora text-2xl text-gray-700 dark:text-gray-200 mb-4">{% trans "Amenities" %}</h2>
+                                <ul class="list-disc pl-5 text-gray-700 dark:text-gray-200">
+                                    {% for amenity in tour.amenities.all %}
+                                        <li class="mb-2">{{ amenity.name }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+                        <!-- Optional Activities -->
+                        {% if tour.optional_activities %}
+                            <div class="tab-pane fade" id="optional" role="tabpanel">
+                                <h2 class="font-lora text-2xl text-gray-700 dark:text-gray-200 mb-4">{% trans "Optional Activities" %}</h2>
+                                <p class="text-gray-700 dark:text-gray-200 mb-2">{{ tour.optional_activities }}</p>
+                            </div>
+                        {% endif %}
+                        <!-- Additional Notes -->
+                        {% if tour.additional_notes %}
+                            <div class="tab-pane fade" id="notes" role="tabpanel">
+                                <h2 class="font-lora text-2xl text-gray-700 dark:text-gray-200 mb-4">{% trans "Additional Notes" %}</h2>
+                                <p class="text-gray-700 dark:text-gray-200 mb-2">{{ tour.additional_notes }}</p>
+                            </div>
+                        {% endif %}
+                        <!-- Flight Details -->
+                        {% if tour_type_val == 'full' and tour.flight_details %}
+                            <div class="tab-pane fade" id="flight" role="tabpanel">
+                                <h2 class="font-lora text-2xl text-gray-700 dark:text-gray-200 mb-4">{% trans "Flight Details" %}</h2>
+                                <p class="text-gray-700 dark:text-gray-200 mb-2">{{ tour.flight_details }}</p>
+                            </div>
+                        {% endif %}
+                        <!-- Pricing & Details -->
+                        <div class="tab-pane fade" id="pricing" role="tabpanel">
+                            <h2 class="font-lora text-2xl text-gray-700 dark:text-gray-200 mb-4">{% trans "Pricing & Details" %}</h2>
+                            <table class="pricing-table" aria-describedby="pricing-details">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">{% trans "Category" %}</th>
+                                        <th scope="col">{% trans "Details" %}</th>
+                                        <th scope="col">{% trans "Notes" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <th scope="row">{% trans "Duration" %}</th>
+                                        <td>
+                                            {% if tour_type_val == 'full' or tour_type_val == 'land' %}
+                                                {{ tour.duration_days }} {% trans "days" %}, {{ tour.nights }} {% trans "nights" %}
+                                            {% else %}
+                                                {{ tour.duration_hours }} {% trans "hours" %}
+                                            {% endif %}
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                    {% if tour.is_special_offer or tour.is_on_discount or tour.is_sold_out %}
+                                        <tr>
+                                            <th scope="row">{% trans "Status" %}</th>
+                                            <td>
+                                                {% if tour.is_special_offer %}
+                                                    {% trans "Special Offer" %}
+                                                {% elif tour.is_on_discount %}
+                                                    {% trans "On Discount" %}
+                                                {% elif tour.is_sold_out %}
+                                                    {% trans "Sold Out" %}
+                                                {% endif %}
+                                            </td>
+                                            <td></td>
+                                        </tr>
+                                    {% endif %}
+                                    <tr>
+                                        <th scope="row">{% trans "Price per person" %}</th>
+                                        <td>
+                                            {% if tour.is_on_discount %}
+                                                <span class="price-before">
+                                                    {% if tour_type_val == 'full' %}
+                                                        {{ tour.price_dbl_regular|floatformat:0 }} {{ currency|default:"USD" }}
+                                                    {% elif tour_type_val == 'land' %}
+                                                        {{ tour.price_dbl|floatformat:0 }} {{ currency|default:"USD" }}
+                                                    {% else %}
+                                                        {{ tour.price_adult|floatformat:0 }} {{ currency|default:"USD" }}
+                                                    {% endif %}
+                                                </span>
+                                                <span class="price">
+                                                    {% if tour_type_val == 'full' %}
+                                                        {{ tour.price_dbl_regular|multiply:0.9|floatformat:0 }} {{ currency|default:"USD" }}
+                                                    {% elif tour_type_val == 'land' %}
+                                                        {{ tour.price_dbl|multiply:0.9|floatformat:0 }} {{ currency|default:"USD" }}
+                                                    {% else %}
+                                                        {{ tour.price_adult|multiply:0.9|floatformat:0 }} {{ currency|default:"USD" }}
+                                                    {% endif %}
+                                                    <span class="currency-symbol"></span>
+                                                </span>
+                                            {% else %}
+                                                <span class="price">
+                                                    {% if tour_type_val == 'full' %}
+                                                        {{ tour.price_dbl_regular|floatformat:0 }} {{ currency|default:"USD" }}
+                                                    {% elif tour_type_val == 'land' %}
+                                                        {{ tour.price_dbl|floatformat:0 }} {{ currency|default:"USD" }}
+                                                    {% else %}
+                                                        {{ tour.price_adult|floatformat:0 }} {{ currency|default:"USD" }}
+                                                    {% endif %}
+                                                    <span class="currency-symbol"></span>
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if tour.is_on_discount %}
+                                                {% trans "10% discount applied" %}
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% if tour_type_val == 'full' %}
+                                        <tr>
+                                            <th scope="row">{% trans "Single" %}</th>
+                                            <td>{{ tour.price_sgl_regular|floatformat:0 }} {{ currency|default:"USD" }} <span class="currency-symbol"></span></td>
+                                            <td></td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row">{% trans "Triple" %}</th>
+                                            <td>{{ tour.price_tpl_regular|floatformat:0 }} {{ currency|default:"USD" }} <span class="currency-symbol"></span></td>
+                                            <td></td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row">{% trans "Child" %}</th>
+                                            <td>{{ tour.price_chd_regular|floatformat:0 }} {{ currency|default:"USD" }} <span class="currency-symbol"></span></td>
+                                            <td></td>
+                                        </tr>
+                                    {% elif tour_type_val == 'land' %}
+                                        <tr>
+                                            <th scope="row">{% trans "Single" %}</th>
+                                            <td>{{ tour.price_sgl|floatformat:0 }} {{ currency|default:"USD" }} <span class="currency-symbol"></span></td>
+                                            <td></td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row">{% trans "Triple" %}</th>
+                                            <td>{{ tour.price_tpl|floatformat:0 }} {{ currency|default:"USD" }} <span class="currency-symbol"></span></td>
+                                            <td></td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row">{% trans "Child" %}</th>
+                                            <td>{{ tour.price_chd|floatformat:0 }} {{ currency|default:"USD" }} <span class="currency-symbol"></span></td>
+                                            <td></td>
+                                        </tr>
+                                    {% else %}
+                                        <tr>
+                                            <th scope="row">{% trans "Child" %}</th>
+                                            <td>{{ tour.price_child|floatformat:0 }} {{ currency|default:"USD" }} <span class="currency-symbol"></span></td>
+                                            <td></td>
+                                        </tr>
+                                    {% endif %}
+                                    <tr>
+                                        <th scope="row">{% trans "Currency" %}</th>
+                                        <td>{{ currency|default:"USD" }}</td>
+                                        <td></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Cancellation Policy -->
+                        {% if tour.cancellation_policy %}
+                            <div class="tab-pane fade" id="cancellation" role="tabpanel">
+                                <h2 class="font-lora text-2xl text-gray-700 dark:text-gray-200 mb-4">{% trans "Cancellation Policy" %}</h2>
+                                <p class="text-gray-700 dark:text-gray-200">{{ tour.cancellation_policy.name }}: {% blocktrans with percent=tour.cancellation_policy.refund_percentage days=tour.cancellation_policy.days_before %}{{ percent }}% refund if cancelled {{ days }} days before.{% endblocktrans %}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Booking Modal -->
+        {% if not tour.is_sold_out %}
+        <div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content bg-white dark:bg-gray-800 rounded-lg">
+                    <div class="modal-header border-b-0">
+                        <h5 class="modal-title font-lora text-xl text-gray-700 dark:text-gray-200" id="bookingModalLabel">{% trans "Book This Tour" %}</h5>
+                        <button type="button" class="text-gray-700 dark:text-gray-200 hover:text-yellow-400" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    <hr>
+                    <div class="modal-body">
+                        <div id="pricing-container">
+                            <div id="booking-form-container" data-duration="{{ tour_duration }}">
+                                {% comment %} {% include 'bookings/partials/booking_form.html' with tour_type=tour_type_val tour=tour booking_data_json=booking_data_json configurations=configurations configurations_json=configurations_json form_errors=form_errors child_age_min=child_age_min max_children_per_room=max_children_per_room exchange_rates=exchange_rates currency=currency %} {% endcomment %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-t-0">
+                        <button type="button" class="bg-red-600/70 text-white px-4 py-2 rounded-md hover:bg-yellow-300 transition-colors" data-bs-dismiss="modal">{% trans "Close" %}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Video Modal -->
+        <div class="modal fade" id="videoModal" tabindex="-1" aria-labelledby="videoModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content bg-white dark:bg-gray-800 rounded-lg">
+                    <div class="modal-header border-b-0">
+                        <h5 class="modal-title font-lora text-xl text-gray-700 dark:text-gray-200" id="videoModalLabel">{% trans "Tour Video" %}</h5>
+                        <button type="button" class="text-gray-700 dark:text-gray-200 hover:text-yellow-400" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="relative" style="padding-bottom: 56.25%;">
+                            <iframe class="absolute top-0 left-0 w-full h-full" src="https://www.youtube.com/embed/2-R0lPzyf9c?si=wsq7haX6ICY5UOKY" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-t-0">
+                        <button type="button" class="bg-yellow-400 text-gray-900 px-4 py-2 rounded-md hover:bg-yellow-300 transition-colors" data-bs-dismiss="modal">{% trans "Close" %}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Itinerary Modal -->
+        {% if tour %}
+            <div class="modal fade" id="pdfModal" tabindex="-1" aria-labelledby="pdfModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content bg-white dark:bg-gray-800 rounded-lg">
+                        <div class="modal-header border-b-0">
+                            <h5 class="modal-title font-lora text-xl text-gray-700 dark:text-gray-200" id="pdfModalLabel">{% trans "Itinerary Preview" %}</h5>
+                            <button type="button" class="text-gray-700 dark:text-gray-200 hover:text-yellow-400" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="pdfCarousel" class="carousel slide relative h-[500px] rounded-lg overflow-hidden" data-bs-ride="carousel">
+                                <div class="carousel-inner">
+                                    <!-- Cover Page -->
+                                    <div class="carousel-item active">
+                                        <div class="relative h-[500px] bg-gray-100">
+                                            {% if tour.cover_image %}
+                                                <img src="{{ tour.cover_image.image.url }}" class="w-full h-full object-cover opacity-50" alt="{% trans 'Cover Page' %}" loading="lazy">
+                                            {% endif %}
+                                            <div class="absolute inset-0 flex flex-col items-center justify-center text-center p-4 content-overlay">
+                                                <h2 class="text-4xl font-lora text-white">{{ tour.title }}</h2>
+                                                <p class="text-lg text-white">{{ tour.cover_page_content }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- General Info Page -->
+                                    <div class="carousel-item">
+                                        <div class="relative h-[500px] bg-gray-100 p-4 overflow-auto">
+                                            <div class="content-overlay text-white">
+                                                <h3 class="text-2xl font-lora mb-4">{% trans "General Information" %}</h3>
+                                                <p>{{ tour.general_info }}</p>
+                                                {% if tour.courtesies %}
+                                                    <h4 class="text-lg font-lora mt-2">{% trans "Inclusions" %}</h4>
+                                                    <ul class="list-disc pl-5">
+                                                        {% for courtesy in tour.courtesies|split:"," %}
+                                                            <li>{{ courtesy|strip }}</li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                {% endif %}
+                                                {% if tour.no_inclusions %}
+                                                    <h4 class="text-lg font-lora mt-2">{% trans "Not Included" %}</h4>
+                                                    <ul class="list-disc pl-5">
+                                                        {% for item in tour.no_inclusions|split:"," %}
+                                                            <li>{{ item|strip }}</li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                {% endif %}
+                                                {% if tour.cancellation_policy %}
+                                                    <p class="mt-2"><strong>{% trans "Cancellation Policy" %}:</strong> {{ tour.cancellation_policy.name }} ({{ tour.cancellation_policy.refund_percentage }}% refund if cancelled {{ tour.cancellation_policy.days_before }} days before)</p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Daily Itinerary Pages -->
+                                    {% for item in tour.get_itinerary_days %}
+                                        <div class="carousel-item">
+                                            <div class="relative h-[500px]">
+                                                {% if item.watermark_image %}
+                                                    <img src="{{ item.watermark_image.image.url }}" class="w-full h-full object-cover opacity-50" alt="{% trans 'Day' %} {{ item.day }}" loading="lazy">
+                                                {% endif %}
+                                                <div class="absolute inset-0 p-4 overflow-auto content-overlay text-white">
+                                                    <h3 class="text-2xl font-lora">{% trans "Day" %} {{ item.day }}</h3>
+                                                    <p>{{ item.description }}</p>
+                                                    {% if item.highlights %}
+                                                        <h4 class="text-lg font-lora mt-2">{% trans "Highlights" %}</h4>
+                                                        <ul class="list-disc pl-5">
+                                                            {% for highlight in item.highlights|split:"," %}
+                                                                <li>{{ highlight|strip }}</li>
+                                                            {% endfor %}
+                                                        </ul>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                    <!-- Final Page -->
+                                    <div class="carousel-item">
+                                        <div class="relative h-[500px] bg-gray-100 flex flex-col items-center justify-center text-center p-4">
+                                            {% if tour.logo_image %}
+                                                <img src="{{ tour.logo_image.image.url }}" class="w-32 h-auto mb-4" alt="{% trans 'Company Logo' %}" loading="lazy">
+                                            {% endif %}
+                                            <div class="content-overlay text-white">
+                                                <p class="text-lg">{{ tour.final_message }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button class="carousel-control-prev" type="button" data-bs-target="#pdfCarousel" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Previous</span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#pdfCarousel" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Next</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-t-0">
+                            <a href="{% url 'tours:download_itinerary_pdf' tour_type_val tour.id %}" class="bg-yellow-400 text-gray-900 px-4 py-2 rounded-md hover:bg-yellow-300 transition-colors">{% trans "Download PDF" %}</a>
+                            <button type="button" class="bg-yellow-400 text-gray-900 px-4 py-2 rounded-md hover:bg-yellow-300 transition-colors" data-bs-dismiss="modal">{% trans "Close" %}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+                <script id="booking-data" type="application/json">
+            {
+                "tourType": "{{ tour_type_val }}",
+                "tourId": "{{ tour.id }}",
+                "tourName": "{{ tour.title|escapejs }}",
+                "childAgeMin": "{{ tour.child_age_min }}",
+                "childAgeMax": "{{ tour.child_age_max }}",
+                "languagePrefix": "{{ request.LANGUAGE_CODE }}",
+                "currency": "{{ request.currency }}",
+                "cancellationPolicy": "{{ tour.cancellation_policy|default:''|escapejs }}"
+            } 
+        </script>
+
+        <!-- Load External Scripts -->
+        <script src="{% static 'js/flatpickr.min.js' %}"></script>
+
+        <!-- Toggle Booking Form Script -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const toggleButton = document.getElementById('toggleBookingForm');
+                const formContainer = document.getElementById('booking-form-container');
+                if (toggleButton && formContainer) {
+                    toggleButton.addEventListener('click', function () {
+                        formContainer.classList.toggle('hidden');
+                        toggleButton.textContent = formContainer.classList.contains('hidden') ? '{% trans "Book Now" %}' : '{% trans "Hide Form" %}';
+                    });
+                }
+            });
+        </script>
+
+        <!-- HTMX Error Handling -->
+        <script>
+            document.body.addEventListener('htmx:afterRequest', function(event) {
+                if (event.detail.xhr.status >= 500) {
+                    console.error('HTMX error:', event.detail.xhr.status, event.detail.xhr.responseText);
+                    const errorMessage = document.getElementById('htmx-error-message')?.textContent || '{% trans "An error occurred. Please try again or contact support." %}';
+                    event.detail.elt.innerHTML = `<div class="alert alert-danger">${errorMessage}</div>`;
+                }
+            });
+        </script>
+
+    {% endblock %}

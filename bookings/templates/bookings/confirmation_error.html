@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Confirmation Error" %} - Milano Travel{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-4">{% trans "Confirmation Error" %}</h2>
+        <div class="alert alert-danger text-center">
+            {% trans "The confirmation link is invalid or has expired." %}
+        </div>
+        <p class="text-center">
+            {% trans "Please check the link or manage proposals at:" %}
+            <a href="{{ site_url }}/bookings/manage-proposals/">{% trans "Manage Proposals" %}</a>
+        </p>
+        <p class="text-center">
+            {% trans "Contact support at" %} <a href="mailto:support@milano-travel.com">support@milano-travel.com</a> {% trans "if you need assistance." %}
+        </p>
+    </div>
+</section>
+{% endblock %}

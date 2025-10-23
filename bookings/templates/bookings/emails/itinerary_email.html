@@ -1,0 +1,50 @@
+{% load i18n booking_tags %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% trans "Your Tour Itinerary" %}</title>
+</head>
+<body>
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1>{% trans "Your Tour Itinerary" %}</h1>
+        <p>{% trans "Dear" %} {{ booking.customer_name }},</p>
+        <p>{% trans "Thank you for your booking! Your itinerary is attached as a PDF (itinerary.pdf)." %}</p>
+        <ul>
+            <li>{% trans "Booking ID" %}: {{ booking.book_id }}</li>
+            <li>{% trans "Tour" %}: {{ booking.tour|default:"Unknown Tour" }}</li>
+            <li>{% trans "Travel Date" %}: {{ booking.travel_date|date:"F j, Y" }}</li>
+            <li>{% trans "End Date" %}: {{ end_date|date:"F j, Y" }}</li>
+            <li>{% trans "Adults" %}: {{ booking.number_of_adults }}</li>
+            <li>{% trans "Children" %}: {{ booking.number_of_children }}</li>
+            {% if configuration_details %}
+            <li>{% trans "Room Configuration" %}:
+                <ul>
+                    {% if configuration_details.singles %}
+                    <li>{% trans "Singles" %}: {{ configuration_details.singles }} ({{ configuration_details.singles }} adult{{ configuration_details.singles|pluralize }})</li>
+                    {% endif %}
+                    {% if configuration_details.doubles %}
+                    <li>{% trans "Doubles" %}: {{ configuration_details.doubles }} ({{ configuration_details.doubles|multiply:2 }} adults)</li>
+                    {% endif %}
+                    {% if configuration_details.triples %}
+                    <li>{% trans "Triples" %}: {{ configuration_details.triples }} ({{ configuration_details.triples|multiply:3 }} adults)</li>
+                    {% endif %}
+                    {% if configuration_details.children %}
+                    <li>{% trans "Children" %}: {{ configuration_details.children }}</li>
+                    {% endif %}
+                    {% if configuration_details.infants %}
+                    <li>{% trans "Infants" %}: {{ configuration_details.infants }}</li>
+                    {% endif %}
+                    <li style="color: green">{% trans "Total" %}: {{ booking.currency }} {{ configuration_details.total|default:booking.total_price }}</li>
+                </ul>
+            </li>
+            {% endif %}
+        </ul>
+        <p>
+            {% trans "View your booking details at:" %}
+            <a href="{{ site_url }}/bookings/customer-portal/?email={{ booking.customer_email|urlencode }}">{% trans "Customer Portal" %}</a>
+        </p>
+        <p>{% trans "Thank you for choosing Milano Travel," %}</p>
+        <p>{% trans "Milano Travel Team" %}</p>
+    </div>
+</body>
+</html>

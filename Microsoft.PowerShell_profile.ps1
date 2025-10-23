@@ -1,0 +1,5 @@
+Set-Alias ,,dj "python $pwd\path\to\manage.py runserver"
+Set-Alias ,,venv "$pwd\.virtualenvs\mtapp-e_N8Dy04\Scripts\activate"
+Set-Alias ,,cs "python $pwd\path\to\manage.py collectstatic"
+Set-Alias ,,mm "python $pwd\path\to\manage.py makemigrations"
+Set-Alias ,,mg "python $pwd\path\to\manage.py migrate"

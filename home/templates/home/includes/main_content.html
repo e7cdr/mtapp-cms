@@ -1,0 +1,107 @@
+{% load i18n static dict_tags wagtailcore_tags %} 
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/main_content.css' %}" />
+{% endblock %}
+
+<style>
+    .notice {
+    display: flex;
+    color: white;
+    position: fixed;
+    top: 34rem;
+    left: 1rem;
+    padding-inline: 1rem ;
+    text-align: center;
+    font-variant: small-caps;
+    background-color: red;
+    border-radius: 10px;
+    animation: notice-out 6s ease forwards;
+    z-index: 1;
+}
+
+
+@keyframes notice-out {
+    0%{
+        opacity: 100;
+        scale: 1;
+        filter: blur(0);
+    }
+
+    10% {
+        opacity: 0;
+        filter: blur(0);
+
+    }
+
+    20% {
+        opacity: 100;
+        filter: blur(0);
+    }
+
+    30% {
+        opacity: 0;
+        filter: blur(0);
+    }
+
+    40% {
+        opacity: 100;
+        filter: blur(0);
+    }
+
+    50% {
+        opacity: 0;
+        filter: blur(0);
+    }
+
+    60% {
+        opacity: 100;
+        filter: blur(0);
+    }
+
+    70% {
+        opacity: 0;
+        filter: blur(0);
+    }
+
+    80% {
+        opacity: 100;
+        filter: blur(0);
+        scale: 1;
+
+    }
+    
+    90% {
+        opacity: 100;
+
+    }
+    100% {
+        scale: 1.5;
+        opacity: 0;
+        filter: blur(40px);
+    }
+
+
+}
+
+@media (max-width:500px) {
+    .notice {
+        top: 39rem;
+        font-size: small;
+
+    }
+}
+
+@media (max-width:360px) {
+    .notice {
+        top: 42rem;
+        font-size: x-small;
+    }
+}
+</style>
+ <span class='notice'>Language <br>
+    V</span>
+{% block content %} {% for block in page.content %} {% include_block block %} {% endfor %} {% endblock %}
+
+
+
