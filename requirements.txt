@@ -1,6 +1,3 @@
-Django==5.2.6
-wagtail==7.1.1
-## The following requirements were added by pip freeze:
 anyascii==0.3.3
 asgiref==3.9.1
 beautifulsoup4==4.13.5
@@ -9,6 +6,7 @@ charset-normalizer==3.4.3
 click==8.3.0
 colorama==0.4.6
 defusedxml==0.7.1
+Django==5.2.6
 django-filter==25.1
 django-modelcluster==6.4
 django-parler==2.3
@@ -24,8 +22,9 @@ filetype==1.2.0
 idna==3.10
 joblib==1.5.2
 laces==0.1.2
+mysqlclient==2.2.7
 nltk==3.9.1
-numpy==2.3.3
+numpy==2.2.6
 openpyxl==3.1.5
 pandas==2.3.2
 pillow==11.3.0
@@ -33,12 +32,13 @@ pillow_heif==1.1.0
 polib==1.2.0
 PyMuPDF==1.26.4
 python-dateutil==2.9.0.post0
+python-decouple==3.8
 pytz==2025.2
 regex==2025.9.18
 reportlab==4.4.4
 requests==2.32.5
 rosetta==0.3
-scipy==1.16.2
+scipy==1.15.3
 six==1.17.0
 soupsieve==2.8
 sqlparse==0.5.3
@@ -47,6 +47,7 @@ tqdm==4.67.1
 typing_extensions==4.15.0
 tzdata==2025.2
 urllib3==2.5.0
+wagtail==7.1.1
 wagtail-localize==1.12.2
 Wand==0.6.13
 Willow==1.11.0

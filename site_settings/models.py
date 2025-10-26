@@ -2,11 +2,6 @@ from django.db import models
 from wagtail.contrib.settings.models import BaseGenericSetting, register_setting
 from wagtail.admin.panels import FieldPanel
 
-# Create your models here.
-
-
-
-
 @register_setting # Decorator to register the setting with Wagtail
 class FooterLinks(BaseGenericSetting): # Inherit from BaseGenericSetting to create a generic setting
     """Model to store footer social media links."""
@@ -19,7 +14,7 @@ class FooterLinks(BaseGenericSetting): # Inherit from BaseGenericSetting to crea
 
     panels = [
         FieldPanel('x_tw'),
-        FieldPanel('facebook'), 
+        FieldPanel('facebook'),
         FieldPanel('instagram'),
         FieldPanel('tik_tok'),
         FieldPanel('youtube'),
@@ -32,10 +27,11 @@ class FooterLinks(BaseGenericSetting): # Inherit from BaseGenericSetting to crea
 
     def __str__(self):
         return "Footer Links Settings"
-    
+
 @register_setting
 class BrandSettings(BaseGenericSetting):
     """Model to store brand settings like logo and company name."""
+    company_name = models.CharField(max_length=300, blank=False, null=False, default='Milano Travel')
     logo = models.ForeignKey(
         'wagtailimages.Image',
         null=True,
@@ -46,6 +42,7 @@ class BrandSettings(BaseGenericSetting):
     )
 
     panels = [
+        FieldPanel('company_name'),
         FieldPanel('logo'),
     ]
 

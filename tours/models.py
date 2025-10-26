@@ -20,18 +20,14 @@ from wagtail.fields import StreamField
 from wagtail.images.models import Image
 from wagtail.documents.models import Document
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel
-from wagtail.blocks import CharBlock, StructBlock, RichTextBlock, ListBlock, ChoiceBlock, IntegerBlock, StreamBlock
-from wagtail.contrib.routable_page.models import RoutablePageMixin, path, re_path
+from wagtail.blocks import CharBlock, StructBlock, RichTextBlock, ListBlock, ChoiceBlock, IntegerBlock
+from wagtail.contrib.routable_page.models import RoutablePageMixin, path
 
 from streams import blocks
-
-
-
 
 logger = logging.getLogger(__name__)
 
 #TODO: Full and Daytour models.
-
 
 # Destination Choices
 DESTINATION_CHOICES = [
@@ -68,8 +64,8 @@ class AbstractTourPage(Page):
 
     amenity = StreamField([
         ('include', ListBlock(ChoiceBlock(choices=blocks.GLOBAL_ICON_CHOICES)))
-    ], blank=True, use_json_field=True, help_text=_("Add as many amenities."))    
-    
+    ], blank=True, use_json_field=True, help_text=_("Add as many amenities."))
+
     no_inclusions = models.TextField(default="Ticket aéreo", help_text=_("Not included"), blank=True)
     additional_notes = models.TextField(
         default="Sujeto a disponibilidad. Consultar suplementos para festivos.", blank=True
@@ -81,9 +77,9 @@ class AbstractTourPage(Page):
     is_special_offer = models.BooleanField(default=False)
     is_sold_out = models.BooleanField(default=False)
     is_all_inclusive = models.BooleanField(default=False)
-    
+
     price_subtext = models.CharField(default="Estimated", help_text="Estimated. IVA not included", max_length=30)
- 
+
 
     # Codes
     ref_code = models.CharField(max_length=20, blank=True, null=True)
@@ -193,7 +189,7 @@ class AbstractTourPage(Page):
             FieldPanel('is_all_inclusive'),
             FieldPanel('is_sold_out'),
         ], heading="Tour Current State"),
-        
+
         MultiFieldPanel([
             FieldPanel('image'),
             FieldPanel('cover_image'),
@@ -213,7 +209,7 @@ class AbstractTourPage(Page):
             FieldPanel('demand_factor'),
             FieldPanel('rep_comm'),
         ], heading="Price & Comm"),
-        
+
         FieldPanel('ref_code'),
         FieldPanel('code_id', read_only=True),
         FieldPanel('supplier_email'),
@@ -232,7 +228,7 @@ class AbstractTourPage(Page):
 
     ]
 
-    
+
     template = "tours/tour_detail.html"
 
 
@@ -243,23 +239,23 @@ class AbstractTourPage(Page):
 
     def get_itinerary_days(self):
         return self.itinerary
-    
+
     def get_context(self, request):
         context = super().get_context(request)
-        
+
         # Extract selected values from amenity StreamField
         selected_values = []
         if self.amenity:
             for block in self.amenity:
                 if block.block_type == 'include':  # Your ListBlock type
                     selected_values.extend(block.value)  # Flatten the list of choices
-        
+
         # Build dict for fast lookup (once, efficient for 20+ choices)
         choice_dict = {choice_value: label for choice_value, label in blocks.GLOBAL_ICON_CHOICES}
-        
+
         # Get labels for selected values
         amenity_labels = [choice_dict.get(value, value) for value in selected_values]  # Fallback to value if no match
-        
+
         context['amenity_labels'] = amenity_labels  # Or ', '.join(amenity_labels) for a single string
         return context
 
@@ -279,7 +275,7 @@ class AbstractTourPage(Page):
             ).exclude(id=self.id)
             if existing.exists():
                 raise ValidationError('Tour with this Code ID already exists in this locale.')
-        
+
         if self.ref_code:  # Assuming ref_code also shared; adjust if unique globally
             existing = self.__class__.objects.filter(
                 locale=self.locale,
@@ -287,7 +283,7 @@ class AbstractTourPage(Page):
             ).exclude(id=self.id)
             if existing.exists():
                 raise ValidationError('Tour with this Ref Code already exists in this locale.')
-        
+
         # Date validation
         if self.start_date and self.end_date:
             if self.start_date >= self.end_date:
@@ -323,7 +319,7 @@ class AbstractTourPage(Page):
     # Translation/Alias logic (move your existing methods here, adapting for abstract)
     def copy_for_translation(self, locale, copy_parents=True, alias=False):
         logger.debug(f"Copying page {self.id} for translation to locale {locale.language_code}, code_id={self.code_id}, ref_code={self.ref_code}, alias={alias}")
-        
+
         # Temporarily set values to pass validation (but we'll override post-copy)
         original_code_id = self.code_id
         original_ref_code = self.ref_code
@@ -345,10 +341,10 @@ class AbstractTourPage(Page):
         return translated_page
 
     def create_alias(self, *, recursive=False, parent=None, update_slug=None, **kwargs):
-        
+
         # Create alias with shared codes
         alias = super().create_alias(recursive=recursive, parent=parent, update_slug=update_slug, **kwargs)
-        
+
         # Sync identifiers (alias gets same locale? Wait—aliases in wagtail_localize use target locale)
         alias.code_id = self.code_id
         alias.ref_code = self.ref_code
@@ -360,7 +356,7 @@ class AbstractTourPage(Page):
 
     def get_code_prefix(self):
         """Override in children for 'LT', 'FT', 'DT'."""
-        raise NotImplementedError("Subclasses must define get_code_prefix()")  
+        raise NotImplementedError("Subclasses must define get_code_prefix()")
 
     def __str__(self):
         return self.title or self.name or 'Untitled Tour'
@@ -381,7 +377,7 @@ class ToursIndexPage(RoutablePageMixin, Page):
     #     on_delete=models.SET_NULL,
     #     related_name="+"
     # )
-# 
+#
     body_content = StreamField([
             ("text_band", blocks.TextBand_Block()),
             ("flex_images", blocks.Flex_Images_Block()),
@@ -405,17 +401,17 @@ class ToursIndexPage(RoutablePageMixin, Page):
 
     def get_context(self, request: HttpRequest):
             context = super().get_context(request)
-            
+
             # Base queryset: Live, public child pages in current locale
             tours_qs = LandTourPage.objects.live().public().filter(locale=self.locale).specific()
-            
+
             # Apply filters from request.GET (unchanged)
             tour_type = request.GET.get('tour_type')
             status = request.GET.get('status')
             min_price = request.GET.get('min_price')
             max_price = request.GET.get('max_price')
             destination = request.GET.get('destination')
-            
+
             if status:
                 status_map = {
                     'on_discount': Q(is_on_discount=True),
@@ -424,7 +420,7 @@ class ToursIndexPage(RoutablePageMixin, Page):
                 }
                 if status in status_map:
                     tours_qs = tours_qs.filter(status_map[status])
-            
+
             if min_price:
                 min_price_dec = Decimal(min_price)
                 tours_qs = tours_qs.filter(price_dbl__gte=min_price_dec)
@@ -433,7 +429,7 @@ class ToursIndexPage(RoutablePageMixin, Page):
                 tours_qs = tours_qs.filter(price_dbl__lte=max_price_dec)
             if destination:
                 tours_qs = tours_qs.filter(destination=destination)
-            
+
             # NEW: Manual pagination with Paginator
             paginator = Paginator(tours_qs, 12)  # 12 tours per page; adjust as needed
             page_num = request.GET.get('page')
@@ -445,7 +441,7 @@ class ToursIndexPage(RoutablePageMixin, Page):
             except EmptyPage:
                 # If page is out of range, deliver last page
                 tours_pag = paginator.page(paginator.num_pages)
-            
+
             def get_tours():
                 land_tour = LandTourPage.objects.live().public().filter(locale=self.locale).specific()
                 return land_tour
@@ -455,7 +451,7 @@ class ToursIndexPage(RoutablePageMixin, Page):
             context['tours_pag'] = tours_pag
             context['active_filters'] = request.GET  # For template to show selected options
             return context
-        
+
     @path('all/', name='all')
     def all_tours(self, request):
         # Reuse get_context logic, but ensure full list
@@ -496,12 +492,12 @@ class LandTourPage(AbstractTourPage): # Land Tour Details
     # search_fields =  Page.search_fields + [
     #     index.SearchField('nights'),
     #     index.SearchField('description'),
-    
+
     # ]
 
     # For Api Foreignkey
     """
-     
+
     class FieldSerializer(Field):
         def to_representation(self, value):
             return {
@@ -509,7 +505,7 @@ class LandTourPage(AbstractTourPage): # Land Tour Details
                 'key_name2': value.field_name2,
             }
 
-   
+
     class ImageSerializer(Field):
         def to_representation(self, value):
         return {
@@ -531,9 +527,9 @@ class LandTourPage(AbstractTourPage): # Land Tour Details
 from wagtail.templatetags.wagtailcore_tags import richtext
     class RichTextFieldSerializer(Field):
         def to_representation(self, value):
-        return richtext(value)    
-    
-Block representation 
+        return richtext(value)
+
+Block representation
     class ImageBlock()
     /The following method needs to be inside the Block/
     def get_api_representation(self, value, context=None):
@@ -544,19 +540,19 @@ Block representation
         }
 
     class CustomPAgeChooserBlock(blocks.PageChooserBlock):
-    
+
     def get_api_representation(self, value, context=None):
         return {
             'id': value.id,
             'title': value.title,
             'subtitle': value.specific.subtitle,
             'url': value.url,
-            }    
+            }
 
     /specific is used for the specific page field. For example
     If subtitle is coming from tours page model, value.subtitle wont work.
     All pages live in Page.++. Page.tours.subtitle would be value.specific.subtitle
-    
+
     For orderables, it is a bit different calling APIFields
     """
     #  APIField('field_name', serializer=FieldSerializer()),
@@ -582,10 +578,10 @@ Block representation
 
     def get_code_prefix(self):
         return "LT"
-    
-      
 
-  
+
+
+
 def convert_pdf_to_images(pdf_path, output_dir, tour_id):
     """Convert PDF pages to PNG images for carousel display."""
     try:

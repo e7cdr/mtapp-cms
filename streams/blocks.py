@@ -1,14 +1,13 @@
-""" 
+"""
 Note: This blocks.py is different from the wagtails.core blocks.py. In this file, we define custom blocks for our project so
-that we can use them in our StreamField models (basically, blocks that can be reused in different pages). This way, we can keep 
-our code DRY (Don't Repeat Yourself). i.e., if we want to change the way a certain block looks, we only have to change it here, 
+that we can use them in our StreamField models (basically, blocks that can be reused in different pages). This way, we can keep
+our code DRY (Don't Repeat Yourself). i.e., if we want to change the way a certain block looks, we only have to change it here,
 and it will be reflected everywhere it's used. Also, if we have, for example, a title, text, and image block that we use in multiple
 pages, we can define it once here and use it in all those pages without redefining it each time. The only thing we need to do is import
 this file in the models.py file where we want to use these blocks. And we're good to go!!
 """
 
 from wagtail import blocks
-from django.db import models
 from wagtail.images.blocks import ImageChooserBlock
 # from wagtail.blocks import CharBlock, StructBlock, ListBlock, PageChooserBlock
 
@@ -76,7 +75,7 @@ def create_icons_list(icon_choices=None):
     Defaults to GLOBAL_ICON_CHOICES if none provided.
     """
     icon_choices = icon_choices or GLOBAL_ICON_CHOICES
-    
+
     class IconsList(blocks.StructBlock):
         icon = blocks.ChoiceBlock(
             choices=icon_choices,  # Injected filtered list
@@ -109,7 +108,7 @@ class CarouselBlock(blocks.StructBlock):
             ('link', blocks.PageChooserBlock(required=False, help_text="Optional link for the image. If provided, the image will be clickable.")),
         ]),
         )
-    
+
     class Meta:
         template = "streams/carousel.html"
         label = "Carousel"
@@ -117,7 +116,7 @@ class CarouselBlock(blocks.StructBlock):
 
 class ExploreBlock(blocks.StructBlock):
     """A Block component to present products or announces with image"""
-    title = blocks.RichTextBlock(required=True, help_text='Add title i.e.: Explore this awesome tour', features=['color'])
+    title = blocks.RichTextBlock(required=True, help_text='Add title i.e.: Explore this awesome tour')
     image = ImageChooserBlock(
         required=True
     )
@@ -146,7 +145,7 @@ class ExploreBlock(blocks.StructBlock):
 
 class Video_Text_Block(blocks.StructBlock):
     """ A Video block with texts below"""
-    title = blocks.RichTextBlock(required=True, help_text='Add title i.e.: Explore this awesome tour', features=['color'])
+    title = blocks.RichTextBlock(required=True, help_text='Add title i.e.: Explore this awesome tour')
     video = blocks.URLBlock(required=True, help_text="Youtube EMBED link. i.e.: https://www.youtube.com/embed/_lw9r4T1PEc?si=43WbnkOeB1LsVgwL. Go to Share and click on <>EMBED")
 
     body = blocks.ListBlock(
@@ -170,16 +169,16 @@ class Cards_Block(blocks.StructBlock):
     title = blocks.CharBlock(required=True, help_text='Add title i.e.: Explore this awesome tour', max_length=35)
     sub_title = blocks.RichTextBlock(required=True, help_text='Add subtitle i.e.: Explore this awesome tour', max_length=45)
     card_description = blocks.RichTextBlock(required=True, help_text='Add description i.e.: Explore this awesome tour', max_length=76)
-    
+
     amenities = blocks.ListBlock(
         Icons_List,  # Your global version: create_icons_list() with full choices
         max_num=5,
         required=False,
         help_text="Add up to 5 amenities.",
-    )    
-    
+    )
+
     price = blocks.FloatBlock(
-        required=True, 
+        required=True,
         help_text="Estimated price",
         decimal_places=2,
     )
@@ -230,7 +229,7 @@ colors = [
 
 class TextBand_Block(blocks.StructBlock):
     '''Three bands with text. #1 and #3 with background color. #2 with cover image'''
-    band_title = blocks.CharBlock(required=True, max_length=36) 
+    band_title = blocks.CharBlock(required=True, max_length=36)
     textbox_1 = blocks.RichTextBlock(required=True, features=["bold", "italic", "link"])
     textbox_2 = blocks.RichTextBlock(required=True, features=["bold", "italic", "link"])
     background_image = ImageChooserBlock(required=False)

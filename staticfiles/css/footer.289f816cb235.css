@@ -1,0 +1,115 @@
+@import url("variables.30d7efa9400d.css");
+
+footer {
+    background: white;
+
+}
+
+@media (prefers-color-scheme: dark) {
+    background-color: var(--color-gray-900);
+}
+
+.footer-container {
+    padding-block: 2rem;
+    padding-inline: 1.5rem;
+    box-shadow: 0px 2px 7px black;
+    border-radius: 1rem;
+    margin-inline: 0.5rem;
+
+}
+
+.footer-container div {
+    text-align: center;
+    align-content: center;
+    display: block;
+
+}
+
+.footer-container div a {
+    color: inherit;
+    text-decoration: inherit;
+    padding: calc(var(--spacing) * 1.5);
+    margin: calc(var(--spacing) * -1.5);
+    display: inline-block;  
+}
+
+.footer-container div a img{
+    width: auto;
+    height: 6rem;
+    transition-property: transform ease;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+    border-style: solid;
+
+}
+
+.footer-container div a img:hover{
+    scale: 1.1;
+
+}
+
+.social-media-wrap {
+
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    margin-inline: calc(var(--spacing) * -4);
+
+}
+
+.social-media-wrap button {
+    background-color: white;
+    width: 2.5rem;
+    color: #38bdf8;
+    box-shadow: 0 3px 3px 1px rgba(0, 0, 0, 0.15);
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    margin-right: 0.5rem;
+    height: 2.5rem;
+    font-weight: 400;
+    align-items: center;
+    border-radius: 9999px;
+    transition: scale ease 0.4s;
+    }
+
+.social-media-wrap button:hover {
+    scale: 1.2;
+
+}
+
+.social-media-wrap button:focus {
+    outline-style: none;
+
+}
+
+.footer hr {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem; 
+    margin-block: calc(var(--spacing) * 6);
+    border-top-width: 2px;
+    border-color: rgba(228, 228, 231, 1);
+}
+
+.footer-copyright {
+    align-items: center;
+    flex-direction: column;
+    display: flex
+
+}
+
+@media (min-width: 640px) {
+    .footer-copyright {
+        flex-direction: row;
+        justify-content: space-between;
+        width: 100%;
+
+    }
+}
+
+.footer-copyright p {
+    color: rgba(113, 113, 122, 1); 
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+}
+
+
+

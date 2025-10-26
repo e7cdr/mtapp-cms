@@ -10,26 +10,34 @@
     <img src="{% static 'default_media/logo.png' %}" alt="Milano Travel Logo" />
    </a>
    <div class="social-media-wrap">
-    <!-- Wagtail settings calling the app site_settings to retrieve the social media links -->
     {% if settings.site_settings.FooterLinks.facebook %}
     <button type="button">
      <a href="{{settings.site_settings.FooterLinks.facebook}}" class="fab fa-facebook-square"></a>
     </button>
-    {% endif %} {% if settings.site_settings.FooterLinks.instagram %}
+    {% endif %}
+    {% if settings.site_settings.FooterLinks.instagram %}
     <button type="button">
-     <a class="fab fa-instagram"></a>
+     <a href="{{settings.site_settings.FooterLinks.instagram}}" class="fab fa-instagram"></a>
     </button>
-    {% endif %} {% if settings.site_settings.FooterLinks.tiktok %}
+    {% endif %}
+    {% if settings.site_settings.FooterLinks.tik_tok %}
     <button type="button">
-     <a class="fab fa-tiktok"></a>
+     <a href="{{settings.site_settings.FooterLinks.tik_tok}}" class="fab fa-tiktok"></a>
     </button>
-    {% endif %} {% if settings.site_settings.FooterLinks.youtube %}
+    {% endif %}
+    {% if settings.site_settings.FooterLinks.youtube %}
     <button type="button">
-     <a class="fab fa-youtube" style="color: red"></a>
+     <a href="{{settings.site_settings.FooterLinks.youtube}}" class="fab fa-youtube" style="color: red"></a>
     </button>
-    {% endif %} {% if settings.site_settings.FooterLinks.whatsapp %}
+    {% endif %}
+    {% if settings.site_settings.FooterLinks.whatsapp%}
     <button type="button">
-     <a class="fab fa-whatsapp" style="color: green"></a>
+     <a href="{{settings.site_settings.FooterLinks.whatsapp}}" class="fab fa-whatsapp" style="color: green"></a>
+    </button>
+    {% endif %}
+    {% if settings.site_settings.FooterLinks.x_tw %}
+    <button type="button">
+     <a href="{{settings.site_settings.FooterLinks.x_tw}}" class="fab fa-x-twitter" style="color: black"></a>
     </button>
     {% endif %}
    </div>

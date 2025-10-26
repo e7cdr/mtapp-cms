@@ -31,34 +31,30 @@
         <link rel="stylesheet" href="https://demos.creative-tim.com/notus-js/assets/vendor/@fortawesome/fontawesome-free/css/all.min.css">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
         <link rel="stylesheet" href="{% static 'css/mtapp.css' %}" type="text/css">
-        {% include "links.html" %}      {% comment %} <link rel="stylesheet" href="{% static 'css/tailwind.output.css' %}" type="text/css"> {% endcomment %}
-        
-        {% comment %} <link rel="stylesheet" href="{% static 'css/style.css' %}"> {% endcomment %}
-        {% comment %} <link rel="javascript" href="{% static 'js/bootstrap.bundle.min' %}"> {% endcomment %}
-
-        {% comment %} <link rel="stylesheet" href="https://demos.creative-tim.com/notus-js/assets/styles/tailwind.css">  {% endcomment %}
-
+        {% include "links.html" %}
         {% block extra_css %}
         {# Override this in templates to add extra stylesheets #}
         {% endblock %}
     </head>
-    
+
     <body class="{% block body_class %}{% endblock %}">
-      
+
           {% wagtailuserbar %}
           {% block navigation %}
           {% include "home/includes/navigation.html" %}
           {% endblock %}
-          
+
           {% block content %}{% endblock %}
-        
-          {% block footer %}
-              {% include "home/includes/footer.html" %}
-          {% endblock %}
-      
+
+
+
         {% block floating_buttons %}
           {% include "home/includes/floating_buttons.html" %}
         {% endblock %}
+
+        {% block footer %}
+              {% include "home/includes/footer.html" %}
+          {% endblock %}
 
         {# Global javascript #}
         <script type="text/javascript" src="{% static 'js/mtapp.js' %}"></script>

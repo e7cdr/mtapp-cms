@@ -19,8 +19,8 @@ class HomePage(Page):
     banner_image = models.ForeignKey(
         "wagtailimages.Image",
         null=True, # True Because HomePage is the first page, it can be created without an image.
-        blank=True, # False because we want to force the user to upload an image.
-        on_delete=models.SET_NULL, # If the image is deleted, set the field to null.
+        blank=True,
+        on_delete=models.SET_NULL,
         related_name="+", # No reverse relation from Image to HomePage.
     )
     banner_cta = models.ForeignKey(
@@ -46,13 +46,12 @@ class HomePage(Page):
             ("explore_block", blocks.ExploreBlock()),
             ("video_text_content", blocks.Video_Text_Block()),
             ("text_band", blocks.TextBand_Block()),
-            
+
         ],
         null=True,
         blank=True,
     )
-    
-    """Content panels for the home page. This defines the fields that will be editable in the Wagtail admin interface."""
+
     content_panels = Page.content_panels + [
         FieldPanel('banner_title'),
         FieldPanel('banner_subtitle'),
@@ -72,4 +71,3 @@ class HomePage(Page):
         context['carousel'] = self.carousel # Access the StreamField directly. First 'For' loop in template will be {% for block in carousel %}
 
         return context
-    
