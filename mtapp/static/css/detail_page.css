@@ -95,12 +95,12 @@ body {
     flex-grow: 4;
     color: white;
 
-    
+
 }
 
-.sticker-1, 
-.sticker-2 , 
-.tour-video, 
+.sticker-1,
+.sticker-2 ,
+.tour-video,
 .tour-itinerary
  {
     text-shadow: 1px 0.5px 1.5px black;
@@ -125,7 +125,7 @@ body {
     color: white;
     text-align: center;
     position: relative;
-    width: 15%;
+    width: 25%;
     transition: all 0.2s ease;
     border-style: none;
     border-radius: 1rem;
@@ -156,7 +156,7 @@ body {
     to {
         --angle: 360deg;
     }
-} 
+}
 
 .sticker-2  {
     background-color: var(--red-transp);
@@ -171,21 +171,21 @@ body {
     margin-left: auto;
     margin-right: auto;
     padding-top: 1rem;
-    
-    
-    
+
+
+
 }
 
 .tab-section {
     grid-template-columns: repeat(1, minmax(0, 1fr));
     display: grid;
-    
-    
+
+
 }
 
 .tab-section div {
     padding-bottom: 1.5rem;
-    
+
 }
 
 .tab-card {
@@ -203,12 +203,12 @@ body {
     border-color: rgb(229 231 235 / 1 , 1));
     border-top-left-radius: 0.5rem;
     border-top-right-radius: 0.5rem;
-    padding: 0.5rem;   
-    
+    padding: 0.5rem;
+
 }
 
 .section-nav ul {
-    justify-content: center; 
+    justify-content: center;
     display: flex;
     flex-wrap: wrap;
     gap: 2rem;
@@ -216,7 +216,7 @@ body {
 
 .nav-item {
     list-style: none;
-    
+
 }
 
 /* Focus: For keyboard nav, match hover but add outline for accessibility */
@@ -278,7 +278,7 @@ body {
 
 .tab-content {
     padding: 2rem;
-    text-align: justify; 
+    text-align: justify;
 
 
 }

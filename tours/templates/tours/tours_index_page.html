@@ -8,21 +8,21 @@
 <link rel="stylesheet" href='{% static "css/layout.css" %}'/>
 
 
-<!--TODO: 
+<!--TODO:
 1: Remove Tailwind to create vanilla CSS
 
 -->
-{% block body_content %} 
-{% for block in page.body_content %} 
-{% include_block block %} 
-{% endfor %} 
+{% block body_content %}
+{% for block in page.body_content %}
+{% include_block block %}
+{% endfor %}
 {% endblock %}
 
 
 <section>
     <div class="layout">
         <div class="area-1">
-            <h1>{% trans "Available Tours" %}</h1>
+
 
     {% if self.intro %}<div class="intro">{{ self.intro|richtext }}</div>{% endif %}
     </div>
@@ -48,14 +48,14 @@
                     <!-- Min Price -->
                     {% comment %} <div>
                         <label for="min_price" class="form-label">{% trans "Min Price" %}</label>
-                        <input type="number" name="min_price" id="min_price" class="form-control" 
+                        <input type="number" name="min_price" id="min_price" class="form-control"
                                value="{{ request.GET.min_price }}" min="0" step="0.01">
                     </div>
 
                     <!-- Max Price -->
                     <div>
                         <label for="max_price" class="form-label">{% trans "Max Price" %}</label>
-                        <input type="number" name="max_price" id="max_price" class="form-control" 
+                        <input type="number" name="max_price" id="max_price" class="form-control"
                                value="{{ request.GET.max_price }}" min="0" step="0.01">
                     </div> {% endcomment %}
 
@@ -93,7 +93,9 @@
         </div>
     </div>
         </div>
-    <div class="area-3"><div class="result-container">
+    <div class="area-3">
+        <h1>{% trans "Available Tours" %}</h1>
+        <div class="result-container">
 <!-- Results -->
     {% if tours_pag %}
     {% block tours %}
