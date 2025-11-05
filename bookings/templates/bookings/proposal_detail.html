@@ -55,11 +55,21 @@
                         <table class="table table-sm">
                             <thead><tr><th>{% trans "Type" %}</th><th>{% trans "Qty x Rate" %}</th><th>{% trans "Subtotal" %}</th></tr></thead>
                             <tbody>
-                                <tr><td>{% trans "Singles" %}</td><td>{{ configuration_details.singles|default:0 }} x USD {{ adjusted_price_sgl|floatformat:2 }}</td><td>USD {{ room_subtotals.singles_subtotal|floatformat:2 }}</td></tr>
-                                <tr><td>{% trans "Doubles" %}</td><td>{{ configuration_details.doubles|default:0 }} x USD {{ adjusted_price_dbl|floatformat:2 }}</td><td>USD {{ room_subtotals.doubles_subtotal|floatformat:2 }}</td></tr>
-                                <tr><td>{% trans "Triples" %}</td><td>{{ configuration_details.triples|default:0 }} x USD {{ adjusted_price_tpl|floatformat:2 }}</td><td>USD {{ room_subtotals.triples_subtotal|floatformat:2 }}</td></tr>
+                                {% if configuration_details.singles > 0 %}
+                                <tr><td>{% trans "Singles" %}</td><td>{{ configuration_details.singles }} x USD {{ adjusted_price_sgl|floatformat:2 }}</td><td>USD {{ room_subtotals.singles_subtotal|floatformat:2 }}</td></tr>
+                                {% endif %}
+                                {% if configuration_details.doubles > 0 %}
+                                <tr><td>{% trans "Doubles" %}</td><td>{{ configuration_details.doubles }} x USD {{ adjusted_price_dbl|floatformat:2 }}</td><td>USD {{ room_subtotals.doubles_subtotal|floatformat:2 }}</td></tr>
+                                {% endif %}
+                                {% if configuration_details.triples > 0 %}
+                                <tr><td>{% trans "Triples" %}</td><td>{{ configuration_details.triples }} x USD {{ adjusted_price_tpl|floatformat:2 }}</td><td>USD {{ room_subtotals.triples_subtotal|floatformat:2 }}</td></tr>
+                                {% endif %}
+                                {% if effective_children > 0 %}
                                 <tr><td>{% trans "Children" %}</td><td>{{ effective_children }} x USD {{ adjusted_price_child|floatformat:2 }}</td><td>USD {{ room_subtotals.children_subtotal|floatformat:2 }}</td></tr>
+                                {% endif %}
+                                {% if effective_infants > 0 %}
                                 <tr><td>{% trans "Infants" %}</td><td>{{ effective_infants }} x USD {{ adjusted_price_infant|floatformat:2 }}</td><td>USD {{ room_subtotals.infants_subtotal|floatformat:2 }}</td></tr>
+                                {% endif %}
                                 <tr class="table-success"><td colspan="2"><strong>{% trans "Total" %}</strong></td><td><strong>USD {{ proposal.estimated_price|floatformat:2 }}</strong></td></tr>
                             </tbody>
                         </table>
@@ -71,8 +81,12 @@
                         <thead><tr><th>{% trans "Type" %}</th><th>{% trans "Qty x Rate" %}</th><th>{% trans "Subtotal" %}</th></tr></thead>
                         <tbody>
                             <tr><td>{% trans "Adults" %}</td><td>{{ proposal.number_of_adults }} x USD {{ adjusted_price_adult|floatformat:2 }}</td><td>USD {{ per_person_details.adult_subtotal|floatformat:2 }}</td></tr>
+                            {% if effective_children > 0 %}
                             <tr><td>{% trans "Children" %}</td><td>{{ effective_children }} x USD {{ adjusted_price_child|floatformat:2 }}</td><td>USD {{ per_person_details.child_subtotal|floatformat:2 }}</td></tr>
+                            {% endif %}
+                            {% if effective_infants > 0 %}
                             <tr><td>{% trans "Infants" %}</td><td>{{ effective_infants }} x USD {{ adjusted_price_infant|floatformat:2 }}</td><td>USD {{ per_person_details.infant_subtotal|floatformat:2 }}</td></tr>
+                            {% endif %}
                             <tr class="table-success"><td colspan="2"><strong>{% trans "Total" %}</strong></td><td><strong>USD {{ proposal.estimated_price|floatformat:2 }}</strong></td></tr>
                         </tbody>
                     </table>

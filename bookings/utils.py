@@ -1,23 +1,24 @@
 from datetime import date, timedelta
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 from venv import logger
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.core.mail import send_mail
 from django.contrib.contenttypes.models import ContentType
+import requests
 
 
-from bookings.models import Booking, Proposal, ProposalConfirmationToken
+from bookings.models import Booking, ExchangeRate, Proposal, ProposalConfirmationToken
 
 from django.template.loader import render_to_string
 from django.contrib import messages
 from django.core.paginator import Paginator
 
 from django.db.models import Sum
-
 from .pdf_gen import generate_itinerary_pdf
 
 def send_supplier_email(proposal: Proposal, token: ProposalConfirmationToken = None, tour=None, end_date=None) -> bool:
@@ -243,6 +244,7 @@ def reject_proposal(request, proposal_id: int) -> HttpResponse:
 # @login_required  # Uncomment for login enforcement
 # @user_passes_test(lambda u: u.is_staff)  # Or staff-only
 def proposal_detail(request, proposal_id: int) -> HttpResponse:
+    
     proposal = get_object_or_404(
         Proposal.objects.select_related('content_type', 'user').prefetch_related('confirmation_tokens'),
         id=proposal_id
@@ -263,11 +265,14 @@ def proposal_detail(request, proposal_id: int) -> HttpResponse:
     effective_children = len(effective_children_ages)
     effective_infants = len(effective_infants_ages)
     
+    # FIXED: Determine tour_type for accurate price_adult in per_person
+    tour_class_name = tour.__class__.__name__.lower()
+    is_full_or_land = any(t in tour_class_name for t in ['fulltourpage', 'landtourpage'])
+    
     # Extract pricing details (mirror compute_pricing logic)
     pricing_type = getattr(tour, 'pricing_type', 'Per_room')
     
     # Base prices (universal)
-    price_adult = Decimal(str(getattr(tour, 'price_adult', '0')))
     price_child = Decimal(str(getattr(tour, 'price_child', getattr(tour, 'price_chd', '0'))))
     price_infant = Decimal(str(getattr(tour, 'price_inf', '0')))
     
@@ -276,13 +281,52 @@ def proposal_detail(request, proposal_id: int) -> HttpResponse:
     price_dbl = Decimal(str(getattr(tour, 'price_dbl', '0')))
     price_tpl = Decimal(str(getattr(tour, 'price_tpl', '0')))
     
-    # Factors (from compute_pricing)
+    # FIXED: Set price_adult based on tour_type for per_person consistency
+    if is_full_or_land:
+        price_adult = price_sgl
+    else:
+        price_adult = Decimal(str(getattr(tour, 'price_adult', '0')))
+    
+    # FIXED: Compute actual factors to match compute_pricing (for accurate subtotals summing to estimated_price)
     seasonal_factor = Decimal(str(getattr(tour, 'seasonal_factor', '1.0')))
-    model_demand_factor = Decimal(str(getattr(tour, 'demand_factor', '0')))
-    full_percent = Decimal('1.0')  # FIXED: For breakdowns, use full (or compute if needed)
-    demand_factor = model_demand_factor * full_percent
-    price_adjustment = Decimal('1') + demand_factor
-    exchange_rate = Decimal('1.0')
+    demand_factor = Decimal('0')
+    
+    # Capacity-based demand (fallback, overridden below)
+    if proposal.travel_date:
+        try:
+            travel_date = date.fromisoformat(str(proposal.travel_date)) if hasattr(proposal.travel_date, 'isoformat') else proposal.travel_date
+            capacity = get_remaining_capacity(proposal.object_id, travel_date, tour.__class__, duration)
+            if 'total_remaining' in capacity:
+                demand_factor = calculate_demand_factor(capacity['total_remaining'], sum(d['total_daily'] for d in capacity['per_day']))
+            else:
+                demand_factor = Decimal('0')
+                logger.warning("No capacity data—default demand_factor=0")
+        except (ValueError, Exception) as e:
+            demand_factor = Decimal('0')
+            logger.warning(f"Error computing capacity demand_factor: {e}—default demand_factor=0")
+    price_adjustment = Decimal('1') + Decimal('0.2') * demand_factor
+    
+    # Override with 30-day demand
+    try:
+        demand_info = get_30_day_used_slots(proposal.object_id, tour.__class__)
+        full_percent = demand_info['full_percent']
+        if isinstance(full_percent, (int, float)):
+            full_percent = Decimal(str(full_percent))
+        model_demand_factor = Decimal(str(getattr(tour, 'demand_factor', '0')))
+        demand_factor = model_demand_factor * full_percent
+        price_adjustment = Decimal('1') + demand_factor
+        logger.debug(f"Computed 30-day demand_factor={demand_factor}, price_adjustment={price_adjustment}")
+    except Exception as e:
+        logger.warning(f"Error computing 30-day demand_factor: {e}—using fallback adjustment {price_adjustment}")
+    
+    # Exchange rate
+    currency = request.session.get('currency', 'USD')
+    exchange_rate = get_exchange_rate(currency)
+    if exchange_rate <= Decimal('0'):
+        logger.warning(f"Invalid exchange rate for {currency}: {exchange_rate}, falling back to USD")
+        currency = 'USD'
+        request.session['currency'] = currency
+        exchange_rate = Decimal('1.0')
     factor = seasonal_factor * price_adjustment * exchange_rate
     
     # Adjusted rates (for "Qty x Rate")
@@ -293,6 +337,9 @@ def proposal_detail(request, proposal_id: int) -> HttpResponse:
     adjusted_price_dbl = price_dbl * factor
     adjusted_price_tpl = price_tpl * factor
     
+    # FIXED: Use selected_config for configuration_details to match qty with subtotals
+    configuration_details = proposal.selected_config if proposal.selected_config else {}
+    
     # Subtotals (qty * adjusted_rate—use effective for children/infants)
     adult_subtotal = proposal.number_of_adults * adjusted_price_adult
     child_subtotal = effective_children * adjusted_price_child
@@ -301,27 +348,32 @@ def proposal_detail(request, proposal_id: int) -> HttpResponse:
         'adult_subtotal': adult_subtotal,
         'child_subtotal': child_subtotal,
         'infant_subtotal': infant_subtotal,
-        'total_breakdown': adult_subtotal + child_subtotal + infant_subtotal,
+        'total_breakdown': (adult_subtotal + child_subtotal + infant_subtotal).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),  # FIXED: Quantize for precision
     }
     
     # Per_room subtotals (if config—apply factor if base)
     room_subtotals = {}
     if pricing_type == 'Per_room' and proposal.selected_config:
-        config = proposal.selected_config
+        selected_config = proposal.selected_config
+        singles_sub = selected_config.get('singles', 0) * adjusted_price_sgl
+        doubles_sub = selected_config.get('doubles', 0) * adjusted_price_dbl
+        triples_sub = selected_config.get('triples', 0) * adjusted_price_tpl
+        children_sub = effective_children * adjusted_price_child
+        infants_sub = effective_infants * adjusted_price_infant
         room_subtotals = {
-            'singles_subtotal': config.get('singles', 0) * adjusted_price_sgl,
-            'doubles_subtotal': config.get('doubles', 0) * adjusted_price_dbl,
-            'triples_subtotal': config.get('triples', 0) * adjusted_price_tpl,
-            'children_subtotal': effective_children * adjusted_price_child,
-            'infants_subtotal': effective_infants * adjusted_price_infant,
-            'total_breakdown': sum([config.get('singles', 0) * adjusted_price_sgl, config.get('doubles', 0) * adjusted_price_dbl, config.get('triples', 0) * adjusted_price_tpl, effective_children * adjusted_price_child, effective_infants * adjusted_price_infant]),
+            'singles_subtotal': singles_sub,
+            'doubles_subtotal': doubles_sub,
+            'triples_subtotal': triples_sub,
+            'children_subtotal': children_sub,
+            'infants_subtotal': infants_sub,
+            'total_breakdown': (singles_sub + doubles_sub + triples_sub + children_sub + infants_sub).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),  # FIXED: Quantize for precision
         }
     
     context = {
         'proposal': proposal,
         'tour': tour,
         'end_date': end_date,
-        'configuration_details': proposal.room_config if proposal.room_config else {},
+        'configuration_details': configuration_details,  # FIXED: Use selected_config for consistent qty/subtotal
         'is_company_tour': getattr(tour, 'is_company_tour', False),
         'site_url': settings.SITE_URL,
         'pricing_type': pricing_type,
@@ -484,3 +536,122 @@ def get_30_day_used_slots(tour_id, tour_model):
         'total_slots': total_slots,
         'full_percent': full_percent
     }
+
+def calculate_demand_factor(remaining, total_capacity):
+    """
+    Demand factor = (total_capacity - remaining) / total_capacity * 1.0
+    e.g., 50/100 remaining = 0.5 full = 0.5 factor (10% uplift).
+    """
+    if total_capacity == 0:
+        return Decimal('0')
+    full_percent = (total_capacity - remaining) / total_capacity
+    return Decimal(str(full_percent))  # 0 to 1.0
+
+def get_remaining_capacity(tour_id, travel_date, tour_model, duration_days=1):
+    """
+    Calculate remaining spots per day for travel_date range.
+    Returns: {'trip_remaining': int (min across range), 'per_day': [{'date': 'YYYY-MM-DD', 'remaining': int}, ...], 'is_full': bool}
+    """
+    if not travel_date:
+        return {'trip_remaining': 0, 'per_day': [], 'is_full': True}
+    
+    today = date.today()
+    if travel_date < today:
+        return {'trip_remaining': 0, 'per_day': [], 'is_full': True}
+    
+    # Fetch tour instance
+    tour = get_object_or_404(tour_model, id=tour_id)
+    
+    # Parse available_days (e.g., '0,1,2,3' → [0,1,2,3]; all if empty)
+    available_days_str = getattr(tour, 'available_days', '')
+    available_days = [int(d.strip()) for d in available_days_str.split(',') if d.strip()] if available_days_str else list(range(7))
+    
+    # ContentType for tour
+    content_type = ContentType.objects.get_for_model(tour_model)
+    
+    # Dates in range
+    dates = [travel_date + timedelta(days=i) for i in range(duration_days)]
+    per_day = []
+    min_remaining = float('inf')
+    is_full_any = False
+    has_available_date = False
+    for d in dates:
+        day_of_week = (d.weekday() + 6) % 7  # 0=Sun, 6=Sat
+        if day_of_week not in available_days:
+            continue
+        
+        has_available_date = True
+        # Daily capacity
+        daily_capacity = tour.max_capacity or 0
+        
+        # Confirmed count for this date
+        adults_sum = Booking.objects.filter(
+            content_type=content_type,
+            object_id=tour_id,
+            travel_date=d,
+            status='CONFIRMED',
+        ).aggregate(Sum('number_of_adults'))['number_of_adults__sum'] or 0
+        children_sum = Booking.objects.filter(
+            content_type=content_type,
+            object_id=tour_id,
+            travel_date=d,
+            status='CONFIRMED',
+        ).aggregate(Sum('number_of_children'))['number_of_children__sum'] or 0
+        confirmed = adults_sum + children_sum
+        
+        remaining = max(0, daily_capacity - confirmed)
+        min_remaining = min(min_remaining, remaining)
+        if remaining == 0:
+            is_full_any = True
+        
+        per_day.append({
+            'date': d.strftime('%Y-%m-%d'),
+            'remaining': remaining,
+            'total_daily': daily_capacity
+        })
+    
+    # FIXED: Handle no available dates
+    trip_remaining = 0 if not has_available_date else (min_remaining if min_remaining != float('inf') else daily_capacity)
+    return {
+        'trip_remaining': trip_remaining,
+        'per_day': per_day,
+        'is_full': is_full_any or not has_available_date
+    }
+
+
+def get_exchange_rate(currency_code: str) -> Decimal:
+    """
+    Retrieve the exchange rate for a given currency relative to USD.
+    Returns 1.0 for USD explicitly to avoid unnecessary database lookup.
+    """
+    currency_code = currency_code.upper()
+    if currency_code == 'USD':
+        logger.debug("Using 1:1 exchange rate for USD")
+        return Decimal('1.0')
+    try:
+        rate = ExchangeRate.objects.get(currency_code=currency_code).rate_to_usd
+        logger.info(f"Exchange rate for {currency_code}: {rate}")
+        return rate
+    except ObjectDoesNotExist:
+        logger.warning(f"Exchange rate not found for {currency_code}, attempting to fetch")
+        return fetch_exchange_rate(currency_code)
+    
+def fetch_exchange_rate(currency_code: str) -> Decimal:
+    try:
+        response = requests.get(
+            f"https://api.openexchangerates.org/latest.json?app_id={settings.OPEN_EXCHANGE_RATES_API_KEY}"
+        )
+        response.raise_for_status()
+        data = response.json()
+        rate = Decimal(str(data['rates'][currency_code]))
+        ExchangeRate.objects.update_or_create(
+            currency_code=currency_code,
+            defaults={'rate_to_usd': rate}
+        )
+        logger.info(f"Fetched exchange rate for {currency_code}: {rate}")
+        return rate
+    except Exception as e:
+        logger.error(f"Failed to fetch rate for {currency_code}: {e}")
+        return Decimal('1.0')
+
+

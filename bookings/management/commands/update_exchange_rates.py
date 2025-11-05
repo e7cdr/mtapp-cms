@@ -1,4 +1,3 @@
-# bookings/management/commands/update_exchange_rates.py
 import requests
 from decimal import Decimal
 from django.conf import settings

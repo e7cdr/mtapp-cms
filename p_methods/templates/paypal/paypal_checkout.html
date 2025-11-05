@@ -224,31 +224,41 @@
                             </tr>
                         </thead>
                         <tbody>
+                            {% if configuration_details.singles > 0 %}
                             <tr>
                                 <td>{% trans "Singles" %}</td>
-                                <td>{{ configuration_details.singles|default:0 }} x {{ currency }} {{ adjusted_price_sgl|floatformat:2 }}</td>
+                                <td>{{ configuration_details.singles }} x {{ currency }} {{ adjusted_price_sgl|floatformat:2 }}</td>
                                 <td>{{ currency }} {{ room_subtotals.singles_subtotal|floatformat:2 }}</td>
                             </tr>
+                            {% endif %}
+                            {% if configuration_details.doubles > 0 %}
                             <tr>
                                 <td>{% trans "Doubles" %}</td>
-                                <td>{{ configuration_details.doubles|default:0 }} x {{ currency }} {{ adjusted_price_dbl|floatformat:2 }}</td>
+                                <td>{{ configuration_details.doubles }} x {{ currency }} {{ adjusted_price_dbl|floatformat:2 }}</td>
                                 <td>{{ currency }} {{ room_subtotals.doubles_subtotal|floatformat:2 }}</td>
                             </tr>
+                            {% endif %}
+                            {% if configuration_details.triples > 0 %}
                             <tr>
                                 <td>{% trans "Triples" %}</td>
-                                <td>{{ configuration_details.triples|default:0 }} x {{ currency }} {{ adjusted_price_tpl|floatformat:2 }}</td>
+                                <td>{{ configuration_details.triples }} x {{ currency }} {{ adjusted_price_tpl|floatformat:2 }}</td>
                                 <td>{{ currency }} {{ room_subtotals.triples_subtotal|floatformat:2 }}</td>
                             </tr>
+                            {% endif %}
+                            {% if effective_children > 0 %}
                             <tr>
                                 <td>{% trans "Children" %}</td>
                                 <td>{{ effective_children }} x {{ currency }} {{ adjusted_price_child|floatformat:2 }}</td>
                                 <td>{{ currency }} {{ room_subtotals.children_subtotal|floatformat:2 }}</td>
                             </tr>
+                            {% endif %}
+                            {% if effective_infants > 0 %}
                             <tr>
                                 <td>{% trans "Infants" %}</td>
                                 <td>{{ effective_infants }} x {{ currency }} {{ adjusted_price_infant|floatformat:2 }}</td>
                                 <td>{{ currency }} {{ room_subtotals.infants_subtotal|floatformat:2 }}</td>
                             </tr>
+                            {% endif %}
                             <tr class="total">
                                 <td colspan="2"><strong>{% trans "Total" %}</strong></td>
                                 <td><strong>{{ currency }} {{ proposal.estimated_price|floatformat:2 }}</strong></td>
@@ -273,16 +283,20 @@
                             <td>{{ proposal.number_of_adults }} x {{ currency }} {{ adjusted_price_adult|floatformat:2 }}</td>
                             <td>{{ currency }} {{ per_person_details.adult_subtotal|floatformat:2 }}</td>
                         </tr>
+                        {% if effective_children > 0 %}
                         <tr>
                             <td>{% trans "Children" %}</td>
                             <td>{{ effective_children }} x {{ currency }} {{ adjusted_price_child|floatformat:2 }}</td>
                             <td>{{ currency }} {{ per_person_details.child_subtotal|floatformat:2 }}</td>
                         </tr>
+                        {% endif %}
+                        {% if effective_infants > 0 %}
                         <tr>
                             <td>{% trans "Infants" %}</td>
                             <td>{{ effective_infants }} x {{ currency }} {{ adjusted_price_infant|floatformat:2 }}</td>
                             <td>{{ currency }} {{ per_person_details.infant_subtotal|floatformat:2 }}</td>
                         </tr>
+                        {% endif %}
                         <tr class="total">
                             <td colspan="2"><strong>{% trans "Total" %}</strong></td>
                             <td><strong>{{ currency }} {{ proposal.estimated_price|floatformat:2 }}</strong></td>

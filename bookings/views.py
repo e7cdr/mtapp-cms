@@ -4,22 +4,16 @@ import logging
 import requests
 from django.db.models import Sum  # NEW: For aggregates
 
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal
 from datetime import date, datetime, timedelta
 from django.urls import reverse, reverse_lazy
 from django.conf import settings
 from django.utils import timezone
-from reportlab.lib.units import mm
 from django.contrib import messages
 from bookings.pdf_gen import generate_itinerary_pdf
-from bookings.utils import (
-    get_30_day_used_slots,
-    send_internal_confirmation_email, 
-    send_itinerary_email, send_preconfirmation_email, 
-    send_proposal_submitted_email, send_supplier_email
-)
 
 from django.db.models import Q
+from bookings.utils import calculate_demand_factor, get_30_day_used_slots, get_exchange_rate, get_remaining_capacity, send_internal_confirmation_email, send_itinerary_email, send_preconfirmation_email, send_proposal_submitted_email, send_supplier_email
 from partners.models import Partner
 from reportlab.lib.pagesizes import A4
 from bookings.forms import ProposalForm
@@ -27,7 +21,6 @@ from django.core.paginator import Paginator
 from django.http import Http404, JsonResponse, HttpResponse
 from django.template.loader import render_to_string
 from tours.models import LandTourPage
-from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import gettext_lazy as _
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import get_object_or_404, render, redirect
@@ -41,7 +34,6 @@ from django.views.generic import FormView
 from .forms import ProposalForm
 from .models import Proposal
 
-from paypalrestsdk import Payment  # pip install paypalrestsdk
 import paypalrestsdk as paypal
 from decouple import config
 from django.views.generic import TemplateView
@@ -192,6 +184,7 @@ paypal.configure({
     "client_secret": config('PAYPAL_CLIENT_SECRET'),
 })
 
+from decimal import Decimal, ROUND_HALF_UP
 
 def compute_pricing(tour_type, tour_id, form_data, session):
     logger.debug(f"compute_pricing inputs: form_data={form_data}, tour_type={tour_type}, tour_id={tour_id}")
@@ -489,103 +482,9 @@ class PaymentView(TemplateView):
         context = super().get_context_data(**kwargs)
         proposal_id = self.kwargs['proposal_id']
         proposal = get_object_or_404(Proposal, id=proposal_id, status='SUPPLIER_CONFIRMED')
-        
-        if not proposal.tour:
-            raise Http404("Tour not found for this proposal.")
-        
-        tour = proposal.tour
-        # Calculate end_date
-        duration = getattr(tour, 'duration_days', 0)
-        end_date = proposal.travel_date + timedelta(days=duration)
-        
-        # Effective children/infants from ages (mirror compute_pricing)
-        child_age_min = getattr(tour, 'child_age_min', 0)  # Assume 2 or model default
-        effective_children_ages = [age for age in proposal.children_ages if age >= child_age_min]
-        effective_infants_ages = [age for age in proposal.children_ages if age < child_age_min]
-        effective_children = len(effective_children_ages)
-        effective_infants = len(effective_infants_ages)
-        
-        # Extract pricing details (mirror compute_pricing logic)
-        pricing_type = getattr(tour, 'pricing_type', 'Per_room')
-        
-        # Base prices (universal)
-        price_adult = Decimal(str(getattr(tour, 'price_adult', '0')))
-        price_child = Decimal(str(getattr(tour, 'price_child', getattr(tour, 'price_chd', '0'))))
-        price_infant = Decimal(str(getattr(tour, 'price_inf', '0')))
-        
-        # Room prices (if Per_room)
-        price_sgl = Decimal(str(getattr(tour, 'price_sgl', '0')))
-        price_dbl = Decimal(str(getattr(tour, 'price_dbl', '0')))
-        price_tpl = Decimal(str(getattr(tour, 'price_tpl', '0')))
-        
-        # Factors (from compute_pricing)
-        seasonal_factor = Decimal(str(getattr(tour, 'seasonal_factor', '1.0')))
-        model_demand_factor = Decimal(str(getattr(tour, 'demand_factor', '0')))
-        full_percent = Decimal('1.0')  # FIXED: For breakdowns, use full (or compute if needed)
-        demand_factor = model_demand_factor * full_percent
-        price_adjustment = Decimal('1') + demand_factor
-        exchange_rate = Decimal('1.0')
-        factor = seasonal_factor * price_adjustment * exchange_rate
-        
-        # Adjusted rates (for "Qty x Rate")
-        adjusted_price_adult = price_adult * factor
-        adjusted_price_child = price_child * factor
-        adjusted_price_infant = price_infant * factor
-        adjusted_price_sgl = price_sgl * factor
-        adjusted_price_dbl = price_dbl * factor
-        adjusted_price_tpl = price_tpl * factor
-        
-        # Subtotals (qty * adjusted_rate—use effective for children/infants)
-        adult_subtotal = proposal.number_of_adults * adjusted_price_adult
-        child_subtotal = effective_children * adjusted_price_child
-        infant_subtotal = effective_infants * adjusted_price_infant
-        per_person_details = {
-            'adult_subtotal': adult_subtotal,
-            'child_subtotal': child_subtotal,
-            'infant_subtotal': infant_subtotal,
-            'total_breakdown': adult_subtotal + child_subtotal + infant_subtotal,
-        }
-        
-        # Per_room subtotals (if config—apply factor if base)
-        room_subtotals = {}
-        if pricing_type == 'Per_room' and proposal.selected_config:
-            config = proposal.selected_config
-            room_subtotals = {
-                'singles_subtotal': config.get('singles', 0) * adjusted_price_sgl,
-                'doubles_subtotal': config.get('doubles', 0) * adjusted_price_dbl,
-                'triples_subtotal': config.get('triples', 0) * adjusted_price_tpl,
-                'children_subtotal': effective_children * adjusted_price_child,
-                'infants_subtotal': effective_infants * adjusted_price_infant,
-                'total_breakdown': sum([config.get('singles', 0) * adjusted_price_sgl, config.get('doubles', 0) * adjusted_price_dbl, config.get('triples', 0) * adjusted_price_tpl, effective_children * adjusted_price_child, effective_infants * adjusted_price_infant]),
-            }
-        
-        # Currency (from session or default)
-        currency = requests.request.session.get('currency', 'USD')
-        
-        context.update({
-            'proposal': proposal,
-            'tour': tour,
-            'end_date': end_date,
-            'configuration_details': proposal.room_config if proposal.room_config else {},
-            'is_company_tour': getattr(tour, 'is_company_tour', False),
-            'site_url': settings.SITE_URL,
-            'pricing_type': pricing_type,
-            'per_person_details': per_person_details,
-            'room_subtotals': room_subtotals,
-            'adjusted_price_adult': adjusted_price_adult,
-            'adjusted_price_child': adjusted_price_child,
-            'adjusted_price_infant': adjusted_price_infant,
-            'adjusted_price_sgl': adjusted_price_sgl,
-            'adjusted_price_dbl': adjusted_price_dbl,
-            'adjusted_price_tpl': adjusted_price_tpl,
-            'factor': factor,
-            'effective_children': effective_children,  # NEW: For template
-            'effective_infants': effective_infants,
-            'amount': str(proposal.estimated_price.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)),
-            'currency': currency,
-            'paypal_client_id': settings.PAYPAL_CLIENT_ID,  # JS SDK
-        })
-        
+        context['proposal'] = proposal
+        context['amount'] = str(proposal.estimated_price)  # For JS
+        context['paypal_client_id'] = settings.PAYPAL_CLIENT_ID  # JS SDK
         return context
 
     def post(self, request, proposal_id):  # On approve/capture
@@ -625,6 +524,7 @@ class PaymentView(TemplateView):
                 messages.success(request, "Payment successful! Itinerary sent.")
                 return redirect('customer_portal')
         return JsonResponse({'error': 'Payment failed'}, status=400)
+
 
 @csrf_exempt
 def submit_proposal(request, tour_id):
@@ -774,15 +674,6 @@ class ProposalSuccessView(TemplateView):
         context['status_note'] = ' (Internal review pending)' if tour.is_company_tour else ' (Awaiting supplier confirmation)'
         return context   
 
-def calculate_demand_factor(remaining, total_capacity):
-    """
-    Demand factor = (total_capacity - remaining) / total_capacity * 1.0
-    e.g., 50/100 remaining = 0.5 full = 0.5 factor (10% uplift).
-    """
-    if total_capacity == 0:
-        return Decimal('0')
-    full_percent = (total_capacity - remaining) / total_capacity
-    return Decimal(str(full_percent))  # 0 to 1.0
 
 def render_pricing(request, tour_type, tour_id):
     logger.debug(f"render_pricing called with POST: {request.POST}")
@@ -846,40 +737,7 @@ def render_pricing(request, tour_type, tour_id):
     logger.debug(f"Rendered pricing_options.html with context: {context}")
     return HttpResponse(response_content, content_type='text/html')
 
-def get_exchange_rate(currency_code: str) -> Decimal:
-    """
-    Retrieve the exchange rate for a given currency relative to USD.
-    Returns 1.0 for USD explicitly to avoid unnecessary database lookup.
-    """
-    currency_code = currency_code.upper()
-    if currency_code == 'USD':
-        logger.debug("Using 1:1 exchange rate for USD")
-        return Decimal('1.0')
-    try:
-        rate = ExchangeRate.objects.get(currency_code=currency_code).rate_to_usd
-        logger.info(f"Exchange rate for {currency_code}: {rate}")
-        return rate
-    except ObjectDoesNotExist:
-        logger.warning(f"Exchange rate not found for {currency_code}, attempting to fetch")
-        return fetch_exchange_rate(currency_code)
 
-def fetch_exchange_rate(currency_code: str) -> Decimal:
-    try:
-        response = requests.get(
-            f"https://api.openexchangerates.org/latest.json?app_id={settings.OPEN_EXCHANGE_RATES_API_KEY}"
-        )
-        response.raise_for_status()
-        data = response.json()
-        rate = Decimal(str(data['rates'][currency_code]))
-        ExchangeRate.objects.update_or_create(
-            currency_code=currency_code,
-            defaults={'rate_to_usd': rate}
-        )
-        logger.info(f"Fetched exchange rate for {currency_code}: {rate}")
-        return rate
-    except Exception as e:
-        logger.error(f"Failed to fetch rate for {currency_code}: {e}")
-        return Decimal('1.0')
 
 def confirm_proposal(request, proposal_id: int) -> HttpResponse:
     # Scoped to single object
@@ -1210,73 +1068,4 @@ def proposal_status(request, proposal_id: int) -> JsonResponse:
     except Proposal.DoesNotExist:
         return JsonResponse({'error': 'Proposal not to found'}, status=404)
 
-def get_remaining_capacity(tour_id, travel_date, tour_model, duration_days=1):
-    """
-    Calculate remaining spots per day for travel_date range.
-    Returns: {'trip_remaining': int (min across range), 'per_day': [{'date': 'YYYY-MM-DD', 'remaining': int}, ...], 'is_full': bool}
-    """
-    if not travel_date:
-        return {'trip_remaining': 0, 'per_day': [], 'is_full': True}
-    
-    today = date.today()
-    if travel_date < today:
-        return {'trip_remaining': 0, 'per_day': [], 'is_full': True}
-    
-    # Fetch tour instance
-    tour = get_object_or_404(tour_model, id=tour_id)
-    
-    # Parse available_days (e.g., '0,1,2,3' → [0,1,2,3]; all if empty)
-    available_days_str = getattr(tour, 'available_days', '')
-    available_days = [int(d.strip()) for d in available_days_str.split(',') if d.strip()] if available_days_str else list(range(7))
-    
-    # ContentType for tour
-    content_type = ContentType.objects.get_for_model(tour_model)
-    
-    # Dates in range
-    dates = [travel_date + timedelta(days=i) for i in range(duration_days)]
-    per_day = []
-    min_remaining = float('inf')
-    is_full_any = False
-    has_available_date = False
-    for d in dates:
-        day_of_week = (d.weekday() + 6) % 7  # 0=Sun, 6=Sat
-        if day_of_week not in available_days:
-            continue
-        
-        has_available_date = True
-        # Daily capacity
-        daily_capacity = tour.max_capacity or 0
-        
-        # Confirmed count for this date
-        adults_sum = Booking.objects.filter(
-            content_type=content_type,
-            object_id=tour_id,
-            travel_date=d,
-            status='CONFIRMED',
-        ).aggregate(Sum('number_of_adults'))['number_of_adults__sum'] or 0
-        children_sum = Booking.objects.filter(
-            content_type=content_type,
-            object_id=tour_id,
-            travel_date=d,
-            status='CONFIRMED',
-        ).aggregate(Sum('number_of_children'))['number_of_children__sum'] or 0
-        confirmed = adults_sum + children_sum
-        
-        remaining = max(0, daily_capacity - confirmed)
-        min_remaining = min(min_remaining, remaining)
-        if remaining == 0:
-            is_full_any = True
-        
-        per_day.append({
-            'date': d.strftime('%Y-%m-%d'),
-            'remaining': remaining,
-            'total_daily': daily_capacity
-        })
-    
-    # FIXED: Handle no available dates
-    trip_remaining = 0 if not has_available_date else (min_remaining if min_remaining != float('inf') else daily_capacity)
-    return {
-        'trip_remaining': trip_remaining,
-        'per_day': per_day,
-        'is_full': is_full_any or not has_available_date
-    }
+
