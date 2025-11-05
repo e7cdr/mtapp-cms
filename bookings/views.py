@@ -4,7 +4,7 @@ import logging
 import requests
 from django.db.models import Sum  # NEW: For aggregates
 
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from datetime import date, datetime, timedelta
 from django.urls import reverse, reverse_lazy
 from django.conf import settings
@@ -191,6 +191,7 @@ paypal.configure({
     "client_id": config('PAYPAL_CLIENT_ID'),
     "client_secret": config('PAYPAL_CLIENT_SECRET'),
 })
+
 
 def compute_pricing(tour_type, tour_id, form_data, session):
     logger.debug(f"compute_pricing inputs: form_data={form_data}, tour_type={tour_type}, tour_id={tour_id}")
@@ -404,7 +405,7 @@ def compute_pricing(tour_type, tour_id, form_data, session):
                             (infants * price_inf)
                         )
                         total_price *= seasonal_factor * price_adjustment * exchange_rate 
-
+                        rounded_price = total_price.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
                         config = {
                             'singles': singles,
                             'doubles': doubles,
@@ -412,7 +413,7 @@ def compute_pricing(tour_type, tour_id, form_data, session):
                             'children': children,
                             'infants': infants,
                             'child_ages': child_ages,
-                            'total_price': float(round(total_price, 2)),
+                            'total_price': float(rounded_price),
                             'currency': currency,
                             'total_rooms': total_rooms
                         }
@@ -439,6 +440,7 @@ def compute_pricing(tour_type, tour_id, form_data, session):
             (infants * price_inf)
         )
         total_price *= seasonal_factor * price_adjustment * exchange_rate
+        rounded_price = total_price.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
         configurations = [{
             'singles': 0,
@@ -447,7 +449,7 @@ def compute_pricing(tour_type, tour_id, form_data, session):
             'children': children,
             'infants': infants,
             'child_ages': child_ages,
-            'total_price': float(round(total_price, 2)),
+            'total_price': float(rounded_price),
             'currency': currency,
             'total_rooms': 0,
             'cheapest': True
@@ -461,6 +463,7 @@ def compute_pricing(tour_type, tour_id, form_data, session):
             (infants * price_inf)
         )
         total_price *= seasonal_factor * price_adjustment * exchange_rate
+        rounded_price = total_price.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
         configurations = [{
             'singles': 0,
@@ -469,7 +472,7 @@ def compute_pricing(tour_type, tour_id, form_data, session):
             'children': children,
             'infants': infants,
             'child_ages': child_ages,
-            'total_price': float(round(total_price, 2)),
+            'total_price': float(rounded_price),
             'currency': currency,
             'total_rooms': 0,
             'cheapest': True
@@ -479,7 +482,6 @@ def compute_pricing(tour_type, tour_id, form_data, session):
     logger.info(f"Generated configurations for {tour_type}/{tour_id}: {len(configurations)} items")
     return configurations
 
-
 class PaymentView(TemplateView):
     template_name = 'bookings/payment.html'
 
@@ -487,9 +489,103 @@ class PaymentView(TemplateView):
         context = super().get_context_data(**kwargs)
         proposal_id = self.kwargs['proposal_id']
         proposal = get_object_or_404(Proposal, id=proposal_id, status='SUPPLIER_CONFIRMED')
-        context['proposal'] = proposal
-        context['amount'] = str(proposal.estimated_price)  # For JS
-        context['paypal_client_id'] = settings.PAYPAL_CLIENT_ID  # JS SDK
+        
+        if not proposal.tour:
+            raise Http404("Tour not found for this proposal.")
+        
+        tour = proposal.tour
+        # Calculate end_date
+        duration = getattr(tour, 'duration_days', 0)
+        end_date = proposal.travel_date + timedelta(days=duration)
+        
+        # Effective children/infants from ages (mirror compute_pricing)
+        child_age_min = getattr(tour, 'child_age_min', 0)  # Assume 2 or model default
+        effective_children_ages = [age for age in proposal.children_ages if age >= child_age_min]
+        effective_infants_ages = [age for age in proposal.children_ages if age < child_age_min]
+        effective_children = len(effective_children_ages)
+        effective_infants = len(effective_infants_ages)
+        
+        # Extract pricing details (mirror compute_pricing logic)
+        pricing_type = getattr(tour, 'pricing_type', 'Per_room')
+        
+        # Base prices (universal)
+        price_adult = Decimal(str(getattr(tour, 'price_adult', '0')))
+        price_child = Decimal(str(getattr(tour, 'price_child', getattr(tour, 'price_chd', '0'))))
+        price_infant = Decimal(str(getattr(tour, 'price_inf', '0')))
+        
+        # Room prices (if Per_room)
+        price_sgl = Decimal(str(getattr(tour, 'price_sgl', '0')))
+        price_dbl = Decimal(str(getattr(tour, 'price_dbl', '0')))
+        price_tpl = Decimal(str(getattr(tour, 'price_tpl', '0')))
+        
+        # Factors (from compute_pricing)
+        seasonal_factor = Decimal(str(getattr(tour, 'seasonal_factor', '1.0')))
+        model_demand_factor = Decimal(str(getattr(tour, 'demand_factor', '0')))
+        full_percent = Decimal('1.0')  # FIXED: For breakdowns, use full (or compute if needed)
+        demand_factor = model_demand_factor * full_percent
+        price_adjustment = Decimal('1') + demand_factor
+        exchange_rate = Decimal('1.0')
+        factor = seasonal_factor * price_adjustment * exchange_rate
+        
+        # Adjusted rates (for "Qty x Rate")
+        adjusted_price_adult = price_adult * factor
+        adjusted_price_child = price_child * factor
+        adjusted_price_infant = price_infant * factor
+        adjusted_price_sgl = price_sgl * factor
+        adjusted_price_dbl = price_dbl * factor
+        adjusted_price_tpl = price_tpl * factor
+        
+        # Subtotals (qty * adjusted_rate—use effective for children/infants)
+        adult_subtotal = proposal.number_of_adults * adjusted_price_adult
+        child_subtotal = effective_children * adjusted_price_child
+        infant_subtotal = effective_infants * adjusted_price_infant
+        per_person_details = {
+            'adult_subtotal': adult_subtotal,
+            'child_subtotal': child_subtotal,
+            'infant_subtotal': infant_subtotal,
+            'total_breakdown': adult_subtotal + child_subtotal + infant_subtotal,
+        }
+        
+        # Per_room subtotals (if config—apply factor if base)
+        room_subtotals = {}
+        if pricing_type == 'Per_room' and proposal.selected_config:
+            config = proposal.selected_config
+            room_subtotals = {
+                'singles_subtotal': config.get('singles', 0) * adjusted_price_sgl,
+                'doubles_subtotal': config.get('doubles', 0) * adjusted_price_dbl,
+                'triples_subtotal': config.get('triples', 0) * adjusted_price_tpl,
+                'children_subtotal': effective_children * adjusted_price_child,
+                'infants_subtotal': effective_infants * adjusted_price_infant,
+                'total_breakdown': sum([config.get('singles', 0) * adjusted_price_sgl, config.get('doubles', 0) * adjusted_price_dbl, config.get('triples', 0) * adjusted_price_tpl, effective_children * adjusted_price_child, effective_infants * adjusted_price_infant]),
+            }
+        
+        # Currency (from session or default)
+        currency = requests.request.session.get('currency', 'USD')
+        
+        context.update({
+            'proposal': proposal,
+            'tour': tour,
+            'end_date': end_date,
+            'configuration_details': proposal.room_config if proposal.room_config else {},
+            'is_company_tour': getattr(tour, 'is_company_tour', False),
+            'site_url': settings.SITE_URL,
+            'pricing_type': pricing_type,
+            'per_person_details': per_person_details,
+            'room_subtotals': room_subtotals,
+            'adjusted_price_adult': adjusted_price_adult,
+            'adjusted_price_child': adjusted_price_child,
+            'adjusted_price_infant': adjusted_price_infant,
+            'adjusted_price_sgl': adjusted_price_sgl,
+            'adjusted_price_dbl': adjusted_price_dbl,
+            'adjusted_price_tpl': adjusted_price_tpl,
+            'factor': factor,
+            'effective_children': effective_children,  # NEW: For template
+            'effective_infants': effective_infants,
+            'amount': str(proposal.estimated_price.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)),
+            'currency': currency,
+            'paypal_client_id': settings.PAYPAL_CLIENT_ID,  # JS SDK
+        })
+        
         return context
 
     def post(self, request, proposal_id):  # On approve/capture
@@ -529,7 +625,6 @@ class PaymentView(TemplateView):
                 messages.success(request, "Payment successful! Itinerary sent.")
                 return redirect('customer_portal')
         return JsonResponse({'error': 'Payment failed'}, status=400)
-
 
 @csrf_exempt
 def submit_proposal(request, tour_id):

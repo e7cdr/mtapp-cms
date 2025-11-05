@@ -16,6 +16,7 @@ from wagtail.snippets.models import register_snippet
 from wagtail.admin.panels import FieldPanel
 
 from mtapp.utils import generate_code_id
+from decimal import Decimal, ROUND_HALF_UP  
 
 @register_snippet
 class Proposal(models.Model):
@@ -175,7 +176,7 @@ class Proposal(models.Model):
                 (self.number_of_children * price_chd) +
                 (self.number_of_infants * price_inf)
             )
-        return total_price.quantize(Decimal('0.01'))
+        return total_price.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
     def __str__(self):
         status_label = dict(self.STATUS_CHOICES).get(self.status, self.status)
@@ -191,7 +192,6 @@ class Proposal(models.Model):
         indexes = [
             models.Index(fields=['content_type', 'object_id', 'travel_date', 'status'])
         ]
-
 @register_snippet
 class Booking(models.Model):
     book_id = models.CharField(max_length=9, unique=True, editable=False, null=True, help_text=_("Booking code so the user can track status."))  # Allow null for migration

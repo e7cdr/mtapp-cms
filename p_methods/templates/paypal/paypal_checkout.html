@@ -4,78 +4,342 @@
 <head>
     <title>{% trans "PayPal Checkout" %} - {{ proposal.tour.name }} - Milano Travel</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- FIXED: Disable cards to focus on PayPal popup; reduces errors/complexity -->
     <script src="https://www.paypal.com/sdk/js?client-id={{ client_id }}&currency={{ currency }}&components=buttons"></script>
+    <style>
+        /* Vanilla CSS Styling for PayPal Checkout */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-top: 20px; /* mt-4 equivalent */
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 1.5rem;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .summary-section {
+            padding: 25px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .summary-section p {
+            margin-bottom: 12px;
+            font-size: 1rem;
+        }
+
+        .summary-section p:last-child {
+            margin-bottom: 0;
+        }
+
+        .summary-section strong {
+            color: #4a90e2;
+            display: inline-block;
+            width: 120px; /* For alignment */
+        }
+
+        .pricing-section {
+            padding: 25px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .pricing-section h4 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .pricing-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .pricing-table th,
+        .pricing-table td {
+            padding: 12px 8px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .pricing-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .pricing-table .total td {
+            background: #d4edda;
+            font-weight: bold;
+            color: #155724;
+            border-top: 2px solid #c3e6cb;
+        }
+
+        .pricing-table .total td:first-child {
+            font-weight: normal;
+        }
+
+        .no-details {
+            font-style: italic;
+            color: #666;
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+
+        #paypal-button-container {
+            padding: 30px;
+            text-align: center;
+            background: #f8f9fa;
+            border-top: 1px solid #eee;
+        }
+
+        #result-message {
+            padding: 20px 30px;
+            text-align: center;
+        }
+
+        .alert {
+            border-radius: 8px;
+            padding: 12px;
+            margin: 0;
+            font-size: 0.95rem;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 480px) {
+            .container {
+                margin: 10px;
+                border-radius: 8px;
+            }
+
+            h2 {
+                font-size: 1.3rem;
+                padding: 15px;
+            }
+
+            .summary-section,
+            .pricing-section {
+                padding: 20px;
+            }
+
+            .summary-section strong {
+                width: 100px;
+                display: block;
+                margin-bottom: 5px;
+            }
+
+            .pricing-table th,
+            .pricing-table td {
+                padding: 10px 6px;
+                font-size: 0.85rem;
+            }
+
+            #paypal-button-container {
+                padding: 20px;
+            }
+
+            #result-message {
+                padding: 15px 20px;
+            }
+        }
+
+        /* PayPal Button Styling (overrides SDK defaults for consistency) */
+        #paypal-button-container .paypal-button {
+            border-radius: 6px !important;
+            overflow: hidden !important;
+        }
+    </style>
 </head>
 <body>
-    <div class="container mt-4">
+    <div class="container">
         <h2>{% trans "Secure Payment for" %} {{ proposal.tour.name }}</h2>
-        <div class="table table-card mb-4">
-            <div class="card-body">
-                <p><strong>{% trans "Proposal ID" %}:</strong> {{ proposal.prop_id }}</p>
-                <p><strong>{% trans "Travel Date" %}:</strong> {{ proposal.travel_date|date:"F j, Y" }}</p>
-                <p><strong>{% trans "Total Amount" %}:</strong> {{ currency }} {{ amount }}</p>
-                <p>{% trans "Adults" %}: {{ proposal.number_of_adults }} | {% trans "Children" %}: {{ proposal.number_of_children }}</p>
-            </div>
+        
+        <div class="summary-section">
+            <p><strong>{% trans "Proposal ID" %}:</strong> {{ proposal.prop_id }}</p>
+            <p><strong>{% trans "Travel Date" %}:</strong> {{ proposal.travel_date|date:"F j, Y" }}</p>
+            <p><strong>{% trans "Total Amount" %}:</strong> {{ currency }} {{ amount }}</p>
+            <p>{% trans "Adults" %}: {{ proposal.number_of_adults }} | {% trans "Children" %}: {{ proposal.number_of_children }}</p>
+        </div>
+
+        <div class="pricing-section">
+            <h4>{% trans "Configuration & Pricing" %}</h4>
+            {% if pricing_type == 'Per_room' %}
+                {% if configuration_details %}
+                    <table class="pricing-table">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Type" %}</th>
+                                <th>{% trans "Qty x Rate" %}</th>
+                                <th>{% trans "Subtotal" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>{% trans "Singles" %}</td>
+                                <td>{{ configuration_details.singles|default:0 }} x {{ currency }} {{ adjusted_price_sgl|floatformat:2 }}</td>
+                                <td>{{ currency }} {{ room_subtotals.singles_subtotal|floatformat:2 }}</td>
+                            </tr>
+                            <tr>
+                                <td>{% trans "Doubles" %}</td>
+                                <td>{{ configuration_details.doubles|default:0 }} x {{ currency }} {{ adjusted_price_dbl|floatformat:2 }}</td>
+                                <td>{{ currency }} {{ room_subtotals.doubles_subtotal|floatformat:2 }}</td>
+                            </tr>
+                            <tr>
+                                <td>{% trans "Triples" %}</td>
+                                <td>{{ configuration_details.triples|default:0 }} x {{ currency }} {{ adjusted_price_tpl|floatformat:2 }}</td>
+                                <td>{{ currency }} {{ room_subtotals.triples_subtotal|floatformat:2 }}</td>
+                            </tr>
+                            <tr>
+                                <td>{% trans "Children" %}</td>
+                                <td>{{ effective_children }} x {{ currency }} {{ adjusted_price_child|floatformat:2 }}</td>
+                                <td>{{ currency }} {{ room_subtotals.children_subtotal|floatformat:2 }}</td>
+                            </tr>
+                            <tr>
+                                <td>{% trans "Infants" %}</td>
+                                <td>{{ effective_infants }} x {{ currency }} {{ adjusted_price_infant|floatformat:2 }}</td>
+                                <td>{{ currency }} {{ room_subtotals.infants_subtotal|floatformat:2 }}</td>
+                            </tr>
+                            <tr class="total">
+                                <td colspan="2"><strong>{% trans "Total" %}</strong></td>
+                                <td><strong>{{ currency }} {{ proposal.estimated_price|floatformat:2 }}</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="no-details">{% trans "No room configuration details." %}</p>
+                {% endif %}
+            {% else %}  <!-- Per_person -->
+                <table class="pricing-table">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Type" %}</th>
+                            <th>{% trans "Qty x Rate" %}</th>
+                            <th>{% trans "Subtotal" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{% trans "Adults" %}</td>
+                            <td>{{ proposal.number_of_adults }} x {{ currency }} {{ adjusted_price_adult|floatformat:2 }}</td>
+                            <td>{{ currency }} {{ per_person_details.adult_subtotal|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td>{% trans "Children" %}</td>
+                            <td>{{ effective_children }} x {{ currency }} {{ adjusted_price_child|floatformat:2 }}</td>
+                            <td>{{ currency }} {{ per_person_details.child_subtotal|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td>{% trans "Infants" %}</td>
+                            <td>{{ effective_infants }} x {{ currency }} {{ adjusted_price_infant|floatformat:2 }}</td>
+                            <td>{{ currency }} {{ per_person_details.infant_subtotal|floatformat:2 }}</td>
+                        </tr>
+                        <tr class="total">
+                            <td colspan="2"><strong>{% trans "Total" %}</strong></td>
+                            <td><strong>{{ currency }} {{ proposal.estimated_price|floatformat:2 }}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            {% endif %}
         </div>
         
         <div id="paypal-button-container"></div>
-        <div id="result-message" class="mt-3"></div>
+        <div id="result-message"></div>
     </div>
 
 <script>
-    // Frontend data (unchanged)
     const proposalId = {{ proposal.id }};
-    const currency = '{{ currency }}';
-    const amount = {{ amount }};
-    const numAdults = {{ proposal.number_of_adults }};
+    const currency = '{{ currency }}';  // 'USD'
+    const amountStr = '{{ amount }}';  // '50.67'
+    const numAdults = {{ proposal.number_of_adults }};  // 2
     const tourId = {{ proposal.tour.id }};
-    const tourName = "{{ proposal.tour.name|escapejs }}";
-    const pricePerAdult = amount / numAdults;
+    const tourName = "{{ proposal.tour.name|escapejs }}";  // "Cuenca Cultural Getaway"
+    const csrfToken = "{{ csrf_token }}";  // For POST requests
 
-    const proposalData = {
-        cart: [
-            {
-                id: tourId,
-                quantity: numAdults,
-                name: tourName + " - Adult Ticket",
-                price: pricePerAdult,
-            },
-        ]
+    // FIXED: Single item for the full booking (quantity=1) to avoid rounding errors
+    const createOrderData = {
+        intent: 'CAPTURE',
+        purchase_units: [{
+            items: [{
+                name: tourName + ` - ${numAdults} Adults`,  // Include adult count in name for clarity
+                unit_amount: {
+                    currency_code: currency,
+                    value: amountStr  // Use full amount directly—no division
+                },
+                quantity: 1,  // FIXED: Always 1 for the whole proposal
+                description: `Tour booking for ${numAdults} adults on ${new Date().toLocaleDateString()}. Travel date: {{ proposal.travel_date|date:"F j, Y"|escapejs }}`,  // Enhanced desc with details
+                category: "DIGITAL_GOODS"
+            }]
+        }]
     };
 
-    // FIXED: Use Django URL tags for locale-safe paths (includes /en/p_methods/)
-    const ordersUrl = "{% url 'p_methods:paypal_orders_create' %}";  // /en/p_methods/api/orders/
-    const captureBase = ordersUrl;  // Reuse for capture: /en/p_methods/api/orders/<id>/capture/
+    const ordersBaseUrl = "{% url 'p_methods:paypal_orders_create' %}";  // e.g., "/en/p-methods/api/orders/"
+    const successDummyUrl = "{% url 'bookings:payment_success' 0 %}";  // e.g., "/en/bookings/payment/success/0/"
 
-    // CSRF token (Django requires for POST)
-    const csrfToken = "{{ csrf_token }}";
-
-    const paypalButtons = window.paypal.Buttons({
-        style: {
-            shape: "pill",
-            layout: "horizontal",
-            color: "gold",
-            label: "paypal",
-            tagline: false,
-            height: 55,
-        },
-        createOrder: function() {
+    paypal.Buttons({
+        createOrder: function(data, actions) {
             console.log('Creating order...');
-            return fetch(ordersUrl, {
+            return fetch(ordersBaseUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken,  // FIXED: CSRF
+                    'X-CSRFToken': csrfToken,
                 },
-                body: JSON.stringify({
-                    cart: proposalData.cart,
-                    proposal_id: proposalId,
-                }),
+                body: JSON.stringify(createOrderData),
             }).then(res => {
-                console.log('Order response status:', res.status);
                 if (!res.ok) {
-                    return res.text().then(text => {
-                        console.error('Order error response:', text.substring(0, 200));
+                    return res.json().then(err => {
+                        console.error('Order response status:', res.status);
+                        console.error('Order error response:', err);
                         throw new Error(`Order creation failed: ${res.status}`);
                     });
                 }
@@ -90,8 +354,9 @@
         },
         onApprove: function(data, actions) {
             console.log('Approved, capturing...');
-            const fullCaptureUrl = captureBase + data.orderID + '/capture/';
-            return fetch(fullCaptureUrl, {  // FIXED: Append ID + /capture/
+            // FIXED: Dynamically build capture URL: base + orderID + '/capture/'
+            const captureUrl = ordersBaseUrl + data.orderID + '/capture/';
+            return fetch(captureUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -110,21 +375,27 @@
                 return res.json();
             }).then(capturedOrder => {
                 console.log('Payment captured:', capturedOrder);
-                window.location.href = '/bookings/payment/success/' + proposalId + '/';  // FIXED: Hardcode (adjust if locale needed)
+                // FIXED: Dynamically build success URL: replace dummy '0' with proposalId
+                const successUrl = successDummyUrl.replace('/0/', '/' + proposalId + '/');
+                window.location.href = successUrl;
             }).catch(error => {
                 console.error('Capture error:', error);
                 document.getElementById('paypal-button-container').innerHTML = 
-                    '<div class="alert alert-danger mt-3">Payment failed. Please try again or contact support.</div>';
+                    '<div class="alert alert-danger">Payment failed. Please try again or contact support.</div>';
             });
         },
         onError: function(err) {
             console.error('PayPal SDK error:', err);
-            // FIXED: Show popup block or other SDK errors
-            const msg = err.message.includes('popup') ? 'Popup blocked—allow popups for paypal.com and try again.' : err.message;
-            document.getElementById('result-message').innerHTML = '<div class="alert alert-danger">' + msg + '</div>';
+            // FIXED: Enhanced for popup/fallback detection (matches your logs)
+            let msg = 'An unexpected error occurred. Please try again.';
+            if (err.message.includes('popup') || err.message.includes('block') || err.type === 'UNKNOWN' || err.err?.includes('popup_open_error')) {
+                msg = 'PayPal opens in a secure popup for safety. If it\'s blank, <strong>allow popups for this site</strong> (click the lock icon in your address bar) and reload. <a href="https://www.paypal.com/signin?intent=login" target="_blank" rel="noopener">Test PayPal in new tab</a>, then retry.';
+            } else if (err.message.includes('400')) {
+                msg = 'Payment details invalid. Check your information and retry.';
+            }
+            document.getElementById('result-message').innerHTML = '<div class="alert alert-warning">' + msg + '</div>';  // Warning for non-fatal errors
         },
-    });
-    paypalButtons.render('#paypal-button-container');
+    }).render('#paypal-button-container');
 </script>
 </body>
 </html>
