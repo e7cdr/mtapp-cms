@@ -30,11 +30,14 @@ ul {
     margin-right: 1.5rem;
     position: relative;
     object-fit: contain;
+    filter: drop-shadow(0 0 0 white);
+
 
 }
 
 .navbar-logo:hover {
     transform: scale(1.1);
+    filter: drop-shadow(0 0 0 rgb(255, 255, 255));
 }
 
 .navbar-menu {

@@ -9,20 +9,34 @@
         <h2 class="text-center mb-4">{% trans "Your Proposals and Bookings" %}</h2>
         <form method="get" class="mb-4">
             <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label for="email" class="form-label">{% trans "Enter Your Email" %}</label>
                     <input type="email" name="email" id="email" class="form-control" value="{{ email }}">
-                    <label for="prop_id" class="form-label">{% trans "Enter Your prop_id" %}</label>
-                    <input type="text" name="prop_id" id="prop_id" class="form-control" value="{{ prop_id }}">
-
                 </div>
-                <div class="col-md-2 align-self-end">
+                <div class="col-md-4">
+                    <label for="id" class="form-label">{% trans "Enter Booking or Proposal ID" %}</label>
+                    <input type="text" name="id" id="id" class="form-control" value="{{ id }}">
+                </div>
+                <div class="col-md-4 align-self-end">
                     <button type="submit" class="btn btn-primary">{% trans "Search" %}</button>
                 </div>
             </div>
         </form>
+        
         {% if proposals or bookings %}
+            <!-- Filter Buttons -->
+            <div class="mb-3">
+                <a href="?status=all&{{ request.GET.urlencode|cut:'status=' }}" class="btn btn-outline-primary btn-sm {% if current_status == 'all' %}active{% endif %}">{% trans "All" %}</a>
+                <a href="?status=pending&{{ request.GET.urlencode|cut:'status=' }}" class="btn btn-primary btn-sm {% if current_status == 'pending' %}active{% endif %}">{% trans "Pending" %}</a>
+                <a href="?status=confirmed&{{ request.GET.urlencode|cut:'status=' }}" class="btn btn-primary btn-sm {% if current_status == 'confirmed' %}active{% endif %}">{% trans "Confirmed" %}</a>
+                <a href="?status=rejected&{{ request.GET.urlencode|cut:'status=' }}" class="btn btn-primary btn-sm {% if current_status == 'rejected' %}active{% endif %}">{% trans "Rejected" %}</a>
+                <a href="?status=paid&{{ request.GET.urlencode|cut:'status=' }}" class="btn btn-primary btn-sm {% if current_status == 'paid' %}active{% endif %}">{% trans "Paid" %}</a>
+            </div>
+            
             <h3>{% trans "Proposals" %}</h3>
+            {% include 'bookings/partials/proposal_list_customer.html' %}  <!-- FIXED: Customer partial (no actions) -->
+            
+            <h3>{% trans "Bookings" %}</h3>
             <table class="table table-striped">
                 <thead>
                     <tr>
@@ -31,58 +45,30 @@
                         <th>{% trans "Travel Date" %}</th>
                         <th>{% trans "Adults" %}</th>
                         <th>{% trans "Children" %}</th>
-                        <th>{% trans "Estimated Price" %}</th>
-                        <th>{% trans "Status" %}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for proposal in proposals %}
-                        <tr>
-                            <td>{{ proposal.prop_id }}</td>
-                            <td>{{ proposal.tour }}</td>
-                            <td>{{ proposal.travel_date }}</td>
-                            <td>{{ proposal.number_of_adults }}</td>
-                            <td>{{ proposal.number_of_children }}</td>
-                            <td>${{ proposal.estimated_price }}</td>
-                            <td>{{ proposal.get_status_display }}</td>
-
-                        </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="8">{% trans "No proposals found." %}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            <h3>{% trans "Bookings" %}</h3>
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>{% trans "ID" %}</th>
-                        <th>{% trans "Tour" %}</th>
-                        <th>{% trans "Travel Date" %}</th>
-                        <th>{% trans "Status" %}</th>
                         <th>{% trans "Total Price" %}</th>
+                        <th>{% trans "Status" %}</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for booking in bookings %}
                         <tr>
-                            <td>{{ booking.id }}</td>
+                            <td>{{ booking.book_id|default:booking.id }}</td>
                             <td>{{ booking.tour }}</td>
-                            <td>{{ booking.travel_date }}</td>
+                            <td>{{ booking.travel_date|date:"M d, Y" }}</td>
+                            <td>{{ booking.number_of_adults }}</td>
+                            <td>{{ booking.number_of_children }}</td>
+                            <td>{{ booking.currency }} {{ booking.total_price|floatformat:2 }}</td>
                             <td>{{ booking.get_status_display }}</td>
-                            <td>${{ booking.total_price }}</td>
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="5">{% trans "No bookings found." %}</td>
+                            <td colspan="7">{% trans "No bookings found." %}</td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
-        {% elif email %}
-            <p class="text-center">{% trans "No records found for" %} {{ email }}.</p>
+        {% elif email or id %}
+            <p class="text-center">{% trans "No records found for" %} {{ email|default:"" }} {{ id|default:"" }}.</p>
         {% endif %}
     </div>
 </section>

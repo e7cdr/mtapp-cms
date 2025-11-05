@@ -1,10 +1,7 @@
-from django.urls import path
 
 # from api.views import DynamicPricingView #TODO
-from . import views
-from django.urls import path, include
 
-app_name = 'tours'
+
 
 urlpatterns = [
     # path('', views.tours_list, name='tours_list'),

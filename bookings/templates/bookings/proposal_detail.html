@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Proposal Details" %} - {{ proposal.prop_id|default:proposal.id }} - Milano Travel{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-between align-items-center mb-4">
+            <h2>{% trans "Proposal Details" %} - {{ proposal.prop_id|default:proposal.id }}</h2>
+            <a href="{% url 'bookings:manage_proposals' %}" class="btn btn-secondary">{% trans "Back to Proposals" %}</a>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <h4>{% trans "Customer Information" %}</h4>
+                <table class="table table-borderless">
+                    <tr><th>{% trans "Name" %}</th><td>{{ proposal.customer_name }}</td></tr>
+                    <tr><th>{% trans "Email" %}</th><td>{{ proposal.customer_email }}</td></tr>
+                    <tr><th>{% trans "Phone" %}</th><td>{{ proposal.customer_phone|default:"N/A" }}</td></tr>
+                    <tr><th>{% trans "Address" %}</th><td>{{ proposal.customer_address|default:"N/A" }}</td></tr>
+                    <tr><th>{% trans "Nationality" %}</th><td>{{ proposal.nationality|default:"N/A" }}</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h4>{% trans "Tour Information" %}</h4>
+                <table class="table table-borderless">
+                    <tr><th>{% trans "Tour" %}</th><td>{{ tour|default:"N/A" }}</td></tr>
+                    <tr><th>{% trans "Travel Date" %}</th><td>{{ proposal.travel_date|date:"F j, Y" }}</td></tr>
+                    <tr><th>{% trans "End Date" %}</th><td>{{ end_date|date:"F j, Y" }}</td></tr>
+                    <tr><th>{% trans "Company Tour?" %}</th><td>{% if is_company_tour %}{% trans "Yes (Internal)" %}{% else %}{% trans "No (Supplier)" %}{% endif %}</td></tr>
+                    <tr><th>{% trans "Status" %}</th><td><span class="badge bg-{% if proposal.status == 'PENDING_SUPPLIER' or proposal.status == 'PENDING_INTERNAL' %}warning{% elif proposal.status == 'SUPPLIER_CONFIRMED' %}info{% elif proposal.status == 'PAID' %}success{% else %}danger{% endif %}">{{ proposal.get_status_display }}{% if proposal.status == 'PENDING_INTERNAL' %}(Internal){% endif %}</span></td></tr>
+                    <tr><th>{% trans "Estimated Price" %}</th><td>{{ proposal.currency }} {{ proposal.estimated_price|default:0 }}</td></tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+                <div class="col-md-6">
+                    <h4>{% trans "Party Size" %}</h4>
+                    <ul class="list-unstyled">
+                        <li>{% trans "Adults" %}: {{ proposal.number_of_adults }}</li>
+                        {% if effective_children > 0 %}
+                            <li>{% trans "Children" %}: {{ effective_children }} (Ages: {{ effective_children_ages|join:", "|default:"N/A" }})</li>
+                        {% endif %}
+                        {% if effective_infants > 0 %}
+                            <li>{% trans "Infants" %}: {{ effective_infants }}</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            <div class="col-md-6">
+                <h4>{% trans "Configuration & Pricing" %}</h4>
+                {% if pricing_type == 'Per_room' %}
+                    {% if configuration_details %}
+                        <table class="table table-sm">
+                            <thead><tr><th>{% trans "Type" %}</th><th>{% trans "Qty x Rate" %}</th><th>{% trans "Subtotal" %}</th></tr></thead>
+                            <tbody>
+                                <tr><td>{% trans "Singles" %}</td><td>{{ configuration_details.singles|default:0 }} x USD {{ adjusted_price_sgl|floatformat:2 }}</td><td>USD {{ room_subtotals.singles_subtotal|floatformat:2 }}</td></tr>
+                                <tr><td>{% trans "Doubles" %}</td><td>{{ configuration_details.doubles|default:0 }} x USD {{ adjusted_price_dbl|floatformat:2 }}</td><td>USD {{ room_subtotals.doubles_subtotal|floatformat:2 }}</td></tr>
+                                <tr><td>{% trans "Triples" %}</td><td>{{ configuration_details.triples|default:0 }} x USD {{ adjusted_price_tpl|floatformat:2 }}</td><td>USD {{ room_subtotals.triples_subtotal|floatformat:2 }}</td></tr>
+                                <tr><td>{% trans "Children" %}</td><td>{{ effective_children }} x USD {{ adjusted_price_child|floatformat:2 }}</td><td>USD {{ room_subtotals.children_subtotal|floatformat:2 }}</td></tr>
+                                <tr><td>{% trans "Infants" %}</td><td>{{ effective_infants }} x USD {{ adjusted_price_infant|floatformat:2 }}</td><td>USD {{ room_subtotals.infants_subtotal|floatformat:2 }}</td></tr>
+                                <tr class="table-success"><td colspan="2"><strong>{% trans "Total" %}</strong></td><td><strong>USD {{ proposal.estimated_price|floatformat:2 }}</strong></td></tr>
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p>{% trans "No room configuration details." %}</p>
+                    {% endif %}
+                {% else %}  <!-- Per_person -->
+                    <table class="table table-sm">
+                        <thead><tr><th>{% trans "Type" %}</th><th>{% trans "Qty x Rate" %}</th><th>{% trans "Subtotal" %}</th></tr></thead>
+                        <tbody>
+                            <tr><td>{% trans "Adults" %}</td><td>{{ proposal.number_of_adults }} x USD {{ adjusted_price_adult|floatformat:2 }}</td><td>USD {{ per_person_details.adult_subtotal|floatformat:2 }}</td></tr>
+                            <tr><td>{% trans "Children" %}</td><td>{{ effective_children }} x USD {{ adjusted_price_child|floatformat:2 }}</td><td>USD {{ per_person_details.child_subtotal|floatformat:2 }}</td></tr>
+                            <tr><td>{% trans "Infants" %}</td><td>{{ effective_infants }} x USD {{ adjusted_price_infant|floatformat:2 }}</td><td>USD {{ per_person_details.infant_subtotal|floatformat:2 }}</td></tr>
+                            <tr class="table-success"><td colspan="2"><strong>{% trans "Total" %}</strong></td><td><strong>USD {{ proposal.estimated_price|floatformat:2 }}</strong></td></tr>
+                        </tbody>
+                    </table>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if proposal.notes %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <h4>{% trans "Notes" %}</h4>
+                <p class="border p-3 bg-light">{{ proposal.notes }}</p>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="row mt-4">
+            <div class="col-12">
+                <a href="{% url 'bookings:manage_proposals' %}" class="btn btn-secondary">{% trans "Back to Proposals" %}</a>
+                {% if proposal.status in 'PENDING_SUPPLIER,PENDING_INTERNAL' %}
+                    <a href="{% url 'bookings:confirm_proposal' proposal.id %}" class="btn btn-success">{% trans "Confirm" %}</a>
+                    <a href="{% url 'bookings:reject_proposal' proposal.id %}" class="btn btn-danger">{% trans "Reject" %}</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

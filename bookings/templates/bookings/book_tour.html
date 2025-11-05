@@ -202,16 +202,6 @@
     }
     </script>
 
-<!-- HTMX Error Handling -->
-{% comment %} <script>
-    document.body.addEventListener('htmx:afterRequest', function(event) {
-        if (event.detail.xhr.status >= 500) {
-            console.error('HTMX error:', event.detail.xhr.status, event.detail.xhr.responseText);
-            const errorMessage = document.getElementById('htmx-error-message').textContent;
-            event.detail.elt.innerHTML = `<div class="alert alert-danger">${errorMessage}</div>`;
-        }
-    });
-</script> {% endcomment %}
 
 <!-- Flatpickr CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">

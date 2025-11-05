@@ -1,27 +1,36 @@
 # bookings/urls.py
-from django.urls import path, include
+from django.urls import path
+
+from bookings.api_views import AvailableDatesView
+from bookings.utils import  manage_proposals, payment_cancel, payment_success, proposal_detail, reject_proposal
 from . import views
-from rest_framework.routers import DefaultRouter
 
 app_name = 'bookings'
+
+
 urlpatterns = [
-    path('', views.get_bookings, name='get_bookings'),
-    path('child_ages/', views.child_ages, name='child_ages'),
-    path('partners/', views.get_partners, name='get_partners'),
+    # Core flow
+    path('start/<int:tour_id>/', views.BookingStartView.as_view(), name='booking_start'),
+    path('pay/<int:proposal_id>/', views.PaymentView.as_view(), name='payment_view'),
+    path('payment/success/<int:proposal_id>/', payment_success, name='payment_success'),
+    path('payment/cancel/<int:proposal_id>/', payment_cancel, name='payment_cancel'),
     path('customer-portal/', views.customer_portal, name='customer_portal'),
     path('manage/bookings/', views.manage_bookings, name='manage_bookings'),
-    path('book_tour/<str:tour_type>/<int:tour_id>/', views.book_tour, name='book_tour'),
-    path('payment/cancel/<int:proposal_id>/', views.payment_cancel, name='payment_cancel'),
-    path('payment/success/<int:proposal_id>/', views.payment_success, name='payment_success'),
-    path('proposal/<int:proposal_id>/reject/', views.reject_proposal, name='reject_proposal'),
-    path('proposal_status/<int:proposal_id>/', views.proposal_status, name='proposal_status'),
-    path('proposal/<int:proposal_id>/confirm/', views.confirm_proposal, name='confirm_proposal'),
-    path('manage/proposals/', views.manage_proposals, name='manage_proposals'),
-    path('calculate_pricing/<str:tour_type>/<int:tour_id>/', views.render_pricing, name='render_pricing'),
-    path('<str:tour_type>/<int:tour_id>/revert/', views.revert_to_booking_form, name='revert_to_booking_form'),
+    # Proposals
+    path('proposal-success/<int:proposal_id>/', views.ProposalSuccessView.as_view(), name='proposal_success'),
+    path('proposal/<int:proposal_id>/status/', views.proposal_status, name='proposal_status'),  # Fixed name (was 'proposal_status' but URL 'proposal_status')
+    path('proposal/<int:proposal_id>/reject/', reject_proposal, name='reject_proposal'),
     path('proposal/<str:token>/confirm-token/', views.confirm_proposal_by_token, name='confirm_proposal_by_token'),
-    path('confirm/<str:tour_type>/<int:tour_id>/', views.confirm_proposal_submission, name='confirm_proposal_submission'),
+    path('manage/proposals/<int:proposal_id>/confirm/', views.confirm_proposal, name='confirm_proposal'),    # Admin/portal (keep if used)
+    path('manage/proposals/', manage_proposals, name='manage_proposals'),
+    path('manage/proposals/<int:proposal_id>/detail/', proposal_detail, name='proposal_detail'),
+    path('submit-proposal/<int:tour_id>/', views.submit_proposal, name='submit_proposal'),  # Function view for AJAX save
+    path('confirm/<int:tour_id>/', views.render_confirmation, name='render_confirmation'),  # FIXED: Matches JS fetch
+    # Pricing (AJAX)
+    path('calculate_pricing/<str:tour_type>/<int:tour_id>/', views.render_pricing, name='render_pricing'),
 
 
+    # Legacy (comment out if not needed; remove later)
+    # path('child_ages/', views.child_ages, name='child_ages'),
+    # path('partners/', views.get_partners, name='get_partners'),
 ]
-

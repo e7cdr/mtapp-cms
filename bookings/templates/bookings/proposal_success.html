@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load i18n wagtailimages_tags %}
+
+{% block title %}{% trans "Proposal Submitted Successfully" %} - Milano Travel{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-4">{% trans "Proposal Submitted Successfully" %}</h2>
+        <div class="alert alert-success text-center mb-4">
+            {% trans "Thank you for your booking!" %}
+        </div>
+        <p class="text-center mb-4">{% trans "Your proposal for" %} <strong>{{ tour.name|default:"Untitled" }}</strong> {% trans "has been submitted and is awaiting supplier confirmation." %}</p>
+        <p class="text-center mb-4">{% trans "You will receive an email with further details soon." %}</p>
+
+        <!-- Prop ID Box -->
+        <div class="text-center mb-4">
+            <div class="bg-light p-3 rounded border" style="max-width: 400px; margin: 0 auto;">
+                <strong>{% trans "Proposal Tracking Code" %}</strong>
+                <h4 class="text-primary mb-0">{{ proposal.prop_id }}</h4>
+            </div>
+            <p class="mt-2">{% trans "Use this code to check the status of your proposal on our website." %}</p>
+            <a href="{% url 'bookings:customer_portal' %}?prop_id={{ proposal.prop_id }}" class="btn btn-primary">{% trans "Track Your Proposal" %}</a>
+        </div>
+
+        <!-- Tour Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>{% trans "Tour Information" %}</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li><strong>{% trans "Tour" %}</strong>: {{ tour.name|default:"Untitled" }}</li>
+                    <li><strong>{% trans "Travel Start Date" %}</strong>: {{ proposal.travel_date|date:"Y-m-d"|default:"N/A" }}</li>
+                    {% if proposal.end_date %}
+                        <li><strong>{% trans "Travel End Date" %}</strong>: {{ proposal.end_date|date:"Y-m-d"|default:"N/A" }}</li>
+                    {% endif %}
+                    <li><strong>{% trans "Estimated Price" %}</strong>: {{ proposal.currency|default:"USD" }} {{ proposal.estimated_price|floatformat:2 }}</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Customer Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>{% trans "Customer Information" %}</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li><strong>{% trans "Name" %}</strong>: {{ proposal.customer_name|default:"N/A" }}</li>
+                    <li><strong>{% trans "Email" %}</strong>: {{ proposal.customer_email|default:"N/A" }}</li>
+                    <li><strong>{% trans "Phone" %}</strong>: {{ proposal.customer_phone|default:"N/A" }}</li>
+                    <li><strong>{% trans "Address" %}</strong>: {{ proposal.customer_address|default:"N/A" }}</li>
+                    <li><strong>{% trans "Nationality" %}</strong>: {{ proposal.nationality|default:"N/A" }}</li>
+                    <li><strong>{% trans "Number of Adults" %}</strong>: {{ proposal.number_of_adults|default:"N/A" }}</li>
+                    <li><strong>{% trans "Number of Children" %}</strong>: {{ proposal.number_of_children|default:"N/A" }}</li>
+                    <li><strong>{% trans "Child Ages" %}</strong>: 
+                        {% if proposal.children_ages %}
+                            {{ proposal.children_ages|join:", " }}
+                        {% else %}
+                            {% trans "None" %}
+                        {% endif %}
+                    </li>
+                    <li><strong>{% trans "Number of Infants" %}</strong>: {{ proposal.number_of_infants|default:0 }}</li>
+                    <li><strong>{% trans "Notes" %}</strong>: {{ proposal.notes|default:"N/A" }}</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Room Configuration (if selected) -->
+        {% if tour_type != 'day' and proposal.selected_room_config %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>{% trans "Selected Room Configuration" %}</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        {% if proposal.selected_room_config.singles %}
+                            <li><strong>{% trans "Single Rooms" %}</strong>: {{ proposal.selected_room_config.singles }}</li>
+                        {% endif %}
+                        {% if proposal.selected_room_config.doubles %}
+                            <li><strong>{% trans "Double Rooms" %}</strong>: {{ proposal.selected_room_config.doubles }}</li>
+                        {% endif %}
+                        {% if proposal.selected_room_config.triples %}
+                            <li><strong>{% trans "Triple Rooms" %}</strong>: {{ proposal.selected_room_config.triples }}</li>
+                        {% endif %}
+                        <li><strong>{% trans "Total Price" %}</strong>: {{ proposal.currency }} {{ proposal.estimated_price|floatformat:2 }}</li>
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="text-center mt-4">
+            <a href="{% url 'bookings:customer_portal' %}?prop_id={{ proposal.prop_id }}" class="btn btn-secondary">{% trans "Track Proposal" %}</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

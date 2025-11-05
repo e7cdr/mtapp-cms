@@ -1,1 +1,3 @@
 "__pycache__/*.pycvenv/.env" 
+"staticfiles"
+".sqlite3"

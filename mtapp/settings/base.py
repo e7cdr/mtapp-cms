@@ -3,22 +3,12 @@
 import os
 from pathlib import Path
 from decouple import config
+from django.conf import settings
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE_DIR = os.path.dirname(PROJECT_DIR)
 
-# 5. Security Settings
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = 'DENY'
 
-# HTTPS in production
-SECURE_SSL_REDIRECT = True  # if behind proxy, see below
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-SECURE_HSTS_SECONDS = 31536000  # Enforce HTTPS for 1 year
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
 
 # Sensitive keys from environment variables
 SECRET_KEY = config('SECRET_KEY')
@@ -27,14 +17,8 @@ STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY')
 STRIPE_PUBLISHABLE_KEY = config('STRIPE_PUBLISHABLE_KEY')
 GOOGLE_TRANSLATE_KEY = config('GOOGLE_TRANSLATE_KEY')
 
-# Email settings for production
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = config('EMAIL_HOST', default='mail.milanotravel.com.ec')
-EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
-EMAIL_HOST_USER = config('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
-EMAIL_USE_TLS = True
-DEFAULT_FROM_EMAIL = 'info@milanotravel.com.ec'
+# Your existing production settings (keep these)
+
 
 
 
@@ -55,8 +39,8 @@ INSTALLED_APPS = [
     "tours",
     "bookings",
     "partners",
+    "p_methods",
     # "profiles",
-    # "revenue_management",
     # "staff_tools",
     "wagtail_localize",
     "wagtail_localize.locales",
@@ -64,8 +48,8 @@ INSTALLED_APPS = [
     "wagtail.contrib.redirects",
     "wagtail.contrib.settings",
     "wagtail.contrib.routable_page",
-    "wagtail.api.v2",
-    "rest_framework",
+    "wagtail.api.v2", # API
+    "rest_framework", # API
     "wagtail.embeds",
     "wagtail.sites",
     "wagtail.users",
@@ -154,20 +138,20 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 USE_L10N = True
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST', default='127.0.0.1'),
-        'PORT': config('DB_PORT', default='3306'),
-        'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            'charset': 'utf8mb4',
-        },
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': config('DB_NAME'),
+#         'USER': config('DB_USER'),
+#         'PASSWORD': config('DB_PASSWORD'),
+#         'HOST': config('DB_HOST', default='127.0.0.1'),
+#         'PORT': config('DB_PORT', default='3306'),
+#         'OPTIONS': {
+#             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+#             'charset': 'utf8mb4',
+#         },
+#     }
+# }
 
 
 # Wagtail internationalization settings

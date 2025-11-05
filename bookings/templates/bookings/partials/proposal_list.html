@@ -11,18 +11,33 @@
         </tr>
     </thead>
     <tbody>
-        {% for proposal in proposals %}
+        {% for proposal in proposals.object_list %}
             <tr>
-                <td>{{ proposal.id }}</td>
-                <td>{{ proposal.customer_name }}</td>
-                <td>{{ proposal.tour }}</td>
-                <td>{{ proposal.travel_date }}</td>
-                <td>{{ proposal.get_status_display }}</td>
+                <td>{{ proposal.prop_id|default:proposal.id }}</td>  <!-- Use prop_id if available -->
+                <td>{{ proposal.customer_name }} ({{ proposal.customer_email }})</td>
+                <td>{{ proposal.tour|default:"N/A" }}</td>
+                <td>{{ proposal.travel_date|date:"M d, Y"|default:"N/A" }}</td>
                 <td>
-                    {% if proposal.status == 'PENDING_SUPPLIER' %}
-                        <a href="{% url 'bookings:confirm_proposal' proposal.id %}" class="btn btn-success btn-sm">{% trans "Confirm" %}</a>
-                        <a href="{% url 'bookings:reject_proposal' proposal.id %}" class="btn btn-danger btn-sm">{% trans "Reject" %}</a>
+                    {% get_current_language as LANGUAGE_CODE %}
+                    <span class="badge bg-{% if proposal.status == 'PENDING_SUPPLIER' or proposal.status == 'PENDING_INTERNAL' %}warning{% elif proposal.status == 'SUPPLIER_CONFIRMED' %}info{% elif proposal.status == 'PAID' %}success{% else %}danger{% endif %}">
+                        {{ proposal.get_status_display }}
+                        {% if proposal.status == 'PENDING_INTERNAL' %}(Internal){% endif %}
+                    </span>
+                </td>
+                <td>
+                    {% if proposal.status in 'PENDING_SUPPLIER,PENDING_INTERNAL' %}
+                        <a href="{% url 'bookings:confirm_proposal' proposal.id %}" 
+                        class="btn btn-success btn-sm" 
+                        onclick="return confirm('Confirm this proposal and send payment email?');">
+                        {% trans "Confirm" %}
+                        </a>
+                        <a href="{% url 'bookings:reject_proposal' proposal.id %}" 
+                        class="btn btn-danger btn-sm" 
+                        onclick="return confirm('Reject this proposal?');">
+                        {% trans "Reject" %}
+                        </a>
                     {% endif %}
+                    <a href="{% url 'bookings:proposal_detail' proposal.id %}" class="btn btn-info btn-sm">{% trans "View" %}</a>
                 </td>
             </tr>
         {% empty %}

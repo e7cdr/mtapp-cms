@@ -118,6 +118,10 @@ class AbstractTourPage(Page):
 
     # Supplier & Pricing (common)
     supplier_email = models.EmailField(blank=True, help_text=_("Supplier contact email"))
+    is_company_tour = models.BooleanField(
+        default=False,
+        help_text=_("If True, skip supplier confirmation and go direct to payment (company-run tour).")
+    )
     pricing_type = models.CharField(
         max_length=20,
         choices=[('Per_room', 'Per Room'), ('Per_person', 'Per Person')],
@@ -129,6 +133,8 @@ class AbstractTourPage(Page):
     price_sgl = models.DecimalField(max_digits=10, decimal_places=2)
     price_dbl = models.DecimalField(max_digits=10, decimal_places=2)
     price_tpl = models.DecimalField(max_digits=10, decimal_places=2)
+
+    price_adult = models.DecimalField(max_digits=10, decimal_places=2)
     price_chd = models.DecimalField(max_digits=10, decimal_places=2)
     price_inf = models.DecimalField(max_digits=10, decimal_places=2)
     seasonal_factor = models.DecimalField(max_digits=3, decimal_places=2, default=1.0)
@@ -199,20 +205,30 @@ class AbstractTourPage(Page):
             FieldPanel('yt_vid'),
         ], heading="Media"),
         MultiFieldPanel([
-            FieldPanel('price_subtext'),
-            FieldPanel('price_sgl'),
-            FieldPanel('price_dbl'),
-            FieldPanel('price_tpl'),
-            FieldPanel('price_chd'),
-            FieldPanel('price_inf'),
-            FieldPanel('seasonal_factor'),
-            FieldPanel('demand_factor'),
-            FieldPanel('rep_comm'),
+                MultiFieldPanel([            
+                    FieldPanel('price_sgl'),
+                    FieldPanel('price_dbl'),
+                    FieldPanel('price_tpl'),
+        ], heading="Prices Per Room"),
+                MultiFieldPanel([
+                    FieldPanel('price_adult'),
+                    FieldPanel('price_chd'),
+                    FieldPanel('price_inf'),
+                    FieldPanel('max_children_per_room'),
+        ], heading="Prices Per Person (If per room, DON't fill ADULT PRICE)"),
+            MultiFieldPanel([
+                FieldPanel('price_subtext'),
+                FieldPanel('seasonal_factor'),
+                FieldPanel('demand_factor'),
+                FieldPanel('rep_comm'),
+            ],heading="Commissions and Factors"),
         ], heading="Price & Comm"),
+        
 
         FieldPanel('ref_code'),
         FieldPanel('code_id', read_only=True),
         FieldPanel('supplier_email'),
+        FieldPanel('is_company_tour'),
         MultiFieldPanel([
             FieldPanel('max_capacity'),
             FieldPanel('available_slots'),
@@ -221,7 +237,6 @@ class AbstractTourPage(Page):
             FieldPanel('end_date'),
             FieldPanel('available_days'),
             FieldPanel('pricing_type'),
-            FieldPanel('max_children_per_room'),
             FieldPanel('child_age_min'),
             FieldPanel('child_age_max'),
         ], heading="Tour Configuration"),

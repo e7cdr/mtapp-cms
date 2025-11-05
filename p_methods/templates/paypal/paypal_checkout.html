@@ -1,0 +1,130 @@
+{% load static i18n %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% trans "PayPal Checkout" %} - {{ proposal.tour.name }} - Milano Travel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://www.paypal.com/sdk/js?client-id={{ client_id }}&currency={{ currency }}&components=buttons"></script>
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>{% trans "Secure Payment for" %} {{ proposal.tour.name }}</h2>
+        <div class="table table-card mb-4">
+            <div class="card-body">
+                <p><strong>{% trans "Proposal ID" %}:</strong> {{ proposal.prop_id }}</p>
+                <p><strong>{% trans "Travel Date" %}:</strong> {{ proposal.travel_date|date:"F j, Y" }}</p>
+                <p><strong>{% trans "Total Amount" %}:</strong> {{ currency }} {{ amount }}</p>
+                <p>{% trans "Adults" %}: {{ proposal.number_of_adults }} | {% trans "Children" %}: {{ proposal.number_of_children }}</p>
+            </div>
+        </div>
+        
+        <div id="paypal-button-container"></div>
+        <div id="result-message" class="mt-3"></div>
+    </div>
+
+<script>
+    // Frontend data (unchanged)
+    const proposalId = {{ proposal.id }};
+    const currency = '{{ currency }}';
+    const amount = {{ amount }};
+    const numAdults = {{ proposal.number_of_adults }};
+    const tourId = {{ proposal.tour.id }};
+    const tourName = "{{ proposal.tour.name|escapejs }}";
+    const pricePerAdult = amount / numAdults;
+
+    const proposalData = {
+        cart: [
+            {
+                id: tourId,
+                quantity: numAdults,
+                name: tourName + " - Adult Ticket",
+                price: pricePerAdult,
+            },
+        ]
+    };
+
+    // FIXED: Use Django URL tags for locale-safe paths (includes /en/p_methods/)
+    const ordersUrl = "{% url 'p_methods:paypal_orders_create' %}";  // /en/p_methods/api/orders/
+    const captureBase = ordersUrl;  // Reuse for capture: /en/p_methods/api/orders/<id>/capture/
+
+    // CSRF token (Django requires for POST)
+    const csrfToken = "{{ csrf_token }}";
+
+    const paypalButtons = window.paypal.Buttons({
+        style: {
+            shape: "pill",
+            layout: "horizontal",
+            color: "gold",
+            label: "paypal",
+            tagline: false,
+            height: 55,
+        },
+        createOrder: function() {
+            console.log('Creating order...');
+            return fetch(ordersUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,  // FIXED: CSRF
+                },
+                body: JSON.stringify({
+                    cart: proposalData.cart,
+                    proposal_id: proposalId,
+                }),
+            }).then(res => {
+                console.log('Order response status:', res.status);
+                if (!res.ok) {
+                    return res.text().then(text => {
+                        console.error('Order error response:', text.substring(0, 200));
+                        throw new Error(`Order creation failed: ${res.status}`);
+                    });
+                }
+                return res.json();
+            }).then(data => {
+                console.log('Order created:', data.id);
+                return data.id;
+            }).catch(error => {
+                console.error('Create order error:', error);
+                throw error;
+            });
+        },
+        onApprove: function(data, actions) {
+            console.log('Approved, capturing...');
+            const fullCaptureUrl = captureBase + data.orderID + '/capture/';
+            return fetch(fullCaptureUrl, {  // FIXED: Append ID + /capture/
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                },
+                body: JSON.stringify({
+                    proposal_id: proposalId,
+                }),
+            }).then(res => {
+                if (!res.ok) {
+                    return res.text().then(text => {
+                        console.error('Capture error:', text.substring(0, 200));
+                        throw new Error(`Capture failed: ${res.status}`);
+                    });
+                }
+                return res.json();
+            }).then(capturedOrder => {
+                console.log('Payment captured:', capturedOrder);
+                window.location.href = '/bookings/payment/success/' + proposalId + '/';  // FIXED: Hardcode (adjust if locale needed)
+            }).catch(error => {
+                console.error('Capture error:', error);
+                document.getElementById('paypal-button-container').innerHTML = 
+                    '<div class="alert alert-danger mt-3">Payment failed. Please try again or contact support.</div>';
+            });
+        },
+        onError: function(err) {
+            console.error('PayPal SDK error:', err);
+            // FIXED: Show popup block or other SDK errors
+            const msg = err.message.includes('popup') ? 'Popup blocked—allow popups for paypal.com and try again.' : err.message;
+            document.getElementById('result-message').innerHTML = '<div class="alert alert-danger">' + msg + '</div>';
+        },
+    });
+    paypalButtons.render('#paypal-button-container');
+</script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+{% load i18n %}
+<!DOCTYPE html>
+<html>
+<head><title>{% trans "Internal Proposal Review" %}</title></head>
+<body>
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>{% trans "New Company Tour Proposal - Internal Review" %}</h2>
+        <p>{% trans "A company-run tour proposal needs your confirmation:" %}</p>
+        <ul>
+            <li><strong>{% trans "Proposal ID" %}:</strong> {{ proposal.prop_id }}</li>
+            <li><strong>{% trans "Tour" %}:</strong> {{ tour }}</li>
+            <li><strong>{% trans "Customer" %}:</strong> {{ proposal.customer_name }} ({{ proposal.customer_email }})</li>
+            <li><strong>{% trans "Travel Date" %}:</strong> {{ proposal.travel_date }}</li>
+            <li><strong>{% trans "End Date" %}:</strong> {{ end_date }}</li>
+            <li><strong>{% trans "Adults/Children" %}:</strong> {{ proposal.number_of_adults }} / {{ proposal.number_of_children }}</li>
+            <li><strong>{% trans "Estimated Price" %}:</strong> {{ proposal.currency }} {{ proposal.estimated_price }}</li>
+            <li><strong>{% trans "Notes" %}:</strong> {{ proposal.notes|default:"None" }}</li>
+        </ul>
+        {% if configuration_details %}
+        <h3>{% trans "Room Configuration" %}:</h3>
+        <ul>
+            <li>Singles: {{ configuration_details.singles|default:0 }}</li>
+            <!-- Add others as in templates -->
+        </ul>
+        {% endif %}
+        <p>
+            {% trans "Please review and confirm in the portal:" %}
+            <a href="{{ portal_url }}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; display: inline-block;">{% trans "Manage Proposals" %}</a>
+        </p>
+        <p>{% trans "Milano Travel Internal Team" %}</p>
+    </div>
+</body>
+</html>

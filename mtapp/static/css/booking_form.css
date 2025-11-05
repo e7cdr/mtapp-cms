@@ -1,0 +1,127 @@
+@import url('variables.css');
+
+
+.booking-section {
+    padding-top: 3.5rem;
+    padding-bottom: 3.5rem;
+
+}
+
+.tour-display {
+    position: relative;
+}
+
+.tour-title {
+    position: absolute;
+    top: 0;
+    left: 0;
+    /* margin-left: 37%; */
+    /* margin: 162px; */
+    height: 20.6rem;
+    width: 31rem;
+    text-align: center;
+    align-content: center;
+    font-family: Style Script;
+    text-shadow: 2px 1px 3px rgba(0, 0, 0, 0.9);
+    font-size: 3rem;
+    color: white;
+}
+
+#id_number_of_adults, #id_number_of_children {
+    background: #deefff;
+    width: 3rem;
+    text-align: center;
+    box-shadow: none;
+    border-radius: 0.9rem;
+}
+
+
+div.container h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+
+}
+
+/* #booking-form-container {
+
+} */
+
+.booking-form {
+    padding: 1.5rem;
+
+}
+
+.card {
+    --bs-card-spacer-y: 1rem;
+    --bs-card-spacer-x: 1rem;
+    --bs-card-title-spacer-y: 0.5rem;
+    --bs-card-title-color: ;
+    --bs-card-subtitle-color: ;
+    --bs-card-border-width: var(--bs-border-width);
+    --bs-card-border-color: var(--bs-border-color-translucent);
+    --bs-card-border-radius: var(--bs-border-radius);
+    --bs-card-box-shadow: ;
+    --bs-card-inner-border-radius: calc(var(--bs-border-radius) - (var(--bs-border-width)));
+    --bs-card-cap-padding-y: 0.5rem;
+    --bs-card-cap-padding-x: 1rem;
+    --bs-card-cap-bg: rgba(var(--bs-body-color-rgb), 0.03);
+    --bs-card-cap-color: ;
+    --bs-card-height: ;
+    --bs-card-color: ;
+    --bs-card-bg: var(--bs-body-bg);
+    --bs-card-img-overlay-padding: 1rem;
+    --bs-card-group-margin: 0.75rem;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    height: var(--bs-card-height);
+    color: var(--bs-body-color);
+    word-wrap: break-word;
+    background-color: var(--bs-card-bg);
+    background-clip: border-box;
+    border: var(--bs-card-border-width) solid var(--bs-card-border-color);
+    border-radius: var(--bs-card-border-radius);
+    margin-bottom: 1.5rem;
+    box-shadow: 0 0 2px black;
+}
+
+label {
+    font-weight: 600;
+
+}
+
+input {
+    box-shadow: 0 0 1px black;
+    padding-left: 0.5rem;
+}
+
+textarea {
+    box-shadow: 0 0 1px black;
+    max-height: 5rem;
+
+}
+
+
+
+.navbar { position: fixed !important; }
+.tour-card-img { max-width: 100%; height: auto; border-radius: 8px; width: 31rem; }
+.visible { display: block !important; }
+.d-none { display: none !important; }
+
+.flatpickr-calendar {
+z-index: 9999 !important;  /* Above Bootstrap modals/cards */
+position: absolute !important;
+opacity: 1 !important;
+display: block !important;  /* Override any hidden states */
+box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);  /* Bootstrap shadow for visibility */
+}
+
+.flatpickr-input { width: 100%;}
+.flatpickr-input:focus + .flatpickr-calendar,
+.flatpickr-calendar[style*="display: block"] {
+    display: block !important;  /* Ensure on focus */
+}
+.flatpickr-calendar.open {
+    visibility: visible !important;
+}

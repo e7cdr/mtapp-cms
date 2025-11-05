@@ -9,32 +9,50 @@
         <h1>{% trans "Your Tour Proposal" %}</h1>
         <p>{% trans "Dear" %} {{ proposal.customer_name }},</p>
         <p>{% trans "Your tour proposal has been confirmed by the supplier. Please complete the payment to finalize your booking:" %}</p>
+        
+        <!-- Basic Summary (mirrors proposal success) -->
         <ul>
-            <li>{% trans "Tour" %}: {{ tour |default:"Unknown Tour" }}</li>
+            <li>{% trans "Tour" %}: {{ tour|default:"Unknown Tour" }}</li>
             <li>{% trans "Travel Date" %}: {{ proposal.travel_date|date:"F j, Y" }}</li>
             <li>{% trans "End Date" %}: {{ end_date|date:"F j, Y" }}</li>
             <li>{% trans "Adults" %}: {{ proposal.number_of_adults }}</li>
             <li>{% trans "Children" %}: {{ proposal.number_of_children }}</li>
-            <li>{% trans "Estimated Price" %}: {{ proposal.currency }} {{ proposal.estimated_price }}</li>
+            <li>{% trans "Infants" %}: {{ proposal.number_of_infants|default:0 }}</li>
             <li>{% trans "Notes" %}: {{ proposal.notes|default:"None" }}</li>
-            {% if configuration_details %}
-            <li>{% trans "Room Configuration" %}:
-                <ul>
-                    <li>{% trans "Singles" %}: {{ configuration_details.singles|default:0 }}</li>
-                    <li>{% trans "Doubles" %}: {{ configuration_details.doubles|default:0 }}</li>
-                    <li>{% trans "Triples" %}: {{ configuration_details.triples|default:0 }}</li>
-                    <li>{% trans "Children" %}: {{ configuration_details.children|default:0 }}</li>
-                    <li>{% trans "Infants" %}: {{ configuration_details.infants|default:0 }}</li>
-                    <li>{% trans "Total" %}: {{ configuration_details.total|default:0 }}</li>
-                </ul>
-            </li>
-            {% endif %}
         </ul>
-        <p>{% trans "Click the button below to simulate payment (Stripe integration pending):" %}</p>
-        <a href="{{ payment_link }}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; display: inline-block;">
+        
+        <!-- Pricing Breakdown (conditional on pricing_type) -->
+        <h3>{% trans "Pricing Details" %}</h3>
+        {% if pricing_type == 'Per_room' %}
+            {% if configuration_details %}
+            <p>{% trans "Room Configuration" %}:</p>
+            <ul>
+                <li>{% trans "Singles" %}: {{ configuration_details.singles|default:0 }}</li>
+                <li>{% trans "Doubles" %}: {{ configuration_details.doubles|default:0 }}</li>
+                <li>{% trans "Triples" %}: {{ configuration_details.triples|default:0 }}</li>
+                <li>{% trans "Children" %}: {{ configuration_details.children|default:0 }}</li>
+                <li>{% trans "Infants" %}: {{ configuration_details.infants|default:0 }}</li>
+                <li><strong>{% trans "Total Estimated Price" %}: {{ proposal.currency }} {{ proposal.estimated_price|default:0 }}</strong></li>
+            </ul>
+            {% else %}
+                <p>{% trans "No room configuration available." %}</p>
+            {% endif %}
+        {% else %}  <!-- Per_person -->
+            <ul>
+                <li>{% trans "Adults" %}: {{ proposal.number_of_adults }} x {{ proposal.currency }} {{ price_adult|default:0 }} = {{ proposal.currency }} {{ per_person_details.adult_subtotal|default:0 }}</li>
+                <li>{% trans "Children" %}: {{ proposal.number_of_children }} x {{ proposal.currency }} {{ price_child|default:0 }} = {{ proposal.currency }} {{ per_person_details.child_subtotal|default:0 }}</li>
+                <li>{% trans "Infants" %}: {{ proposal.number_of_infants|default:0 }} x {{ proposal.currency }} {{ price_infant|default:0 }} = {{ proposal.currency }} {{ per_person_details.infant_subtotal|default:0 }}</li>
+                <li><strong>{% trans "Total Estimated Proposal Price" %}: {{ proposal.currency }} {{ proposal.estimated_price|default:0 }}</strong></li>
+            </ul>
+        {% endif %}
+        
+        <!-- Payment Button (fake for testing—calls payment_success) -->
+        <p>{% trans "Click the button below to proceed with payment:" %}</p>
+        <a href="{{ payment_link }}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; display: inline-block; border-radius: 4px;">
             {% trans "Pay Now" %}
         </a>
-        <p>{% trans "This payment link is for testing and will directly confirm your booking." %}</p>
+        <p class="small text-muted">{% trans "This link is secure and will process your payment." %}</p>
+        
         <p>
             {% trans "You can track your proposal status at:" %}
             <a href="{{ site_url }}/bookings/customer-portal/">{% trans "Customer Portal" %}</a>

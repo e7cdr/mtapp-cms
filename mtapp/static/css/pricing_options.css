@@ -1,0 +1,50 @@
+
+
+.pricing-table {
+    padding: 0.5rem;
+}
+
+.pricing-table .title, .pricing-table .subtitle {
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+}
+
+.pricing-table .subtitle {
+    font-size: small;
+}
+.subtitle p {
+    margin-bottom: 0;
+}
+
+.ranges {
+    padding-top: .5rem;
+    padding-bottom: .5rem;
+    padding-right: 1rem;
+    padding-left: 1rem;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    width: 80%;
+}
+
+button {
+    border-radius: 0.4rem;
+    font-size: small;
+}
+
+.hover\:scale-102:hover {
+    transform: scale(1.02);
+}
+.configuration-item.hidden {
+    display: none !important;
+}
+@media (max-width: 640px) {
+    .pricing-table .text-base {
+        font-size: 0.875rem;
+    }
+    .pricing-table .text-sm {
+        font-size: 0.75rem;
+    }
+    .pricing-table .p-3 {
+        padding: 0.5rem;
+    }
+}

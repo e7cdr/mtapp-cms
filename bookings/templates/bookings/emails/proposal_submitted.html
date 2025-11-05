@@ -1,0 +1,49 @@
+{% load i18n %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% trans "Your Tour Proposal Submitted" %}</title>
+</head>
+<body>
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1>{% trans "Your Tour Proposal Submitted" %}</h1>
+        <p>{% trans "Dear" %} {{ proposal.customer_name|default:"Customer" }},</p>
+        <p>
+            {% blocktrans trimmed %}
+                Thank you! Your proposal (ID: {{ proposal.prop_id|default:'N/A' }}) for {{ tour|default:'Unknown Tour' }} has been submitted.
+            {% endblocktrans %}
+        </p>
+        {% if is_company_tour %}
+            <p>{% trans "This is a company-run tour—our internal team will confirm shortly." %}</p>
+        {% else %}
+            <p>{% trans "We'll notify you once the supplier confirms (usually within 24-48 hours)." %}</p>
+        {% endif %}
+        <ul>
+            <li>{% trans "Travel Date" %}: {{ proposal.travel_date|date:"F j, Y"|default:'N/A' }}</li>
+            <li>{% trans "End Date" %}: {{ end_date|date:"F j, Y"|default:'N/A' }}</li>
+            <li>{% trans "Adults" %}: {{ proposal.number_of_adults|default:0 }}</li>
+            <li>{% trans "Children" %}: {{ proposal.number_of_children|default:0 }}</li>
+            <li>{% trans "Estimated Price" %}: {{ proposal.currency|default:'USD' }} {{ proposal.estimated_price|default:0 }}</li>
+            <li>{% trans "Notes" %}: {{ proposal.notes|default:'None' }}</li>
+            {% if configuration_details %}
+            <li>{% trans "Room Configuration" %}:
+                <ul>
+                    <li>{% trans "Singles" %}: {{ configuration_details.singles|default:0 }}</li>
+                    <li>{% trans "Doubles" %}: {{ configuration_details.doubles|default:0 }}</li>
+                    <li>{% trans "Triples" %}: {{ configuration_details.triples|default:0 }}</li>
+                    <li>{% trans "Children" %}: {{ configuration_details.children|default:0 }}</li>
+                    <li>{% trans "Infants" %}: {{ configuration_details.infants|default:0 }}</li>
+                    <li>{% trans "Total" %}: {{ configuration_details.total|default:0 }}</li>
+                </ul>
+            </li>
+            {% endif %}
+        </ul>
+        <p>
+            {% trans "Track your proposal at:" %}
+            <a href="{{ site_url }}/bookings/customer-portal/">{% trans "Customer Portal" %}</a>
+        </p>
+        <p>{% trans "Thank you for choosing Milano Travel," %}</p>
+        <p>{% trans "Milano Travel Team" %}</p>
+    </div>
+</body>
+</html>

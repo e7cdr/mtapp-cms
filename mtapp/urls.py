@@ -6,16 +6,23 @@ from django.conf.urls.i18n import i18n_patterns
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail import urls as wagtail_urls
 from wagtail.documents import urls as wagtaildocs_urls
+
+from bookings.api_views import AvailableDatesView
 from .api import api_router
 from search import views as search_views
+
+
+
 
 
 urlpatterns = [
     path("django-admin/", admin.site.urls),
     path("admin/", include(wagtailadmin_urls)),
     path("documents/", include(wagtaildocs_urls)),
+    path('api/available-dates/', AvailableDatesView.as_view(), name='available_dates_api'),  # FIXED: Matches JS fetch
+    path('bookings/', include('bookings.urls', namespace='bookings')),
 
-]
+    ]
 
 
 if settings.DEBUG:
@@ -30,6 +37,9 @@ urlpatterns = urlpatterns + i18n_patterns (
     path("api/v2/", api_router.urls),
     path('i18n/', include('django.conf.urls.i18n')),
     path("search/", search_views.search, name="search"),
+    path('p_methods/', include('p_methods.urls', namespace='p_methods')),
+
+
     # For anything not caught by a more specific rule above, hand over to
     # Wagtail's page serving mechanism. This should be the last pattern in
     # the list:

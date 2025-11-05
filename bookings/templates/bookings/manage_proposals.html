@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static i18n %}
+{% load static i18n custom_filters %}
 
 {% block title %}{% trans "Manage Proposals" %} - Milano Travel{% endblock %}
 
@@ -7,12 +7,48 @@
 <section class="py-5">
     <div class="container">
         <h2 class="text-center mb-4">{% trans "Manage Proposals" %}</h2>
+        
         <div class="mb-3">
-            <a href="?status=PENDING_SUPPLIER" class="btn btn-primary btn-sm">{% trans "Pending" %}</a>
-            <a href="?status=SUPPLIER_CONFIRMED" class="btn btn-primary btn-sm">{% trans "Confirmed" %}</a>
-            <a href="?status=REJECTED" class="btn btn-primary btn-sm">{% trans "Rejected" %}</a>
-            <a href="?status=PAID" class="btn btn-primary btn-sm">{% trans "Paid" %}</a>
+            <!-- Status Filters -->
+            <a href="?status=all" class="btn btn-outline-primary btn-sm {% if current_status == 'all' %}active{% endif %}">{% trans "All" %}</a>
+            <a href="?status=PENDING_SUPPLIER" class="btn btn-primary btn-sm {% if current_status == 'PENDING_SUPPLIER' %}active{% endif %}">{% trans "Pending Supplier" %}</a>
+            <a href="?status=PENDING_INTERNAL" class="btn btn-primary btn-sm {% if current_status == 'PENDING_INTERNAL' %}active{% endif %}">{% trans "Pending Internal" %}</a>
+            <a href="?status=SUPPLIER_CONFIRMED" class="btn btn-primary btn-sm {% if current_status == 'SUPPLIER_CONFIRMED' %}active{% endif %}">{% trans "Confirmed" %}</a>
+            <a href="?status=REJECTED" class="btn btn-primary btn-sm {% if current_status == 'REJECTED' %}active{% endif %}">{% trans "Rejected" %}</a>
+            <a href="?status=PAID" class="btn btn-primary btn-sm {% if current_status == 'PAID' %}active{% endif %}">{% trans "Paid" %}</a>
         </div>
+
+        <!-- NEW: Month Filter Form -->
+        <div class="mb-3">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label for="month" class="form-label">{% trans "Month" %}</label>
+                <select name="month" id="month" class="form-select">
+                    <option value="">{% trans "All Months" %}</option>
+                    {% for month in "January|February|March|April|May|June|July|August|September|October|November|December"|split:"|" %}
+                        {% for m in "1|2|3|4|5|6|7|8|9|10|11|12"|split:"|" %}
+                            {% if forloop.counter0|stringformat:"s" == forloop.parentloop.counter0|stringformat:"s" %}
+                                <option value="{{ forloop.counter0|add:1 }}" {% if request.GET.month == forloop.counter0|add:1|stringformat:"s" %}selected{% endif %}>{{ month }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    {% endfor %}
+                </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="year" class="form-label">{% trans "Year" %}</label>
+                    <select name="year" id="year" class="form-select">
+                        <option value="">{% trans "All Years" %}</option>
+                        {% for y in "2024|2025|2026"|split:"|" %}
+                            <option value="{{ y }}" {% if request.GET.year == y %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 align-self-end">
+                    <button type="submit" class="btn btn-outline-secondary">{% trans "Filter" %}</button>
+                </div>
+            </form>
+        </div>
+
         {% include 'bookings/partials/proposal_list.html' %}
     </div>
 </section>

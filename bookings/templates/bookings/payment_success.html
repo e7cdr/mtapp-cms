@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Payment Successful" %} - Milano Travel{% endblock %}
+
+{% block content %}
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 text-center mb-4">
+                <h2>{% trans "Payment Successful!" %}</h2>
+                <div class="alert alert-success">
+                    {% trans "Your booking is confirmed. Thank you for choosing Milano Travel!" %}
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="mt-2">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <p class="lead">{% trans "Booking ID: " %}{{ booking.book_id|default:booking.id }}</p>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <h4>{% trans "Customer Information" %}</h4>
+                <table class="table table-borderless">
+                    <tr><th>{% trans "Name" %}</th><td>{{ booking.customer_name }}</td></tr>
+                    <tr><th>{% trans "Email" %}</th><td>{{ booking.customer_email }}</td></tr>
+                    <tr><th>{% trans "Phone" %}</th><td>{{ booking.customer_phone|default:"N/A" }}</td></tr>
+                    <tr><th>{% trans "Address" %}</th><td>{{ booking.customer_address|default:"N/A" }}</td></tr>
+                    <tr><th>{% trans "Nationality" %}</th><td>{{ booking.nationality|default:"N/A" }}</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h4>{% trans "Tour Information" %}</h4>
+                <table class="table table-borderless">
+                    <tr><th>{% trans "Tour" %}</th><td>{{ tour|default:"N/A" }}</td></tr>
+                    <tr><th>{% trans "Travel Date" %}</th><td>{{ booking.travel_date|date:"F j, Y" }}</td></tr>
+                    <tr><th>{% trans "End Date" %}</th><td>{{ end_date|date:"F j, Y"|default:"N/A" }}</td></tr>
+                    <tr><th>{% trans "Status" %}</th><td><span class="badge bg-success">{% trans "Confirmed & Paid" %}</span></td></tr>
+                    <tr><th>{% trans "Total Price" %}</th><td>{{ booking.currency }} {{ booking.total_price|floatformat:2 }}</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <h4>{% trans "Party Size" %}</h4>
+                <ul class="list-unstyled">
+                    <li>{% trans "Adults" %}: {{ booking.number_of_adults }}</li>
+                    {% if booking.number_of_children > 0 %}
+                        <li>{% trans "Children" %}: {{ booking.number_of_children }} (Ages: {{ booking.children_ages|join:", "|default:"N/A" }})</li>
+                    {% endif %}
+                    {% if booking.number_of_infants > 0 %}
+                        <li>{% trans "Infants" %}: {{ booking.number_of_infants }}</li>
+                    {% endif %}
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h4>{% trans "Configuration" %}</h4>
+                {% if configuration_details %}
+                    <ul class="list-unstyled">
+                        <li>{% trans "Singles" %}: {{ configuration_details.singles|default:0 }}</li>
+                        <li>{% trans "Doubles" %}: {{ configuration_details.doubles|default:0 }}</li>
+                        <li>{% trans "Triples" %}: {{ configuration_details.triples|default:0 }}</li>
+                        <li>{% trans "Children" %}: {{ configuration_details.children|default:0 }}</li>
+                        <li>{% trans "Infants" %}: {{ configuration_details.infants|default:0 }}</li>
+                        <li><strong>{% trans "Total" %}: {{ configuration_details.total|default:0 }}</strong></li>
+                    </ul>
+                {% else %}
+                    <p>{% trans "No configuration details." %}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if notes %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <h4>{% trans "Notes" %}</h4>
+                <p class="border p-3 bg-light">{{ notes }}</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="row mt-4">
+            <div class="col-12 text-center">
+                <a href="{{ site_url }}/bookings/customer-portal/" class="btn btn-primary">{% trans "View My Portal" %}</a>
+                <a href="{{ site_url }}" class="btn btn-secondary">{% trans "Back to Home" %}</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

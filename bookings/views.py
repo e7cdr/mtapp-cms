@@ -1,79 +1,257 @@
-import os
 import json
+import urllib
 import logging
 import requests
-from io import BytesIO
+from django.db.models import Sum  # NEW: For aggregates
+
 from decimal import Decimal
-from datetime import datetime, timedelta
-from django.urls import reverse
+from datetime import date, datetime, timedelta
+from django.urls import reverse, reverse_lazy
 from django.conf import settings
-from reportlab.lib import colors
 from django.utils import timezone
 from reportlab.lib.units import mm
 from django.contrib import messages
-import urllib
+from bookings.pdf_gen import generate_itinerary_pdf
+from bookings.utils import (
+    get_30_day_used_slots,
+    send_internal_confirmation_email, 
+    send_itinerary_email, send_preconfirmation_email, 
+    send_proposal_submitted_email, send_supplier_email
+)
+
+from django.db.models import Q
 from partners.models import Partner
 from reportlab.lib.pagesizes import A4
-from django.core.mail import send_mail
 from bookings.forms import ProposalForm
 from django.core.paginator import Paginator
-from django.contrib.messages import get_messages
-from django.http import JsonResponse, HttpResponse
+from django.http import Http404, JsonResponse, HttpResponse
 from django.template.loader import render_to_string
-from tours.models import FullTour, LandTour, DayTour
+from tours.models import LandTourPage
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import gettext_lazy as _
 from django.contrib.contenttypes.models import ContentType
-from home.templatetags.custom_filters import parse_date
 from django.shortcuts import get_object_or_404, render, redirect
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from django.views.decorators.csrf import csrf_exempt
 from bookings.models import ExchangeRate, Proposal, Booking, ProposalConfirmationToken
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image, PageTemplate, Frame, HRFlowable, KeepTogether
+
 
 logger = logging.getLogger(__name__)
 
+from django.views.generic import FormView
+from .forms import ProposalForm
+from .models import Proposal
+
+from paypalrestsdk import Payment  # pip install paypalrestsdk
+import paypalrestsdk as paypal
+from decouple import config
+from django.views.generic import TemplateView
+
+
+class BookingStartView(FormView):
+    template_name = 'bookings/booking_start.html'
+    form_class = ProposalForm
+    success_url = reverse_lazy('bookings:customer_portal')  # Fallback, not used
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        tour_id = self.kwargs['tour_id']
+        self.tour = get_object_or_404(LandTourPage, id=tour_id)
+        kwargs['tour'] = self.tour
+        kwargs['initial'] = {
+            'tour_type': 'land',
+            'tour_id': tour_id,
+            'form_submission': 'pricing',
+            'currency': 'USD',
+            'travel_date': date.today(),  # FIXED: Hard today (overrides tour.start_date)
+        }
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['tour'] = self.tour
+        context['tour_type'] = 'land'
+        context['tour_duration'] = self.tour.duration_days if self.tour else 0
+        context['booking_data'] = {'tourName': self.tour.name}
+
+        # Safe form access for initial_children
+        form = kwargs.get('form', self.get_form())
+        is_bound = form.is_bound
+        context['initial_children'] = form.cleaned_data.get('number_of_children', 0) if is_bound else 0
+        initial_child_ages = form.cleaned_data.get('child_ages', []) if is_bound else []
+        context['initial_child_ages'] = initial_child_ages
+        context['initial_child_ages_json'] = json.dumps(initial_child_ages)
+
+        min_age = getattr(self.tour, 'child_age_min', 0)
+        max_age = getattr(self.tour, 'child_age_max', 12)
+        context['select_age_range'] = list(range(min_age, max_age + 1))
+
+        if self.tour:
+            context['tour_start_date'] = self.tour.start_date.isoformat() if self.tour.start_date else date.today().isoformat()
+            context['tour_end_date'] = self.tour.end_date.isoformat() if self.tour.end_date else (date.today() + timedelta(days=365)).isoformat()
+            context['available_days'] = self.tour.available_days  # e.g., '0,1,2,3'
+
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        if form.is_valid():
+            cleaned_data = form.cleaned_data
+            # Force currency default if missing (e.g., field not rendered)
+            if 'currency' not in cleaned_data or not cleaned_data['currency']:
+                cleaned_data['currency'] = 'USD'
+
+            # Force travel_date from POST (ensure it's saved even if form quirky) - Enhanced
+            travel_date_str = request.POST.get('travel_date', '')
+            print(f"DEBUG Post: Raw travel_date from POST: '{travel_date_str}'")  # Key: Check if Flatpickr sets this
+            if travel_date_str:
+                try:
+                    from datetime import datetime
+                    parsed_date = datetime.strptime(travel_date_str, '%Y-%m-%d').date()
+                    cleaned_data['travel_date'] = parsed_date
+                    print(f"DEBUG Post: Parsed travel_date from POST '{travel_date_str}' to {parsed_date}")
+                except ValueError:
+                    print(f"DEBUG Post: Invalid travel_date '{travel_date_str}' - falling back")
+                    cleaned_data['travel_date'] = self.tour.start_date or date.today()  # Fallback to tour or today
+            else:
+                print("DEBUG Post: No travel_date in POST - falling back")
+                cleaned_data['travel_date'] = self.tour.start_date or date.today()
+
+            print("Form valid - storing for confirmation")
+            print(f"DEBUG Post: Final cleaned travel_date: {cleaned_data['travel_date']} (type: {type(cleaned_data['travel_date'])})")
+
+            # Compute configs for reference
+            configs = compute_pricing(
+                cleaned_data['tour_type'], self.tour.id,
+                request.POST, request.session
+            )
+
+            # Parse selected
+            selected_config_str = cleaned_data.get('selected_configuration', '0')
+            selected_index = int(selected_config_str) if selected_config_str.isdigit() else 0
+            selected_room_config = configs[selected_index] if selected_index < len(configs) else {}
+
+            
+
+            # Store in session—no save yet
+            proposal_data = {
+                'tour_type': cleaned_data['tour_type'],
+                'tour_id': cleaned_data['tour_id'],
+                'customer_name': cleaned_data['customer_name'],
+                'customer_email': cleaned_data['customer_email'],
+                'customer_phone': cleaned_data.get('customer_phone', ''),
+                'customer_address': cleaned_data.get('customer_address', ''),
+                'nationality': cleaned_data.get('nationality', ''),
+                'notes': cleaned_data.get('notes', ''),
+                'number_of_adults': cleaned_data['number_of_adults'],
+                'number_of_children': cleaned_data['number_of_children'],
+                'child_ages': cleaned_data.get('child_ages', []),
+                'travel_date': cleaned_data['travel_date'].isoformat() if hasattr(cleaned_data['travel_date'], 'isoformat') else str(cleaned_data['travel_date']),
+                'selected_configuration': selected_index,
+                'currency': cleaned_data['currency'],
+                'supplier_email': self.tour.supplier_email,
+                'estimated_price': str(selected_room_config.get('total_price', '0')),  # Str for JSON
+                'room_config': {'options': configs},
+                'selected_room_config': selected_room_config,
+                'number_of_infants': sum(1 for age in cleaned_data.get('child_ages', []) if age < self.tour.child_age_min),
+            }
+
+            temp_proposal = Proposal(
+                number_of_adults=proposal_data['number_of_adults'],
+                number_of_children=proposal_data['number_of_children'],
+                number_of_infants=proposal_data['number_of_infants'],
+                selected_config=proposal_data['selected_room_config'],
+                content_type=ContentType.objects.get_for_model(self.tour),
+                object_id=self.tour.id,
+                travel_date=datetime.strptime(proposal_data['travel_date'], '%Y-%m-%d').date(),
+                currency=proposal_data['currency'],
+                tour=self.tour,  # For calc
+            )
+            proposal_data['estimated_price'] = str(selected_room_config.get('total_price', '0'))
+
+            request.session['proposal_data'] = proposal_data
+            print(f"DEBUG Post: Saved session travel_date: {proposal_data['travel_date']}")
+
+            print(f"Stored data for confirmation: {len(proposal_data)} keys")
+
+            # Handle AJAX vs non-AJAX
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': True, 'message': 'Data saved for confirmation'})
+            else:
+                # Non-AJAX: FIXED: Redirect to modal loader (your render_confirmation)
+                return redirect('bookings:render_confirmation', tour_id=self.tour.id)
+        else:
+            print(f"DEBUG Post: Form invalid - errors: {form.errors}")  # Add this for validation fails
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'error': form.errors}, status=400)
+            # Non-AJAX: re-render with errors
+            return self.form_invalid(form)
+     
+paypal.configure({
+    "mode": "sandbox",  # "live" for prod
+    "client_id": config('PAYPAL_CLIENT_ID'),
+    "client_secret": config('PAYPAL_CLIENT_SECRET'),
+})
 
 def compute_pricing(tour_type, tour_id, form_data, session):
-    """
-    Compute pricing configurations for a tour based on form data.
-    Uses seasonal_factor, demand_factor, and infant pricing from the tour model.
-    Returns a list of configuration dictionaries.
-    """
     logger.debug(f"compute_pricing inputs: form_data={form_data}, tour_type={tour_type}, tour_id={tour_id}")
-    model_map = {'full': FullTour, 'land': LandTour, 'day': DayTour}
+    model_map = {'full': "FullTourPage", 'land': LandTourPage, 'day': "DayTourPage"}
     model = model_map.get(tour_type.lower())
     if not model:
         logger.error(f"Invalid tour type: {tour_type}")
         return []
 
-    tour = get_object_or_404(model, pk=tour_id)
+    tour = get_object_or_404(model.objects.specific(), pk=tour_id)  # Ensures polymorphic fields
     logger.debug(f"Fetched tour: {tour.title}, type={tour_type}, id={tour_id}")
 
     form_errors = []
     number_of_adults_input = form_data.get('number_of_adults', 1)
-    try:
-        number_of_adults = int(number_of_adults_input)
-        if number_of_adults < 0:
-            form_errors.append("Number of adults cannot be negative.")
-            number_of_adults = 1
-    except (ValueError, TypeError):
-        form_errors.append("Please provide a valid number of adults.")
+    if number_of_adults_input == '':
         number_of_adults = 1
+    else:
+        try:
+            number_of_adults = int(number_of_adults_input)
+            if number_of_adults < 0:
+                form_errors.append("Number of adults cannot be negative.")
+                number_of_adults = 1
+        except (ValueError, TypeError):
+            form_errors.append("Please provide a valid number of adults.")
+            number_of_adults = 1
 
     number_of_children_input = form_data.get('number_of_children', 0)
-    try:
-        number_of_children = int(number_of_children_input)
-        if number_of_children < 0:
-            form_errors.append("Number of children cannot be negative.")
-            number_of_children = 0
-    except (ValueError, TypeError):
-        form_errors.append("Please provide a valid number of children.")
+    if number_of_children_input == '':
         number_of_children = 0
+    else:
+        try:
+            number_of_children = int(number_of_children_input)
+            if number_of_children < 0:
+                form_errors.append("Number of children cannot be negative.")
+                number_of_children = 0
+        except (ValueError, TypeError):
+            form_errors.append("Please provide a valid number of children.")
+            number_of_children = 0
 
     payment_type = form_data.get('payment_type', 'regular')
     travel_date = form_data.get('travel_date')
     currency = form_data.get('currency', session.get('currency', 'USD')).upper()
     session['currency'] = currency
+
+# Demand factor from capacity (fallback if no date)
+    if travel_date:
+        try:
+            travel_date = date.fromisoformat(travel_date)
+            capacity = get_remaining_capacity(tour_id, travel_date, tour.__class__, tour.duration_days)
+            if 'total_remaining' in capacity:
+                demand_factor = calculate_demand_factor(capacity['total_remaining'], sum(d['total_daily'] for d in capacity['per_day']))
+            else:
+                demand_factor = Decimal('0')
+                logger.warning("No capacity data—default demand_factor=0")
+        except ValueError:
+            demand_factor = Decimal('0')
+            logger.warning(f"Invalid travel_date '{travel_date}'—default demand_factor=0")
+    else:
+        demand_factor = Decimal('0')
+        logger.debug("No travel_date—default demand_factor=0")
+    price_adjustment = Decimal('1') + Decimal('0.2') * demand_factor
     logger.debug(f"Received number_of_adults: {number_of_adults}, number_of_children: {number_of_children}, payment_type: {payment_type}, travel_date: {travel_date}, currency: {currency}")
 
     if form_errors:
@@ -82,30 +260,35 @@ def compute_pricing(tour_type, tour_id, form_data, session):
 
     # Child ages parsing
     child_ages_input = form_data.get('child_ages', '[]')
-    if isinstance(child_ages_input, list):
-        child_ages = child_ages_input
+    if child_ages_input == '':
+        child_ages = []
     else:
-        try:
-            child_ages = json.loads(child_ages_input)
-            if not isinstance(child_ages, list):
-                logger.warning(f"Invalid child_ages: {child_ages_input}, expected a list")
+        if isinstance(child_ages_input, list):
+            child_ages = child_ages_input
+        else:
+            try:
+                child_ages = json.loads(child_ages_input)
+                if not isinstance(child_ages, list):
+                    logger.warning(f"Invalid child_ages: {child_ages_input}, expected a list")
+                    child_ages = []
+            except json.JSONDecodeError as e:
+                logger.warning(f"Invalid child_ages JSON: {child_ages_input}, error: {str(e)}")
                 child_ages = []
-        except json.JSONDecodeError as e:
-            logger.warning(f"Invalid child_ages JSON: {child_ages_input}, error: {str(e)}")
-            child_ages = []
     try:
         child_ages = [int(age) for age in child_ages if 0 <= int(age) <= tour.child_age_max][:number_of_children]
     except (ValueError, TypeError) as e:
         logger.warning(f"Invalid child ages values: {child_ages}, error: {str(e)}")
         child_ages = []
+    
 
     child_age_min = tour.child_age_min
     child_age_max = tour.child_age_max
     infants = sum(1 for age in child_ages if age < child_age_min)
     children = number_of_children if not child_ages else len(child_ages) - infants
-    if len(child_ages) != number_of_children:
+    if number_of_children > 0 and len(child_ages) != number_of_children:
         logger.warning(f"Child ages count ({len(child_ages)}) does not match number_of_children ({number_of_children})")
         return []
+    
     if not child_ages and number_of_children > 0:
         child_ages = [child_age_min] * number_of_children
         children = number_of_children
@@ -124,16 +307,22 @@ def compute_pricing(tour_type, tour_id, form_data, session):
         seasonal_factor = Decimal('1.0')
     logger.debug(f"Seasonal factor from tour: {seasonal_factor}")
 
-    # Demand factor from model
-    try:
-        demand_factor = Decimal(str(tour.demand_factor))
-        if demand_factor < 0:
-            logger.warning(f"Invalid demand_factor in tour {tour_id}: {demand_factor}, using default 0")
-            demand_factor = Decimal('0')
-    except (ValueError, TypeError):
-        logger.warning(f"Invalid demand_factor in tour {tour_id}: {tour.demand_factor}, using default 0")
-        demand_factor = Decimal('0')
-    price_adjustment = Decimal('1') + Decimal('0.2') * demand_factor
+    # Demand factor from 30-day capacity (global—scale model demand_factor)
+    demand_info = get_30_day_used_slots(tour_id, tour.__class__)
+    full_percent = demand_info['full_percent']
+    model_demand_factor = Decimal(str(getattr(tour, 'demand_factor', '0')))  # FIXED: From model (e.g., 0.2)
+    demand_factor = model_demand_factor * full_percent  # e.g., 0.2 * 0.5 = 0.1 (10% adjustment)
+    logger.debug(f"30-day used_slots={demand_info['used_slots']}, full_percent={full_percent}, model_demand_factor={model_demand_factor}, demand_factor={demand_factor}")
+    price_adjustment = Decimal('1') + demand_factor  # 1 + 0.1 = 1.1 (10%)
+    # try:
+    #     demand_factor = Decimal(str(tour.demand_factor))
+    #     if demand_factor < 0:
+    #         logger.warning(f"Invalid demand_factor in tour {tour_id}: {demand_factor}, using default 0")
+    #         demand_factor = Decimal('1.0')
+    # except (ValueError, TypeError):
+    #     logger.warning(f"Invalid demand_factor in tour {tour_id}: {tour.demand_factor}, using default 0")
+    #     demand_factor = Decimal('1.0')
+    # price_adjustment = demand_factor
     logger.debug(f"Demand factor from tour: {demand_factor}, Price adjustment: {price_adjustment}")
 
     # Use global get_exchange_rate
@@ -153,6 +342,7 @@ def compute_pricing(tour_type, tour_id, form_data, session):
             price_tpl = Decimal(str(tour.price_tpl_cash))
             price_chd = Decimal(str(tour.price_chd_cash))
             price_inf = Decimal(str(tour.price_inf_cash))
+            price_adult = price_sgl
             logger.debug(f"Using cash pricing for FullTour: sgl={price_sgl}, dbl={price_dbl}, tpl={price_tpl}, chd={price_chd}, inf={price_inf}")
         else:
             price_sgl = Decimal(str(tour.price_sgl_regular))
@@ -160,6 +350,7 @@ def compute_pricing(tour_type, tour_id, form_data, session):
             price_tpl = Decimal(str(tour.price_tpl_regular))
             price_chd = Decimal(str(tour.price_chd_regular))
             price_inf = Decimal(str(tour.price_inf_regular))
+            price_adult = price_sgl
             logger.debug(f"Using regular pricing for FullTour: sgl={price_sgl}, dbl={price_dbl}, tpl={price_tpl}, chd={price_chd}, inf={price_inf}")
     elif tour_type.lower() == 'land':
         price_sgl = Decimal(str(tour.price_sgl))
@@ -167,8 +358,13 @@ def compute_pricing(tour_type, tour_id, form_data, session):
         price_tpl = Decimal(str(tour.price_tpl))
         price_chd = Decimal(str(tour.price_chd))
         price_inf = Decimal(str(tour.price_inf))
+        price_adult = price_sgl
+
         logger.debug(f"Using pricing for LandTour: sgl={price_sgl}, dbl={price_dbl}, tpl={price_tpl}, chd={price_chd}, inf={price_inf}")
     else:
+        if tour_type.lower() != 'day':
+            logger.warning(f"Invalid pricing_type '{tour.pricing_type}' for {tour_type} tour {tour_id}; skipping configs")
+            return []  # Or raise ValueError for strict
         price_adult = Decimal(str(tour.price_adult))
         price_chd = Decimal(str(tour.price_child))
         price_inf = Decimal(str(tour.price_inf))
@@ -180,53 +376,50 @@ def compute_pricing(tour_type, tour_id, form_data, session):
         logger.warning("No adult provided with children or infants")
         return []
 
-    if tour_type.lower() in ['land', 'full'] and tour.pricing_type == 'per_room':
-        for singles in range(number_of_adults + 1):
-            for doubles in range((number_of_adults - singles) // 2 + 1):
-                remaining_adults = number_of_adults - singles - doubles * 2
-                if remaining_adults < 0:
-                    continue
-                triples = remaining_adults // 3
-                extra_adults = remaining_adults % 3
-                adjusted_singles = singles + extra_adults
-                total_adults = adjusted_singles + doubles * 2 + triples * 3
-                if total_adults != number_of_adults:
-                    logger.debug(f"Skipping invalid config: adjusted_singles={adjusted_singles}, doubles={doubles}, triples={triples}, total_adults={total_adults}")
-                    continue
-                total_rooms = adjusted_singles + doubles + triples
-                if total_rooms == 0:
-                    logger.debug("Skipping config with zero rooms")
-                    continue
-                total_children = children + infants
-                if total_children > total_rooms * max_children_per_room:
-                    logger.debug(f"Children+Infants ({total_children}) exceed limit ({total_rooms * max_children_per_room}) for config: adjusted_singles={adjusted_singles}, doubles={doubles}, triples={triples}")
-                    children_exceed_room_limit = True
-                    continue
-                total_price = (
-                    (adjusted_singles * price_sgl) +
-                    (doubles * price_dbl) +
-                    (triples * price_tpl) +
-                    (children * price_chd) +
-                    (infants * price_inf)
-                )
-                total_price = total_price * seasonal_factor * price_adjustment
-                total_price = total_price * exchange_rate
-                # total_price = total_price + (total_price * Decimal('0.05')) #5% increase
+    if tour_type.lower() in ['land', 'full'] and tour.pricing_type == 'Per_room':
+        # Full enumeration: Nested loops for all combos (capped for performance)
+        max_rooms = number_of_adults  # Max singles = n
+        for singles in range(0, number_of_adults + 1):
+            remaining_after_singles = number_of_adults - singles
+            max_doubles = remaining_after_singles // 2
+            for doubles in range(0, max_doubles + 1):
+                remaining_after_doubles = remaining_after_singles - doubles * 2
+                max_triples = remaining_after_doubles // 3
+                for triples in range(0, max_triples + 1):
+                    remaining_after_triples = remaining_after_doubles - triples * 3
+                    if remaining_after_triples == 0:  # Exact match
+                        total_rooms = singles + doubles + triples
+                        if total_rooms == 0:
+                            continue
+                        total_children = children + infants
+                        if total_children > total_rooms * max_children_per_room:
+                            children_exceed_room_limit = True
+                            continue
 
-                config = {
-                    'singles': adjusted_singles,
-                    'doubles': doubles,
-                    'triples': triples,
-                    'children': children,
-                    'infants': infants,
-                    'child_ages': child_ages,
-                    'total_price': float(round(total_price, 2)),
-                    'currency': currency,
-                    'total_rooms': total_rooms
-                }
-                configurations.append(config)
-                logger.debug(f"Generated config: {config}")
+                        total_price = (
+                            (singles * price_sgl) +
+                            (doubles * price_dbl) +
+                            (triples * price_tpl) +
+                            (children * price_chd) +
+                            (infants * price_inf)
+                        )
+                        total_price *= seasonal_factor * price_adjustment * exchange_rate 
 
+                        config = {
+                            'singles': singles,
+                            'doubles': doubles,
+                            'triples': triples,
+                            'children': children,
+                            'infants': infants,
+                            'child_ages': child_ages,
+                            'total_price': float(round(total_price, 2)),
+                            'currency': currency,
+                            'total_rooms': total_rooms
+                        }
+                        configurations.append(config)
+                        logger.debug(f"Generated config: {config}")
+
+        # Dedupe and sort
         unique_configs = []
         seen = set()
         for config in configurations:
@@ -241,13 +434,11 @@ def compute_pricing(tour_type, tour_id, form_data, session):
 
     elif tour_type.lower() in ['land', 'full'] and tour.pricing_type == 'per_person':
         total_price = (
-            (number_of_adults * price_sgl) +
+            (number_of_adults * price_adult) +
             (children * price_chd) +
             (infants * price_inf)
         )
-        total_price = total_price * seasonal_factor * price_adjustment
-        total_price = total_price * exchange_rate
-        total_price = total_price + (total_price * Decimal('0.05'))
+        total_price *= seasonal_factor * price_adjustment * exchange_rate
 
         configurations = [{
             'singles': 0,
@@ -269,9 +460,7 @@ def compute_pricing(tour_type, tour_id, form_data, session):
             (children * price_chd) +
             (infants * price_inf)
         )
-        total_price = total_price * seasonal_factor * price_adjustment
-        total_price = total_price * exchange_rate
-        total_price = total_price + (total_price * Decimal('0.05'))
+        total_price *= seasonal_factor * price_adjustment * exchange_rate
 
         configurations = [{
             'singles': 0,
@@ -290,6 +479,216 @@ def compute_pricing(tour_type, tour_id, form_data, session):
     logger.info(f"Generated configurations for {tour_type}/{tour_id}: {len(configurations)} items")
     return configurations
 
+
+class PaymentView(TemplateView):
+    template_name = 'bookings/payment.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        proposal_id = self.kwargs['proposal_id']
+        proposal = get_object_or_404(Proposal, id=proposal_id, status='SUPPLIER_CONFIRMED')
+        context['proposal'] = proposal
+        context['amount'] = str(proposal.estimated_price)  # For JS
+        context['paypal_client_id'] = settings.PAYPAL_CLIENT_ID  # JS SDK
+        return context
+
+    def post(self, request, proposal_id):  # On approve/capture
+        proposal = get_object_or_404(Proposal, id=proposal_id)
+        payment_id = request.POST.get('paymentId')
+        if not payment_id:
+            return JsonResponse({'error': 'No payment ID'}, status=400)
+
+        # Server-side capture (secure)
+        payment = paypal.Payment.find(payment_id)
+        if payment.state == 'approved':
+            payment.execute({'payer_id': request.POST.get('PayerID')})
+            if payment.state == 'completed':
+                proposal.status = 'PAID'
+                proposal.save()
+
+                # Create Booking
+                booking = Booking.objects.create(
+                    customer_name=proposal.customer_name,
+                    customer_email=proposal.customer_email,
+                    # ... copy other fields: number_of_adults, travel_date, etc.
+                    content_type=proposal.content_type,
+                    object_id=proposal.object_id,
+                    total_price=proposal.estimated_price,
+                    payment_status='PAID',
+                    payment_method='PAYPAL',
+                    proposal=proposal,
+                    configuration_details=proposal.room_config,
+                    user=proposal.user,
+                )
+                booking.save()  # Triggers commission, etc.
+
+                # Send itinerary
+                pdf_data = generate_itinerary_pdf(booking)
+                send_itinerary_email(booking, pdf_data)
+
+                messages.success(request, "Payment successful! Itinerary sent.")
+                return redirect('customer_portal')
+        return JsonResponse({'error': 'Payment failed'}, status=400)
+
+
+@csrf_exempt
+def submit_proposal(request, tour_id):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Invalid method'}, status=405)
+
+    session_data = request.session.get('proposal_data')
+    if not session_data:
+        return JsonResponse({'error': 'No data in session'}, status=400)
+
+    # Parse travel_date
+    travel_date_str = session_data['travel_date']
+    try:
+        travel_date = datetime.strptime(travel_date_str, '%Y-%m-%d').date()
+    except ValueError as ve:
+        logger.error(f"Invalid travel_date format '{travel_date_str}': {ve}")
+        return JsonResponse({'error': 'Invalid travel date format'}, status=400)
+
+    tour = get_object_or_404(LandTourPage, id=tour_id)  # Adjust model as needed
+    content_type = ContentType.objects.get_for_model(tour)
+
+    # NEW: Read is_company_tour early from tour
+    is_company_tour = getattr(tour, 'is_company_tour', False)
+    logger.info(f"Proposal for tour {tour_id}: is_company_tour={is_company_tour}")  # Debug log
+
+    try:
+        proposal = Proposal.objects.create(
+            customer_name=session_data['customer_name'],
+            customer_email=session_data['customer_email'],
+            customer_phone=session_data.get('customer_phone', ''),
+            customer_address=session_data.get('customer_address', ''),
+            nationality=session_data.get('nationality', ''),
+            notes=session_data.get('notes', ''),
+            content_type=content_type,
+            object_id=tour_id,
+            number_of_adults=session_data['number_of_adults'],
+            number_of_children=session_data['number_of_children'],
+            children_ages=session_data['child_ages'],
+            travel_date=travel_date,
+            supplier_email=session_data['supplier_email'],
+            currency=session_data['currency'],
+            estimated_price=Decimal(session_data['estimated_price']),
+            user=request.user if request.user.is_authenticated else None,
+            status='PENDING_SUPPLIER',  # Default; override below
+            room_config=session_data.get('room_config', {}),
+            selected_config=session_data.get('selected_room_config', {}),
+            number_of_infants=session_data.get('number_of_infants', 0),
+        )
+
+        # Calculate end_date
+        duration = getattr(tour, 'duration_days', 0)
+        end_date = proposal.travel_date + timedelta(days=duration)
+
+        # 1. ALWAYS: Send initial client email
+        send_proposal_submitted_email(proposal, tour, end_date)
+
+        # 2. CONDITIONAL: Handle based on is_company_tour (from tour)
+        if is_company_tour:
+            # Company tour: Internal flow
+            proposal.status = 'PENDING_INTERNAL'  # Requires STATUS_CHOICES update
+            proposal.save()
+            send_internal_confirmation_email(proposal, tour, end_date)
+            logger.info(f"Internal proposal {proposal.id} created for company tour {tour_id}")
+        else:
+            # Normal supplier flow
+            # Status already 'PENDING_SUPPLIER' from create
+            if proposal.supplier_email:
+                token = ProposalConfirmationToken.objects.create(proposal=proposal)
+                send_supplier_email(proposal, token, tour, end_date)
+                logger.info(f"Supplier email sent for proposal {proposal.id}")
+            else:
+                logger.warning(f"No supplier email for proposal {proposal.id}")
+
+        # Clear session
+        if 'proposal_data' in request.session:
+            del request.session['proposal_data']
+
+        messages.success(request, f"Proposal {proposal.prop_id} submitted!")
+        return JsonResponse({
+            'success': True,
+            'proposal_id': proposal.id,
+            'prop_id': proposal.prop_id,
+            'message': 'Proposal submitted successfully! Redirecting to confirmation...',
+            'redirect_url': f"{settings.SITE_URL}/bookings/proposal-success/{proposal.id}/",
+            'is_company_tour': is_company_tour,  # Optional: For JS/client display
+        })
+
+    except Exception as e:
+        logger.error(f"Error creating proposal {tour_id}: {e}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+def render_confirmation(request, tour_id):
+    context = {
+        'tour_id': tour_id,
+        'submit_url': reverse('bookings:submit_proposal', args=[tour_id]),  # Pre-compute here
+    }
+    session_data = request.session.get('proposal_data')
+    print(f"DEBUG: session_data exists? {bool(session_data)}")  # Keep for now
+    if not session_data:
+        context['error'] = _("No booking data found. Please start over.")
+        print("DEBUG: No session_data - error set")
+        # Always render template, no redirect for AJAX compatibility
+    else:
+        print(f"DEBUG: Raw travel_date in session: '{session_data.get('travel_date', 'MISSING')}' (type: {type(session_data.get('travel_date'))})")
+        try:
+            tour = get_object_or_404(LandTourPage, id=tour_id)
+        except Http404:
+            context['error'] = _("Invalid tour selected.")
+            print("DEBUG: Tour 404 - error set")
+            # Render with error
+        else:
+            # Fallback for missing travel_date
+            if 'travel_date' not in session_data or not session_data['travel_date']:
+                from datetime import date
+                session_data['travel_date'] = date.today().isoformat()
+                print(f"DEBUG: Fallback triggered - set to {session_data['travel_date']}")
+
+            # Safe access to avoid KeyError
+            context.update({
+                'tour': tour,
+                'tour_type': session_data.get('tour_type', 'land'),
+                'form_data': session_data,
+                'booking_data': {'tourName': tour.name},
+                'selected_room_config': session_data.get('selected_room_config', {}),
+                'tour_duration': getattr(tour, 'duration_days', 0),
+                'selected_configuration_index': session_data.get('selected_configuration', 0),
+            })
+            print(f"DEBUG: Final form_data.travel_date for template: '{session_data['travel_date']}'")
+            print(f"DEBUG Render: Context tour_id = {context['tour_id']} (type: {type(context['tour_id'])})")
+            print(f"DEBUG Render: submit_url = {context['submit_url']}")
+
+    return render(request, 'bookings/partials/confirm_proposal.html', context)
+
+class ProposalSuccessView(TemplateView):
+    template_name = 'bookings/proposal_success.html'
+
+    def get_context_data(self, **kwargs):  # Fixed: get_context_data, not get_context
+        context = super().get_context_data(**kwargs)
+        proposal_id = self.kwargs['proposal_id']
+        proposal = get_object_or_404(Proposal, id=proposal_id)  # Fixed: get_object_or_404
+        tour = proposal.tour
+        context['proposal'] = proposal
+        context['tour'] = tour
+        context['tour_type'] = 'land'  # Or detect from proposal.content_type
+        context['site_url'] = settings.SITE_URL  # For links
+        context['is_company_tour'] = tour.is_company_tour
+        context['status_note'] = ' (Internal review pending)' if tour.is_company_tour else ' (Awaiting supplier confirmation)'
+        return context   
+
+def calculate_demand_factor(remaining, total_capacity):
+    """
+    Demand factor = (total_capacity - remaining) / total_capacity * 1.0
+    e.g., 50/100 remaining = 0.5 full = 0.5 factor (10% uplift).
+    """
+    if total_capacity == 0:
+        return Decimal('0')
+    full_percent = (total_capacity - remaining) / total_capacity
+    return Decimal(str(full_percent))  # 0 to 1.0
+
 def render_pricing(request, tour_type, tour_id):
     logger.debug(f"render_pricing called with POST: {request.POST}")
     # Prioritize currency from POST data
@@ -298,7 +697,7 @@ def render_pricing(request, tour_type, tour_id):
     logger.debug(f"Selected currency: {currency}")
 
     configurations = compute_pricing(tour_type, tour_id, request.POST, request.session)
-    model_map = {'full': FullTour, 'land': LandTour, 'day': DayTour}
+    model_map = {'full': "FullTourPage", 'land': LandTourPage, 'day': "DayTourPage"}
     tour = get_object_or_404(model_map.get(tour_type.lower()), pk=tour_id)
     form_errors = []
     if not configurations:
@@ -306,12 +705,19 @@ def render_pricing(request, tour_type, tour_id):
         logger.warning("No configurations generated in render_pricing")
 
     try:
-        child_ages = json.loads(request.POST.get('child_ages', '[]'))
-        child_ages = [int(age) for age in child_ages if 0 <= int(age) <= tour.child_age_max]
-    except (json.JSONDecodeError, ValueError):
+        child_ages_input = request.POST.get('child_ages', '[]')
+        child_ages = json.loads(child_ages_input) if child_ages_input else []
+        child_ages = [int(age) for age in child_ages if isinstance(age, (int, str)) and str(age).isdigit() and 0 <= int(age) <= tour.child_age_max]
+    except (json.JSONDecodeError, ValueError, TypeError):
         child_ages = []
-    number_of_adults = int(request.POST.get('number_of_adults', '1'))
-    number_of_children = int(request.POST.get('number_of_children', '0'))
+
+    # Safe int parses for adults/children (handle empty string)
+    number_of_adults_str = request.POST.get('number_of_adults', '1')
+    number_of_adults = int(number_of_adults_str) if number_of_adults_str and number_of_adults_str.strip() != '' else 1
+
+    number_of_children_str = request.POST.get('number_of_children', '0')
+    number_of_children = int(number_of_children_str) if number_of_children_str and number_of_children_str.strip() != '' else 0
+
     infants = sum(1 for age in child_ages if age < tour.child_age_min) if child_ages else 0
 
     exchange_rate = get_exchange_rate(currency)
@@ -332,7 +738,7 @@ def render_pricing(request, tour_type, tour_id):
         'tour': tour,
         'configurations_json': configurations_json,
         'child_age_min': getattr(tour, 'child_age_min', 7),
-        'child_age_max': int(getattr(tour, 'child_age_axn', 12)),
+        'child_age_max': int(getattr(tour, 'child_age_max', 12)),  # Fixed typo: child_age_axn -> child_age_max
         'children_exceed_room_limit': False,
         'max_children_per_room': getattr(tour, 'max_children_per_room', 1),
         'currency': currency,
@@ -380,395 +786,74 @@ def fetch_exchange_rate(currency_code: str) -> Decimal:
         logger.error(f"Failed to fetch rate for {currency_code}: {e}")
         return Decimal('1.0')
 
-def book_tour(request, tour_type: str, tour_id: int) -> HttpResponse:
-    model_map = {'full': FullTour, 'land': LandTour, 'day': DayTour}
-    model = model_map.get(tour_type.lower())
-    if not model:
-        logger.error(f"Invalid tour type: {tour_type}")
-        messages.error(request, _("Invalid tour type."))
-        return redirect('tours_list')
-    try:
-        tour = model.objects.get(id=tour_id)
-    except model.DoesNotExist:
-        logger.error(f"Tour not found: type={tour_type}, id={tour_id}")
-        messages.error(request, _("Tour not found."))
-        return redirect('tours_list')
-
-    currency = request.session.get('currency', 'USD').upper()
-    form_data = request.session.get('proposal_form_data', {})
-
-    # Calculate initial travel_date and end_date
-    travel_date_str = form_data.get('travel_date', '2025-05-11')
-    try:
-        if not travel_date_str:
-            raise ValueError("Travel date is empty")
-        travel_date = parse_date(travel_date_str).date()
-        end_date = travel_date + timedelta(days=tour.duration_days - 1) if tour_type in ['full', 'land'] else travel_date
-    except (ValueError, TypeError, AttributeError) as e:
-        logger.warning(f"Invalid travel_date in form_data: {travel_date_str}, error: {str(e)}")
-        travel_date = datetime(2025, 5, 11).date()
-        end_date = travel_date + timedelta(days=tour.duration_days - 1) if tour_type in ['full', 'land'] else travel_date
-
-    if request.method == 'POST':
-        logger.debug(f"POST data received: {request.POST}")
-        post_data = request.POST.copy()
-        if 'currency' not in post_data:
-            post_data['currency'] = currency
-        try:
-            form = ProposalForm(post_data, initial={'tour_type': tour_type, 'tour_id': tour_id, 'currency': currency})
-            if form.is_valid():
-                cleaned_data = form.cleaned_data.copy()
-                logger.debug(f"book_tour cleaned_data: {cleaned_data}")
-                if cleaned_data.get('currency'):
-                    request.session['currency'] = cleaned_data['currency'].upper()
-                selected_configuration = str(cleaned_data.get('selected_configuration', '0'))
-                configurations = compute_pricing(tour_type, tour_id, cleaned_data, request.session)
-                if not configurations:
-                    logger.error("No configurations generated, redirecting to booking form")
-                    messages.error(request, _("No pricing options available. Please try different options."))
-                    return redirect('bookings:book_tour', tour_type=tour_type, tour_id=tour_id)
-                try:
-                    idx = int(selected_configuration)
-                    if idx < 0 or idx >= len(configurations):
-                        logger.warning(f"Invalid selected_configuration: {selected_configuration}, resetting to 0")
-                        selected_configuration = '0'
-                except ValueError:
-                    logger.warning(f"Non-integer selected_configuration: {selected_configuration}, resetting to 0")
-                    selected_configuration = '0'
-                form_data = {
-                    'customer_name': cleaned_data.get('customer_name', ''),
-                    'customer_email': cleaned_data.get('customer_email', ''),
-                    'customer_phone': cleaned_data.get('customer_phone', ''),
-                    'customer_address': cleaned_data.get('customer_address', ''),
-                    'nationality': cleaned_data.get('nationality', ''),
-                    'notes': cleaned_data.get('notes', ''),
-                    'number_of_adults': cleaned_data.get('number_of_adults', 1),
-                    'number_of_children': cleaned_data.get('number_of_children', 0),
-                    'child_ages': cleaned_data.get('child_ages', []),
-                    'travel_date': cleaned_data.get('travel_date').isoformat() if cleaned_data.get('travel_date') else travel_date.isoformat(),
-                    'end_date': cleaned_data.get('end_date').isoformat() if cleaned_data.get('end_date') else end_date.isoformat(),
-                    'currency': cleaned_data.get('currency', 'USD'),
-                    'selected_configuration': selected_configuration,
-                    'configurations': configurations,
-                }
-                request.session['proposal_form_data'] = form_data
-                request.session.modified = True
-                logger.debug(f"Stored form data in session: {form_data}")
-                context = {
-                    'form_data': form_data,
-                    'tour': tour,
-                    'tour_type': tour_type,
-                    'tour_id': tour_id,
-                    'tour_duration': tour.duration_days if tour_type in ['full', 'land'] else tour.duration_hours,
-                    'configurations': form_data.get('configurations', []),
-                    'selected_configuration_index': form_data.get('selected_configuration', '0'),
-                    'booking_data_json': {
-                        'tourName': tour.safe_translation_getter('title', 'Untitled'),
-                        'tourType': tour_type,
-                        'tourId': tour_id,
-                        'languagePrefix': request.LANGUAGE_CODE,
-                        'childAgeMin': getattr(tour, 'child_age_min', 7),
-                        'childAgeMax': int(getattr(tour, 'child_age_max', 12)),
-                    },
-                    'is_confirmation': True,
-                }
-                logger.debug(f"Rendering confirm_proposal.html with context: {context}")
-                return render(request, 'bookings/partials/confirm_proposal.html', context)
-            else:
-                logger.error(f"Form validation failed: {form.errors}")
-                form_errors = [str(error) for error in form.errors.values()]
-                context = {
-                    'form': form,
-                    'tour': tour,
-                    'tour_type_val': tour_type,
-                    'tour_id': tour_id,
-                    'form_errors': form_errors,
-                    'tour_duration': tour.duration_days if tour_type in ['full', 'land'] else tour.duration_hours,
-                    'configurations': [],
-                    'configurations_json': json.dumps([]),
-                    'currency': currency,
-                    'travel_date': travel_date.isoformat(),
-                    'end_date': end_date.isoformat(),
-                    'child_age_min': getattr(tour, 'child_age_min', 7),
-                    'child_age_max': int(getattr(tour, 'child_age_max', 12)),
-                    'max_children_per_room': getattr(tour, 'max_children_per_room', 1),
-                    'exchange_rates': ExchangeRate.objects.all(),
-                }
-                return render(request, 'bookings/partials/booking_form.html', context)
-        except Exception as e:
-            logger.error(f"Unexpected error in book_tour POST: {str(e)}", exc_info=True)
-            messages.error(request, _("An unexpected error occurred. Please try again or contact support."))
-            return render(request, 'bookings/partials/booking_form.html', {
-                'form': form,
-                'tour': tour,
-                'tour_type_val': tour_type,
-                'tour_id': tour_id,
-                'form_errors': ['An unexpected error occurred.'],
-                'tour_duration': tour.duration_days if tour_type in ['full', 'land'] else tour.duration_hours,
-                'configurations': [],
-                'configurations_json': json.dumps([]),
-                'currency': currency,
-                'travel_date': travel_date.isoformat(),
-                'end_date': end_date.isoformat(),
-                'child_age_min': getattr(tour, 'child_age_min', 7),
-                'child_age_max': int(getattr(tour, 'child_age_max', 12)),
-                'max_children_per_room': getattr(tour, 'max_children_per_room', 1),
-                'exchange_rates': ExchangeRate.objects.all(),
-            })
-    else:
-        initial_data = {
-            'tour_type': tour_type,
-            'tour_id': tour_id,
-            'number_of_adults': form_data.get('number_of_adults', 1),
-            'number_of_children': form_data.get('number_of_children', 0),
-            'child_ages': json.dumps(form_data.get('child_ages', [])),
-            'travel_date': travel_date.isoformat(),
-            'end_date': end_date.isoformat(),
-            'currency': form_data.get('currency', currency),
-            'customer_name': form_data.get('customer_name'),
-            'customer_email': form_data.get('customer_email'),
-            'customer_phone': form_data.get('customer_phone'),
-            'customer_address': form_data.get('customer_address'),
-            'nationality': form_data.get('nationality'),
-            'notes': form_data.get('notes'),
-            'selected_configuration': form_data.get('selected_configuration', '0'),
-        }
-        form = ProposalForm(initial=initial_data)
-
-    pricing_data = {
-        'tour_type': tour_type,
-        'tour_id': tour_id,
-        'number_of_adults': form_data.get('number_of_adults', '1'),
-        'number_of_children': form_data.get('number_of_children', '0'),
-        'travel_date': travel_date.isoformat(),
-        'currency': form_data.get('currency', currency),
-        'form_submission': 'pricing',
-        'child_ages': json.dumps(form_data.get('child_ages', [])),
-    }
-    configurations = compute_pricing(tour_type, tour_id, pricing_data, request.session)
-    configurations_json = json.dumps(configurations, ensure_ascii=False)
-    cancellation_policy = getattr(tour, 'cancellation_policy', None)
-    cancellation_policy_str = (
-        str(cancellation_policy) if cancellation_policy else 'CXL 7 / 50 (7 days, 50.00%)'
+def confirm_proposal(request, proposal_id: int) -> HttpResponse:
+    # Scoped to single object
+    proposal = get_object_or_404(
+        Proposal.objects.select_related('content_type'),
+        id=proposal_id
     )
+    
+    tour = proposal.tour
+    if not tour:
+        messages.error(request, "Tour not found for this proposal.")
+        return redirect('bookings:manage_proposals')
+    
+    is_company_tour = getattr(tour, 'is_company_tour', False)
+    pending_status = 'PENDING_INTERNAL' if is_company_tour else 'PENDING_SUPPLIER'
+    
+    if proposal.status != pending_status:
+        messages.error(request, f"Proposal not pending {'internal' if is_company_tour else 'supplier'} confirmation.")
+        return redirect('bookings:manage_proposals')
+    
+    # Placeholder payment link (PayPal placeholder—update later)
+    proposal.payment_link = f"{settings.SITE_URL}/p-methods/paypal/checkout/{proposal.id}/"
+    # proposal.payment_link = f"{settings.SITE_URL}/bookings/payment/success/{proposal.id}/"  # FIXED: Use existing success view for fake checkout        proposal.status = 'SUPPLIER_CONFIRMED'
 
-    booking_data = {
-        'tourName': tour.safe_translation_getter('title', 'Untitled'),
-        'tourType': tour_type,
-        'tourId': str(tour_id),
-        'languagePrefix': request.LANGUAGE_CODE,
-        'cancellationPolicy': cancellation_policy_str,
-        'childAgeMin': getattr(tour, 'child_age_min', 7),
-        'childAgeMax': int(getattr(tour, 'child_age_max', 12)),
-    }
+    proposal.status = 'SUPPLIER_CONFIRMED'
+    proposal.save()
+    
+    # FIX: Call without extra kwargs (func handles tour/end_date internally)
+    send_preconfirmation_email(proposal)
+    
+    # Clear stray session (defensive)
+    if 'proposal_data' in request.session:
+        del request.session['proposal_data']
+    
+    msg = f"Proposal {proposal.prop_id or proposal.id} confirmed ({'internally' if is_company_tour else 'by supplier'}). Payment link sent to {proposal.customer_email}."
+    messages.success(request, msg)
+    
+    return redirect('bookings:manage_proposals')
+
+def confirm_proposal_by_token(request, token: str) -> HttpResponse:
     try:
-        booking_data_json = json.dumps(booking_data, ensure_ascii=False)
-        logger.debug(f"booking_data_json: {booking_data_json}")
-    except Exception as e:
-        logger.error(f"Failed to serialize booking_data to JSON: {e}")
-        booking_data_json = json.dumps({})
-        logger.warning("Using empty booking_data_json as fallback")
-
-    context = {
-        'form': form,
-        'tour': tour,
-        'tour_type_val': tour_type,
-        'tour_id': tour_id,
-        'booking_data_json': booking_data_json,
-        'tour_duration': tour.duration_days if tour_type in ['full', 'land'] else tour.duration_hours,
-        'configurations': configurations,
-        'configurations_json': configurations_json,
-        'form_errors': [],
-        'child_age_min': getattr(tour, 'child_age_min', 7),
-        'child_age_max': int(getattr(tour, 'child_age_max', 12)),
-        'max_children_per_room': getattr(tour, 'max_children_per_room', 1),
-        'select_age_range': list(range(0, getattr(tour, 'child_age_max', 12) + 1)),
-        'exchange_rates': ExchangeRate.objects.all(),
-        'currency': currency,
-        'travel_date': travel_date.isoformat(),
-        'end_date': end_date.isoformat(),
-    }
-    logger.debug(f"Context booking_data_json: {context['booking_data_json']}")
-    logger.debug(f"Rendering booking_form.html with context: {context}")
-    logger.debug(f"child_age_max for tour {tour.id}: {getattr(tour, 'child_age_max', 12)}")
-    return render(request, 'bookings/partials/booking_form.html', context)
-
-def confirm_proposal_submission(request, tour_type: str, tour_id: int) -> HttpResponse:
-    model_map = {'full': FullTour, 'land': LandTour, 'day': DayTour}
-    logger.debug(f"confirm_proposal_submission called: method={request.method}, tour_type={tour_type}, tour_id={tour_id}")
-
-    # Validate tour_type
-    if not tour_type or tour_type.lower() not in model_map:
-        logger.error(f"Invalid tour_type: {tour_type}")
-        messages.error(request, _("Invalid tour type."))
-        return redirect('tours_list')
-
-    model = model_map.get(tour_type.lower())
-    if not model:
-        logger.error(f"Model not found for tour_type: {tour_type}")
-        messages.error(request, _("Invalid tour type."))
-        return redirect('tours_list')
-
-    # Validate tour
-    try:
-        tour = model.objects.get(id=tour_id)
-    except model.DoesNotExist:
-        logger.error(f"Tour not found: type={tour_type}, id={tour_id}")
-        messages.error(request, _("Tour not found."))
-        return redirect('tours_list')
-
-    # Validate session data
-    form_data = request.session.get('proposal_form_data')
-    if not form_data:
-        logger.error("No proposal form data in session")
-        messages.error(request, _("No booking data found. Please start over."))
-        return redirect('bookings:book_tour', tour_type=tour_type, tour_id=tour_id)
-
-    logger.debug(f"Form data: {form_data}")
-    configurations = form_data.get('configurations', [])
-
-    if not configurations:
-        logger.error("No configurations in session, redirecting to book_tour")
-        messages.error(request, _("No pricing options available. Please try different options."))
-        return redirect('bookings:book_tour', tour_type=tour_type, tour_id=tour_id)
-
-    # Use request.POST for selected_configuration
-    selected_configuration_index = request.POST.get('selected_configuration', '0')
-
-    # Validate selected_configuration_index
-    if selected_configuration_index is None or selected_configuration_index == '':
-        logger.warning(f"selected_configuration_index is None or empty, defaulting to '0'")
-        selected_configuration_index = '0'
-    try:
-        idx = int(selected_configuration_index)
-        if idx < 0 or idx >= len(configurations):
-            logger.warning(f"Invalid configuration index: {selected_configuration_index}, resetting to 0")
-            selected_configuration_index = '0'
-    except ValueError:
-        logger.warning(f"Non-integer configuration index: {selected_configuration_index}, resetting to 0")
-        selected_configuration_index = '0'
-
-    logger.debug(f"POST selected_configuration: {request.POST.get('selected_configuration')}, "
-                 f"Session selected_configuration: {form_data.get('selected_configuration')}, "
-                 f"Final selected_configuration_index: {selected_configuration_index}, "
-                 f"Configurations length: {len(configurations)}")
-
-    logger.debug(f"Initial session proposal_form_data: {request.session.get('proposal_form_data')}")
-
-    # Update form_data with selected_configuration
-    form_data['selected_configuration'] = selected_configuration_index
-    request.session['proposal_form_data'] = form_data
-    request.session.modified = True  # Ensure session is saved
-
-    if request.method == 'POST':
-        logger.debug(f"POST data received: {request.POST}")
-        if 'confirm' in request.POST:
-            try:
-                selected_config = configurations[int(selected_configuration_index)]
-                logger.debug(f"Selected config: {selected_config}")
-                content_type = ContentType.objects.get_for_model(model)
-                estimated_price = round(Decimal(str(selected_config['total_price'])), 2)
-                child_ages = form_data.get('child_ages', [])
-                if isinstance(child_ages, str):
-                    try:
-                        child_ages = json.loads(child_ages)
-                    except json.JSONDecodeError:
-                        logger.warning(f"Failed to parse child_ages: {child_ages}, using empty list")
-                        child_ages = []
-                proposal = Proposal(
-                    content_type=content_type,
-                    object_id=tour_id,
-                    travel_date=datetime.fromisoformat(form_data['travel_date']).date() if form_data.get('travel_date') else None,
-                    number_of_adults=int(form_data.get('number_of_adults', 1)),
-                    number_of_children=int(form_data.get('number_of_children', 0)),
-                    children_ages=child_ages,
-                    room_config={
-                        'singles': selected_config.get('singles', 0),
-                        'doubles': selected_config.get('doubles', 0),
-                        'triples': selected_config.get('triples', 0),
-                        'children': selected_config.get('children', 0),
-                        'infants': selected_config.get('infants', 0),
-                        'total': float(estimated_price),
-                    },
-                    estimated_price=estimated_price,
-                    currency=form_data.get('currency', 'USD'),
-                    customer_name=form_data.get('customer_name', ''),
-                    customer_email=form_data.get('customer_email', ''),
-                    customer_phone=form_data.get('customer_phone', ''),
-                    customer_address=form_data.get('customer_address', ''),
-                    nationality=form_data.get('nationality', ''),
-                    notes=form_data.get('notes', ''),
-                    status='PENDING_SUPPLIER',
-                    created_at=timezone.now(),
-                    updated_at=timezone.now(),
-                    supplier_email=tour.supplier_email if hasattr(tour, 'supplier_email') else None,
-                    user=get_default_user(request)
-                )
-                proposal.save()
-                # Store selected_configuration_index in session
-                request.session['selected_configuration_index'] = selected_configuration_index
-                logger.info(f"Proposal saved: ID={proposal.id}, tour={tour.title}, estimated_price={estimated_price}")
-
-                # Create confirmation token and send supplier email
-                token = ProposalConfirmationToken.objects.create(proposal=proposal)
-                if not send_supplier_email(proposal, token):
-                    logger.warning(f"Supplier email not sent Stuart email sent for proposal {proposal.id}, but continuing")
-                    messages.warning(request, _("Proposal submitted, but supplier notification failed. We will contact the supplier manually."))
-
-                request.session.pop('proposal_form_data', None)
-                messages.success(request, _("Proposal submitted successfully. Awaiting supplier confirmation."))
-                return render(request, 'bookings/partials/proposal_success.html', {
-                    'proposal': proposal,
-                    'tour': tour,
-                    'tour_type': tour_type,
-                })
-            except ContentType.DoesNotExist as e:
-                logger.error(f"ContentType error: {e}")
-                messages.error(request, _("Invalid tour configuration. Please try again."))
-                return redirect('bookings:book_tour', tour_type=tour_type, tour_id=tour_id)
-            except ValueError as e:
-                logger.error(f"Value error in proposal creation: {e}")
-                messages.error(request, _("Invalid data format. Please try again."))
-                return redirect('bookings:book_tour', tour_type=tour_type, tour_id=tour_id)
-            except Exception as e:
-                logger.error(f"Unexpected error saving proposal: {e}", exc_info=True)
-                messages.error(request, _("Failed to submit proposal. Please try again."))
-                return redirect('bookings:book_tour', tour_type=tour_type, tour_id=tour_id)
-
-        elif 'go_back' in request.POST:
-            logger.debug("Go Back to Edit clicked, rendering booking_form via HTMX")
-            return revert_to_booking_form(request, tour_type, tour_id)
-        else:
-            logger.warning("Unknown POST action")
-            messages.error(request, _("Invalid action. Please try again."))
-            return redirect('bookings:book_tour', tour_type=tour_type, tour_id=tour_id)
-    else:
-        # Handle GET request
-        if not tour_type:
-            logger.error("Empty tour_type in GET request")
-            messages.error(request, _("Invalid tour type. Please start over."))
-            return redirect('tours_list')
-        context = {
-            'form_data': form_data,
-            'tour': tour,
-            'tour_type': tour_type,
-            'tour_id': tour_id,
-            'tour_duration': getattr(tour, 'duration_days', getattr(tour, 'duration_hours', None)),
-            'configurations': configurations,
-            'selected_configuration': selected_configuration_index,
-            'booking_data_json': {
-                'tourName': tour.safe_translation_getter('title', 'Untitled'),
-                'tourType': tour_type,
-                'tourId': tour_id,
-                'languagePrefix': request.LANGUAGE_CODE,
-            },
-            'is_confirmation': True,
-        }
-        logger.debug(f"Rendering confirm_proposal.html with context: {context}")
-        storage = get_messages(request)
-        storage.used = True
-        return render(request, 'bookings/partials/confirm_proposal.html', context)
-
+        token_obj = ProposalConfirmationToken.objects.get(token=token)
+        if not token_obj.is_valid():
+            messages.error(request, "Invalid or expired confirmation link.")
+            return render(request, 'bookings/confirmation_error.html')
+        proposal = token_obj.proposal
+        if not proposal.tour:
+            messages.error(request, "Tour not found.")
+            return render(request, 'bookings/confirmation_error.html')
+        
+        # For company tours: Redirect to portal (no token support)
+        if getattr(proposal.tour, 'is_company_tour', False):
+            messages.info(request, "Company tour proposals must be confirmed via the internal portal.")
+            return redirect('bookings:manage_proposals')
+        
+        # Normal supplier flow
+        proposal.payment_link = f"{settings.SITE_URL}/p-methods/paypal/checkout/{proposal.id}/"  # FIXED: Checkout page        proposal.status = 'SUPPLIER_CONFIRMED'
+        proposal.save()
+        token_obj.used_at = timezone.now()
+        token_obj.save()
+        send_preconfirmation_email(proposal)
+        return render(request, 'bookings/confirmation_success.html', {
+            'proposal': proposal,
+            'site_url': settings.SITE_URL,
+        })
+    except ProposalConfirmationToken.DoesNotExist:
+        messages.error(request, "Invalid confirmation link.")  # FIXED: "Reject" → "Invalid"
+        return render(request, 'bookings/confirmation_error.html')
+    
 def child_ages(request) -> HttpResponse:
     number_of_children = int(request.GET.get('number_of_children', 0))
     tour_type = request.GET.get('tour_type', 'land')
@@ -781,7 +866,7 @@ def child_ages(request) -> HttpResponse:
     except json.JSONDecodeError:
         child_ages = []
 
-    model_map = {'full': FullTour, 'land': LandTour, 'day': DayTour}
+    model_map = {'full': "FullTourPage", 'land': LandTourPage, 'day': "DayTourPage"}
     model = model_map.get(tour_type.lower())
     if not model:
         logger.error(f"Invalid tour type: {tour_type}")
@@ -833,7 +918,7 @@ def revert_to_booking_form(request, tour_type: str, tour_id: int) -> HttpRespons
     logger.debug(f"revert_to_booking_form called: tour_type={tour_type}, tour_id={tour_id}")
 
     # Map tour type to model
-    model_map = {'full': FullTour, 'land': LandTour, 'day': DayTour}
+    model_map = {'full': "FullTourPage", 'land': LandTourPage, 'day': "DayTourPage"}
     model = model_map.get(tour_type.lower())
     if not model:
         logger.error(f"Invalid tour type: {tour_type}")
@@ -938,549 +1023,7 @@ def revert_to_booking_form(request, tour_type: str, tour_id: int) -> HttpRespons
 
     logger.debug(f"Rendering booking_form.html with context: {context}")
     return render(request, 'bookings/partials/booking_form.html', context)
-def manage_proposals(request) -> HttpResponse:
-    proposals = Proposal.objects.prefetch_related('translations', 'tour').all()
-    paginator = Paginator(proposals, 10)
-    page_obj = paginator.get_page(request.GET.get('page', 1))
-    if request.htmx:
-        status = request.GET.get('status')
-        if status:
-            proposals = proposals.filter(status=status)
-            paginator = Paginator(proposals, 10)
-            page_obj = paginator.get_page(request.GET.get('page', 1))
-        return render(request, 'bookings/partials/proposal_list.html', {'proposals': page_obj})
-    return render(request, 'bookings/manage_proposals.html', {'proposals': page_obj})
 
-def confirm_proposal(request, proposal_id: int) -> HttpResponse:
-    try:
-        proposal = Proposal.objects.get(id=proposal_id)
-        if proposal.status != 'PENDING_SUPPLIER':
-            messages.error(request, "Proposal is not pending supplier confirmation.")
-            return redirect('bookings:manage_proposals')
-        proposal.payment_link = f"{settings.SITE_URL}/bookings/payment/success/{proposal.id}/"
-        proposal.status = 'SUPPLIER_CONFIRMED'
-        proposal.save()
-        send_preconfirmation_email(proposal)
-        messages.success(request, "Proposal confirmed. Payment link sent to customer.")
-    except Proposal.DoesNotExist:
-        messages.error(request, "Proposal not found.")
-    return redirect('bookings:manage_proposals')
-
-def confirm_proposal_by_token(request, token: str) -> HttpResponse:
-    try:
-        token_obj = ProposalConfirmationToken.objects.get(token=token)
-        if not token_obj.is_valid():
-            messages.error(request, "Invalid or expired confirmation link.")
-            return render(request, 'bookings/confirmation_error.html')
-        proposal = token_obj.proposal
-        proposal.payment_link = f"{settings.SITE_URL}/bookings/payment/success/{proposal.id}/"
-        proposal.status = 'SUPPLIER_CONFIRMED'
-        proposal.save()
-        token_obj.used_at = timezone.now()
-        token_obj.save()
-        send_preconfirmation_email(proposal)
-        return render(request, 'bookings/confirmation_success.html', {
-            'proposal': proposal,
-            'site_url': settings.SITE_URL,
-        })
-    except ProposalConfirmationToken.DoesNotExist:
-        messages.error(request, "Invalid confirmation link.")
-        return render(request, 'bookings/confirmation_error.html')
-
-def send_supplier_email(proposal: Proposal, token: ProposalConfirmationToken = None) -> bool:
-    try:
-        if not proposal.supplier_email:
-            logger.error(f"Supplier email missing for proposal {proposal.id}")
-            raise ValueError("Supplier email is required.")
-        subject = f"New Tour Proposal - {proposal.tour}"
-
-        context = {
-            'proposal': proposal,
-            'end_date': proposal.travel_date + timedelta(days=proposal.tour.duration_days),
-            'tour': proposal.tour,
-            'site_url': settings.SITE_URL,
-            'configuration_details': proposal.room_config if proposal.room_config else [],
-        }
-        if token:
-            context['confirm_url'] = f"{settings.SITE_URL}{reverse('bookings:confirm_proposal_by_token', args=[token.token])}"
-        message = render_to_string('bookings/emails/supplier_proposal.html', context)
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [proposal.supplier_email],
-            html_message=message,
-            fail_silently=False,
-        )
-        logger.info(f"Supplier email sent to {proposal.supplier_email} for proposal {proposal.id}")
-        return True
-    except Exception as e:
-        logger.error(f"Failed to send supplier email for proposal {proposal.id}: {e}")
-        return False
-
-def reject_proposal(request, proposal_id: int) -> HttpResponse:
-    try:
-        proposal = Proposal.objects.get(id=proposal_id)
-        proposal.status = 'REJECTED'
-        proposal.save()
-        messages.success(request, "Proposal rejected.")
-    except Proposal.DoesNotExist:
-        messages.error(request, "Proposal not found.")
-    return redirect('bookings:manage_proposals')
-
-def send_preconfirmation_email(proposal: Proposal) -> None:
-    subject = "Confirm Your Tour Proposal"
-    duration = proposal.tour.duration_days
-    end_date = proposal.travel_date + timedelta(days=duration)
-    message = render_to_string('bookings/emails/preconfirmation.html', {
-        'proposal': proposal,
-        'tour': proposal.tour,
-        'end_date': end_date,
-        'payment_link': proposal.payment_link,
-        'site_url': settings.SITE_URL,
-        'configuration_details': proposal.room_config if proposal.room_config else [],
-    })
-    send_mail(
-        subject,
-        message,
-        settings.DEFAULT_FROM_EMAIL,
-        [proposal.customer_email],
-        html_message=message,
-    )
-    logger.info(f"Preconfirmation email sent to {proposal.customer_email} for proposal {proposal.id}")
-
-def payment_success(request, proposal_id: int) -> HttpResponse:
-    try:
-        proposal = Proposal.objects.get(id=proposal_id)
-        if proposal.status != 'SUPPLIER_CONFIRMED':
-            logger.error(f"Invalid proposal status for payment: {proposal.status}, id={proposal_id}")
-            messages.error(request, "Invalid proposal status.")
-            return redirect('home')
-
-        # Check if a Booking already exists for this proposal
-        existing_booking = Booking.objects.filter(proposal=proposal).first()
-        if existing_booking:
-            logger.info(f"Booking already exists for proposal {proposal_id}: booking_id={existing_booking.id}")
-            messages.info(request, "Booking already confirmed. Itinerary has been sent.")
-            try:
-                itinerary_pdf = generate_itinerary_pdf(existing_booking)
-                send_itinerary_email(existing_booking, itinerary_pdf)
-            except Exception as e:
-                logger.error(f"Failed to resend itinerary for booking {existing_booking.id}: {e}")
-                messages.warning(request, "Booking confirmed, but itinerary resending failed. Contact support.")
-            return redirect('home')
-
-        # Create new Booking
-        booking = Booking.objects.create(
-            customer_name=proposal.customer_name,
-            customer_email=proposal.customer_email,
-            customer_phone=proposal.customer_phone,
-            customer_address=proposal.customer_address,
-            nationality=proposal.nationality,
-            notes=proposal.notes,
-            content_type=proposal.content_type,
-            object_id=proposal.object_id,
-            number_of_adults=proposal.number_of_adults,
-            number_of_children=proposal.number_of_children,
-            travel_date=proposal.travel_date,
-            total_price=proposal.estimated_price,
-            payment_status='PAID',
-            status='CONFIRMED',
-            payment_method='CREDIT_CARD',
-            proposal=proposal,
-            currency=proposal.currency,
-            user=proposal.user,
-        )
-        proposal.status = 'PAID'
-        proposal.save()
-        try:
-            itinerary_pdf = generate_itinerary_pdf(booking)
-            send_itinerary_email(booking, itinerary_pdf)
-            messages.success(request, "Payment successful! Your itinerary has been sent.")
-        except Exception as e:
-            logger.error(f"Failed to generate/send itinerary for booking {booking.id}: {e}")
-            messages.warning(request, "Payment successful, but itinerary generation failed. Contact support.")
-    except Proposal.DoesNotExist:
-        logger.error(f"Proposal not found: id={proposal_id}")
-        messages.error(request, "Proposal not found.")
-    return redirect('home')
-
-def payment_cancel(request, proposal_id: int) -> HttpResponse:
-    try:
-        proposal = Proposal.objects.get(id=proposal_id)
-        proposal.status = 'REJECTED'
-        proposal.save()
-        logger.info(f"Payment cancelled for proposal {proposal_id}")
-        messages.error(request, "Payment cancelled. Please contact us to retry.")
-    except Proposal.DoesNotExist:
-        logger.error(f"Proposal not found: id={proposal_id}")
-        messages.error(request, "Proposal not found.")
-    return redirect('home')
-
-def generate_itinerary_pdf(booking: Booking) -> bytes:
-    try:
-        buffer = BytesIO()
-        doc = SimpleDocTemplate(
-            buffer,
-            pagesize=A4,
-            topMargin=15*mm,
-            bottomMargin=15*mm,
-            leftMargin=15*mm,
-            rightMargin=15*mm
-        )
-        styles = getSampleStyleSheet()
-
-        title_style = ParagraphStyle(
-            name='Title',
-            parent=styles['Title'],
-            fontName='Helvetica-Bold',
-            fontSize=20,
-            textColor=colors.HexColor('#1a3c6e'),
-            spaceAfter=8,
-            alignment=1
-        )
-        title_shadow_style = ParagraphStyle(
-            name='TitleShadow',
-            parent=title_style,
-            textColor=colors.HexColor('#cccccc'),
-            spaceAfter=0
-        )
-        subtitle_style = ParagraphStyle(
-            name='Subtitle',
-            parent=styles['Title'],
-            fontName='Helvetica',
-            fontSize=16,
-            textColor=colors.HexColor('#1a3c6e'),
-            spaceAfter=12,
-            alignment=1
-        )
-        heading_style = ParagraphStyle(
-            name='Heading2',
-            parent=styles['Heading2'],
-            fontName='Helvetica-Bold',
-            fontSize=12,
-            textColor=colors.HexColor('#333333'),
-            spaceBefore=12,
-            spaceAfter=8
-        )
-        normal_style = ParagraphStyle(
-            name='Normal',
-            parent=styles['Normal'],
-            fontName='Helvetica',
-            fontSize=10,
-            leading=12,
-            textColor=colors.HexColor('#333333')
-        )
-        bullet_style = ParagraphStyle(
-            name='Bullet',
-            parent=normal_style,
-            leftIndent=10,
-            bulletIndent=0,
-            spaceAfter=4,
-            fontSize=10,
-            bulletFontName='Helvetica',
-            bulletText='●'
-        )
-        footer_style = ParagraphStyle(
-            name='Footer',
-            parent=normal_style,
-            fontName='Helvetica-Bold',
-            fontSize=10,
-            alignment=1
-        )
-
-        elements = []
-
-        def add_watermark(canvas, doc):
-            if canvas.getPageNumber() == 1:
-                watermark_path = 'static/images/watermark.jpg'
-                logger.info(f"Attempting to load watermark: {watermark_path}")
-                if not os.path.exists(watermark_path):
-                    logger.warning(f"Watermark file does not exist: {watermark_path}")
-                try:
-                    canvas.saveState()
-                    canvas.setFillAlpha(0.15)
-                    watermark = Image(watermark_path, width=doc.width+30*mm, height=doc.height+40*mm)
-                    watermark.drawOn(canvas, doc.leftMargin-15*mm, doc.bottomMargin-20*mm)
-                    canvas.restoreState()
-                except Exception as e:
-                    logger.warning(f"Could not load watermark: {e}")
-            else:
-                logo_path = 'static/images/logo.png'
-                logger.info(f"Attempting to load logo watermark: {logo_path}")
-                if not os.path.exists(logo_path):
-                    logger.warning(f"Logo watermark file does not exist: {logo_path}")
-                try:
-                    canvas.saveState()
-                    canvas.setFillAlpha(0.45)
-                    logo = Image(logo_path, width=80*mm, height=40*mm)
-                    logo.drawOn(canvas, (doc.width-80*mm)/2, (doc.height-40*mm)/2)
-                    canvas.restoreState()
-                except Exception as e:
-                    logger.warning(f"Could not load logo watermark: {e}")
-
-        doc.addPageTemplates([
-            PageTemplate(id='First', frames=[Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height)], onPage=add_watermark),
-            PageTemplate(id='Later', frames=[Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height)], onPage=add_watermark),
-        ])
-
-        header_bg_path = 'static/images/header_bg.jpg'
-        logo_path = 'static/images/logo.png'
-        header_row = []
-        logo_row = []
-
-        logger.info(f"Attempting to load header background: {header_bg_path}")
-        if not os.path.exists(header_bg_path):
-            logger.warning(f"Header background file does not exist: {header_bg_path}")
-        try:
-            header_bg = Image(header_bg_path, width=doc.width+30*mm, height=45*mm)
-            header_row.append(header_bg)
-        except Exception as e:
-            logger.warning(f"Could not load header background: {e}")
-            header_row.append(Paragraph(_("Header Image Missing"), normal_style))
-
-        logger.info(f"Attempting to load logo: {logo_path}")
-        if not os.path.exists(logo_path):
-            logger.warning(f"Logo file does not exist: {logo_path}")
-        try:
-            logo = Image(logo_path, width=50*mm, height=25*mm)
-            logo_row.append(logo)
-            logger.info("Successfully loaded logo for header")
-        except Exception as e:
-            logger.warning(f"Failed to load logo: {e}")
-            logo_row.append(Paragraph(_("Logo Missing"), normal_style))
-
-        header_table = Table([header_row, logo_row], colWidths=[doc.width], rowHeights=[45*mm, 25*mm])
-        header_table.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (0, 0), 'CENTER'),
-            ('ALIGN', (0, 1), (0, 1), 'LEFT'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('TOPPADDING', (0, 1), (-1, 1), -30*mm),
-            ('LEFTPADDING', (0, 0), (-1, -1), -15*mm),
-            ('RIGHTPADDING', (0, 0), (-1, -1), -15*mm),
-            ('LEFTPADDING', (0, 1), (0, 1), 15*mm),
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1a3c6e'))
-        ]))
-        elements.append(header_table)
-        elements.append(Spacer(1, 10*mm))
-
-        tour = getattr(booking, 'tour', None)
-        tour_name = tour.safe_translation_getter('title', _('Unknown Tour')).upper() if tour else _('Unknown Tour').upper()
-        duration = _('CUSTOM')
-        if tour:
-            if isinstance(tour, (FullTour, LandTour)):
-                duration_days = getattr(tour, 'duration_days', 0)
-                duration = f"{duration_days} DAYS {duration_days-1} NIGHTS" if duration_days else _("CUSTOM")
-            elif isinstance(tour, DayTour):
-                duration_hours = getattr(tour, 'duration_hours', 8)
-                duration = f"{duration_hours} HOURS"
-        elements.append(Paragraph(f"{tour_name} FULL PACK", title_shadow_style))
-        elements.append(Paragraph(f"{tour_name} FULL PACK", title_style))
-        elements.append(Paragraph(duration, subtitle_style))
-        elements.append(Spacer(1, 10*mm))
-
-        inclusions = []
-        if tour and isinstance(tour, FullTour):
-            inclusions = [
-                _("Boleto aéreo GYE - CTG - GYE via Avianca con artículo personal"),
-                _("Traslados aeropuerto - hotel - aeropuerto"),
-                _(f"{getattr(tour, 'duration_days', 3)-1 or 3} noches de alojamiento en hotel a elegir"),
-                _("Desayunos diarios"),
-                _("City tour en chiva típica + visita al castillo de San Felipe"),
-                _("Full Day Isla Barú (Playa Blanca) + almuerzo típico incluido"),
-                _("Tasas e Impuestos de Ecuador y Colombia"),
-            ]
-        elif tour and isinstance(tour, LandTour):
-            inclusions = [
-                _("Alojamiento en hotel seleccionado"),
-                _("Desayunos diarios"),
-                tour.safe_translation_getter('courtesies', _("Tour guiado")),
-            ]
-        elif tour and isinstance(tour, DayTour):
-            inclusions = [
-                tour.safe_translation_getter('courtesies', _("Botella de agua")),
-                _("Guía profesional"),
-            ]
-        else:
-            inclusions = [_("Servicios según disponibilidad")]
-
-        elements.append(KeepTogether([
-            Paragraph(_("INCLUDE"), heading_style),
-            *[Paragraph(f"• {item}", bullet_style) for item in inclusions]
-        ]))
-        elements.append(Spacer(1, 10*mm))
-
-        if tour and isinstance(tour, FullTour):
-            elements.append(KeepTogether([
-                Paragraph(_("ITINERARIO COTIZADO"), heading_style),
-                Table(
-                    [
-                        [_("Flight"), _("Date"), _("Route"), _("Departure"), _("Arrival")],
-                        ["AV8374", "03 Apr", "GYE-BOG", "04:15", "06:10"],
-                        ["AV9530", "03 Apr", "BOG-CTG", "08:07", "09:39"],
-                        ["AV9807", "06 Apr", "CTG-BOG", "08:13", "09:45"],
-                        ["AV8389", "06 Apr", "BOG-GYE", "11:50", "13:40"],
-                    ],
-                    colWidths=[30*mm, 30*mm, 40*mm, 30*mm, 30*mm],
-                    style=TableStyle([
-                        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1a3c6e')),
-                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                        ('FONTSIZE', (0, 0), (-1, -1), 9),
-                        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-                        ('TOPPADDING', (0, 0), (-1, -1), 8),
-                        ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#1a3c6e')),
-                        ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor('#1a3c6e')),
-                        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                        ('BACKGROUND', (0, 1), (-1, 1), colors.HexColor('#f5f5f5')),
-                        ('BACKGROUND', (0, 3), (-1, 3), colors.HexColor('#f5f5f5')),
-                    ])
-                )
-            ]))
-            elements.append(Spacer(1, 10*mm))
-
-        total_price = getattr(booking, 'total_price', 0.00) or 0.00
-        currency = getattr(tour, 'currency', 'EUR') if tour else 'EUR'
-        configuration_details = getattr(booking, 'configuration_details', {}) or {}
-
-        if configuration_details:
-            room_data = []
-            singles = configuration_details.get('singles', 0)
-            doubles = configuration_details.get('doubles', 0)
-            triples = configuration_details.get('triples', 0)
-            children = configuration_details.get('children', 0)
-            infants = configuration_details.get('infants', 0)
-            if singles:
-                room_data.append([f"Single Room ({singles} adult{'s' if singles > 1 else ''})", f"{currency} {total_price/singles:.2f}"])
-            if doubles:
-                room_data.append([f"Double Room ({doubles*2} adults)", f"{currency} {total_price/(doubles*2):.2f}"])
-            if triples:
-                room_data.append([f"Triple Room ({triples*3} adults)", f"{currency} {total_price/(triples*3):.2f}"])
-            if children:
-                room_data.append([f"Children ({children})", f"{currency} {total_price/children:.2f}"])
-            if infants:
-                room_data.append([f"Infants ({infants})", f"{currency} 0.00"])
-            if room_data:
-                elements.append(KeepTogether([
-                    Paragraph(_("ROOM CONFIGURATION"), heading_style),
-                    Table(
-                        room_data,
-                        colWidths=[100*mm, 60*mm],
-                        style=TableStyle([
-                            ('FONTSIZE', (0, 0), (-1, -1), 10),
-                            ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor('#333333')),
-                            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-                            ('TOPPADDING', (0, 0), (-1, -1), 8),
-                            ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#1a3c6e')),
-                            ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor('#1a3c6e')),
-                            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
-                            ('ALIGN', (1, 0), (-1, -1), 'RIGHT'),
-                            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f5f5f5')),
-                        ])
-                    )
-                ]))
-                elements.append(Spacer(1, 10*mm))
-
-        elements.append(KeepTogether([
-            Paragraph(_("TOTAL PRICE"), heading_style),
-            Table(
-                [[_("Total"), f"{currency} {total_price:.2f}"]],
-                colWidths=[100*mm, 60*mm],
-                style=TableStyle([
-                    ('FONTSIZE', (0, 0), (-1, -1), 10),
-                    ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor('#333333')),
-                    ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-                    ('TOPPADDING', (0, 0), (-1, -1), 8),
-                    ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#1a3c6e')),
-                    ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor('#1a3c6e')),
-                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                    ('ALIGN', (0, 0), (0, -1), 'LEFT'),
-                    ('ALIGN', (1, 0), (-1, -1), 'RIGHT'),
-                    ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f5f5f5')),
-                ])
-            )
-        ]))
-        elements.append(Spacer(1, 10*mm))
-
-        not_included = [
-            _("Comidas y bebidas no indicadas en el programa"),
-            _("Extras personales en hoteles y restaurantes"),
-            _("Propinas"),
-            _("Tarjeta de asistencia médica"),
-        ]
-        if tour and isinstance(tour, DayTour):
-            not_included = [
-                _("Transporte al punto de inicio"),
-                _("Comidas no especificadas"),
-                _("Propinas"),
-            ]
-
-        elements.append(KeepTogether([
-            Paragraph(_("NO INCLUDE"), heading_style),
-            *[Paragraph(f"• {item}", bullet_style) for item in not_included]
-        ]))
-        elements.append(Spacer(1, 10*mm))
-
-        notes = [
-            _("PERÍODO DE COMPRA: COMPRA INMEDIATA"),
-            _("Check in a partir de las 15:00 y check out a las 12:00"),
-            _("Habitaciones triples cuentan únicamente con 2 camas"),
-            _("La asignación de habitaciones se hará con base en disponibilidad"),
-            _("PRECIOS SUJETOS A CAMBIO Y DISPONIBILIDAD SIN PREVIO AVISO HASTA CONFIRMAR RESERVA"),
-        ]
-        if tour and isinstance(tour, DayTour):
-            notes = [
-                _("Confirmación sujeta a disponibilidad"),
-                _("Mínimo de participantes requerido"),
-                _("PRECIOS SUJETOS A CAMBIO SIN PREVIO AVISO"),
-            ]
-
-        elements.append(KeepTogether([
-            Paragraph(_("NOTAS IMPORTANTES"), heading_style),
-            *[Paragraph(f"• {note}", bullet_style) for note in notes]
-        ]))
-        elements.append(Spacer(1, 15*mm))
-
-        elements.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor('#1a3c6e')))
-        elements.append(Spacer(1, 5*mm))
-        elements.append(Paragraph(_("Thank you for choosing Milano Travel!"), footer_style))
-        elements.append(Paragraph(_("Contact us at support@milano-travel.com"), normal_style))
-
-        logger.info(f"Building PDF with {len(elements)} elements for booking {booking.id}")
-        doc.build(elements)
-        pdf = buffer.getvalue()
-        buffer.close()
-        logger.info(f"Successfully generated PDF for booking {booking.id}")
-        return pdf
-    except Exception as e:
-        logger.error(f"PDF generation failed for booking {booking.id}: {e}")
-        raise
-
-def send_itinerary_email(booking: Booking, pdf_data: bytes) -> None:
-    subject = "Your Tour Itinerary"
-    duration = booking.tour.duration_days
-    end_date = booking.travel_date + timedelta(days=duration)
-
-    message = render_to_string('bookings/emails/itinerary_email.html', {
-        'booking': booking,
-        'tour': booking.tour,
-        'end_date': end_date,
-        'site_url': settings.SITE_URL,
-        'configuration_details': booking.configuration_details or {},
-    })
-    from django.core.mail import EmailMessage
-    email = EmailMessage(
-        subject,
-        message,
-        settings.DEFAULT_FROM_EMAIL,
-        [booking.customer_email],
-    )
-    email.attach('itinerary.pdf', pdf_data, 'application/pdf')
-    email.content_subtype = 'html'
-    email.send()
-    logger.info(f"Itinerary email sent to {booking.customer_email} for booking {booking.id}")
 
 def get_bookings(request) -> JsonResponse:
     bookings = [{'id': b.pk, 'name': f"{b.customer_name} ({b.pk})"} for b in Booking.objects.all()]
@@ -1519,22 +1062,46 @@ def get_default_user(request):
             password="securepassworde7c"  # Use a secure password
         )
 
-def customer_portal(request) -> HttpResponse:
-    email = request.GET.get('email', '')
-    prop_id = request.GET.get('prop_id', '')
-    proposals = []
-    bookings = []
+from .models import Proposal, Booking
+
+def customer_portal(request):
+    proposals = Proposal.objects.select_related('content_type', 'user').prefetch_related('confirmation_tokens')
+    bookings = Booking.objects.select_related('content_type', 'user')
+    
+    # Search/filter logic (email/ID/status)
+    email = request.GET.get('email', '').strip()
+    id_filter = request.GET.get('id', '').strip()
+    status = request.GET.get('status', 'all')
+    
     if email:
-        proposals = Proposal.objects.filter(customer_email=email).prefetch_related('tour')
-        bookings = Booking.objects.filter(customer_email=email).prefetch_related('tour')
-    if prop_id:
-        proposals = Proposal.objects.filter(prop_id=prop_id).prefetch_related('tour')
-        bookings = Booking.objects.filter(customer_email=email).prefetch_related('tour')
+        proposals = proposals.filter(customer_email__icontains=email)
+        bookings = bookings.filter(customer_email__icontains=email)
+        logger.info(f"Filtering by email: {email}")
+    if id_filter:
+        proposals = proposals.filter(
+            Q(prop_id__icontains=id_filter) | Q(id__icontains=id_filter)
+        )
+        bookings = bookings.filter(
+            Q(book_id__icontains=id_filter) | Q(id__icontains=id_filter)
+        )
+        logger.info(f"Filtering by ID: {id_filter}")
+    if status != 'all':
+        proposals = proposals.filter(status=status)
+        bookings = bookings.filter(status=status)
+        logger.info(f"Filtering by status: {status}")
+    
+    # Pagination (separate—10 each)
+    proposals_paginator = Paginator(proposals, 10)
+    bookings_paginator = Paginator(bookings, 10)
+    proposals = proposals_paginator.get_page(request.GET.get('proposals_page', 1))
+    bookings = bookings_paginator.get_page(request.GET.get('bookings_page', 1))
+    
     context = {
         'proposals': proposals,
         'bookings': bookings,
         'email': email,
-        'prop_id': prop_id,
+        'id': id_filter,
+        'current_status': status,
     }
     return render(request, 'bookings/customer_portal.html', context)
 
@@ -1546,5 +1113,75 @@ def proposal_status(request, proposal_id: int) -> JsonResponse:
             'payment_link': proposal.payment_link if proposal.status == 'SUPPLIER_CONFIRMED' else ''
         })
     except Proposal.DoesNotExist:
-        return JsonResponse({'error': 'Proposal not found'}, status=404)
+        return JsonResponse({'error': 'Proposal not to found'}, status=404)
 
+def get_remaining_capacity(tour_id, travel_date, tour_model, duration_days=1):
+    """
+    Calculate remaining spots per day for travel_date range.
+    Returns: {'trip_remaining': int (min across range), 'per_day': [{'date': 'YYYY-MM-DD', 'remaining': int}, ...], 'is_full': bool}
+    """
+    if not travel_date:
+        return {'trip_remaining': 0, 'per_day': [], 'is_full': True}
+    
+    today = date.today()
+    if travel_date < today:
+        return {'trip_remaining': 0, 'per_day': [], 'is_full': True}
+    
+    # Fetch tour instance
+    tour = get_object_or_404(tour_model, id=tour_id)
+    
+    # Parse available_days (e.g., '0,1,2,3' → [0,1,2,3]; all if empty)
+    available_days_str = getattr(tour, 'available_days', '')
+    available_days = [int(d.strip()) for d in available_days_str.split(',') if d.strip()] if available_days_str else list(range(7))
+    
+    # ContentType for tour
+    content_type = ContentType.objects.get_for_model(tour_model)
+    
+    # Dates in range
+    dates = [travel_date + timedelta(days=i) for i in range(duration_days)]
+    per_day = []
+    min_remaining = float('inf')
+    is_full_any = False
+    has_available_date = False
+    for d in dates:
+        day_of_week = (d.weekday() + 6) % 7  # 0=Sun, 6=Sat
+        if day_of_week not in available_days:
+            continue
+        
+        has_available_date = True
+        # Daily capacity
+        daily_capacity = tour.max_capacity or 0
+        
+        # Confirmed count for this date
+        adults_sum = Booking.objects.filter(
+            content_type=content_type,
+            object_id=tour_id,
+            travel_date=d,
+            status='CONFIRMED',
+        ).aggregate(Sum('number_of_adults'))['number_of_adults__sum'] or 0
+        children_sum = Booking.objects.filter(
+            content_type=content_type,
+            object_id=tour_id,
+            travel_date=d,
+            status='CONFIRMED',
+        ).aggregate(Sum('number_of_children'))['number_of_children__sum'] or 0
+        confirmed = adults_sum + children_sum
+        
+        remaining = max(0, daily_capacity - confirmed)
+        min_remaining = min(min_remaining, remaining)
+        if remaining == 0:
+            is_full_any = True
+        
+        per_day.append({
+            'date': d.strftime('%Y-%m-%d'),
+            'remaining': remaining,
+            'total_daily': daily_capacity
+        })
+    
+    # FIXED: Handle no available dates
+    trip_remaining = 0 if not has_available_date else (min_remaining if min_remaining != float('inf') else daily_capacity)
+    return {
+        'trip_remaining': trip_remaining,
+        'per_day': per_day,
+        'is_full': is_full_any or not has_available_date
+    }
