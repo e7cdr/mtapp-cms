@@ -8,40 +8,24 @@ from django.conf import settings
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE_DIR = os.path.dirname(PROJECT_DIR)
 
-
+SITE_URL = 'www.milanotravel.com.ec'
 
 # Sensitive keys from environment variables
 SECRET_KEY = config('SECRET_KEY')
 OPEN_EXCHANGE_RATES_API_KEY = config('OPEN_EXCHANGE_RATES_API_KEY')
-STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY')
-STRIPE_PUBLISHABLE_KEY = config('STRIPE_PUBLISHABLE_KEY')
 GOOGLE_TRANSLATE_KEY = config('GOOGLE_TRANSLATE_KEY')
-
-# Your existing production settings (keep these)
-
-
-
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
-
 
 # Application definition
 
 INSTALLED_APPS = [
-    "home",
-    "search",
-    "flex",
-    "streams",
-    "parler",
-    "site_settings",
-    "rosetta",
-    "tours",
-    "bookings",
-    "partners",
-    "p_methods",
-    # "profiles",
-    # "staff_tools",
+    "django_filters",
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+
     "wagtail_localize",
     "wagtail_localize.locales",
     "wagtail.contrib.forms",
@@ -59,15 +43,24 @@ INSTALLED_APPS = [
     "wagtail.search",
     "wagtail.admin",
     "wagtail",
+
     "modelcluster",
     "taggit",
-    "django_filters",
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
-    "django.contrib.staticfiles",
+
+
+    "home",
+    "search",
+    "flex",
+    "streams",
+    "parler",
+    "site_settings",
+    "rosetta",
+    "tours",
+    "bookings",
+    "partners",
+    "p_methods",
+    # "profiles",
+    # "staff_tools",
 ]
 
 MIDDLEWARE = [
@@ -107,7 +100,20 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "mtapp.wsgi.application"
 
-
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST', default='www.milanotravel.com.ec'),
+        'PORT': config('DB_PORT', default='3306'),
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            'charset': 'utf8mb4',
+        },
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -137,21 +143,6 @@ TIME_ZONE = "UTC"
 
 USE_I18N = True
 USE_L10N = True
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': config('DB_NAME'),
-#         'USER': config('DB_USER'),
-#         'PASSWORD': config('DB_PASSWORD'),
-#         'HOST': config('DB_HOST', default='127.0.0.1'),
-#         'PORT': config('DB_PORT', default='3306'),
-#         'OPTIONS': {
-#             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-#             'charset': 'utf8mb4',
-#         },
-#     }
-# }
 
 
 # Wagtail internationalization settings
@@ -276,6 +267,16 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'INFO',
             'propagate': False,
+        },
+        'django.core.mail': {  # NEW: Catches SMTP connect/send details
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'smtplib': {  # NEW: Low-level SMTP server responses
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True,
         },
     },
 }

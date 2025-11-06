@@ -113,7 +113,7 @@ class AbstractTourPage(Page):
         max_length=50,
         blank=True,
         default='',
-        help_text="Comma-separated days (0=Sunday, ..., 6=Saturday), e.g., '0,1,2,3'"
+        help_text="Comma-separated days (0=Sunday, 1=Monday..., 6=Saturday), e.g., '0,1,2,3'"
     )
 
     # Supplier & Pricing (common)
@@ -205,7 +205,8 @@ class AbstractTourPage(Page):
             FieldPanel('yt_vid'),
         ], heading="Media"),
         MultiFieldPanel([
-                MultiFieldPanel([            
+                FieldPanel('pricing_type'),
+                MultiFieldPanel([
                     FieldPanel('price_sgl'),
                     FieldPanel('price_dbl'),
                     FieldPanel('price_tpl'),
@@ -223,7 +224,7 @@ class AbstractTourPage(Page):
                 FieldPanel('rep_comm'),
             ],heading="Commissions and Factors"),
         ], heading="Price & Comm"),
-        
+
 
         FieldPanel('ref_code'),
         FieldPanel('code_id', read_only=True),
@@ -236,7 +237,6 @@ class AbstractTourPage(Page):
             FieldPanel('start_date'),
             FieldPanel('end_date'),
             FieldPanel('available_days'),
-            FieldPanel('pricing_type'),
             FieldPanel('child_age_min'),
             FieldPanel('child_age_max'),
         ], heading="Tour Configuration"),

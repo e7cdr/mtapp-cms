@@ -74,6 +74,12 @@ body {
 .cover-text a {
     text-decoration: none;
     color: inherit;
+    max-width: 8rem;
+    align-content: center;
+}
+
+.booking-actions {
+    margin-top: 0.5rem;
 }
 
 .tour-video, .tour-itinerary {
@@ -114,6 +120,10 @@ body {
     syntax: '<angle>';
     inherits: false;
     initial-value: 0deg;
+}
+
+.booking-actions {
+    margin-top: 0.5rem;
 }
 
 .book-button{

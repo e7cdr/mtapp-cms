@@ -1,4 +1,4 @@
-print("=== LOADING DEV SETTINGS ===")
+# print("=== LOADING DEV SETTINGS ===")
 from .base import *
 
 # SECURITY WARNING: don't run with debug turned on in production!

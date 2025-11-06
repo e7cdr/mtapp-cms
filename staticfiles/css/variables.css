@@ -25,7 +25,7 @@
     --yellow-dark-90: #191500;
     --yellow-dark-100: #000000;
 
-    --yellow-transp: #ffd90055;
+    --yellow-transp: #ffc10766;
 
     /* Dark to light scale (to white for light mode) */
   --green2-0: #39DA35;   /* Lively accent */
@@ -128,4 +128,4 @@
   --nav-bar-hover-color: #ffd500;
 
 
-} 
+}

@@ -1,3 +1,99 @@
-"__pycache__/*.pycvenv/.env" 
-"staticfiles"
-".sqlite3"
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+.venv/
+
+# Secrets & Config
+.env
+.env.local
+.env.*.local
+secrets/
+*.pem
+*.key
+*.cert
+*.p12
+*.jks
+*.keystore
+keystore/
+
+# Django / Wagtail
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+staticfiles.bak/
+*.pot
+*.pyc
+.DS_Store
+Thumbs.db
+
+# Wagtail-specific (if using)
+wagtailcache/
+wagtail-userbar/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+```
+
+### Quick Tips
+- **Customize**: If you use Docker, add `docker-compose.override.yml`. For CI/CD, ignore `*.yml` if local-only.
+- **Verify**: After updating, run `git status`—sensitive files shouldn't show up.
+- **Migrate to Prod**: As before, commit migrations/static, but regenerate `collectstatic` on PA.
+- **Backup Reminder**: Version DB dumps separately (e.g., via Git LFS or external) if needed, but don't commit live data.
+
+This should prevent future "oops" moments. If your setup has extras (e.g., Celery, Redis), let me know to tweak!

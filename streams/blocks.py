@@ -100,7 +100,7 @@ def create_icons_list(icon_choices=None):
 Icons_List = create_icons_list()  # Exports the default version
 
 class CarouselBlock(blocks.StructBlock):
-    caption = blocks.CharBlock(required=False, help_text="Title for the image")  # Optional caption
+    caption = blocks.CharBlock(required=False, help_text="Carousel main title (optional)")  # Optional caption
     carousel = blocks.ListBlock(
         blocks.StructBlock([
             ('image', ImageChooserBlock()),
