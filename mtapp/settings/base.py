@@ -1,5 +1,6 @@
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+from datetime import timedelta
 import os
 from pathlib import Path
 from decouple import config
@@ -48,6 +49,12 @@ INSTALLED_APPS = [
     "taggit",
 
 
+    'axes',  # For login attempt locking
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',  # Optional: for social logins later
+    'django_ratelimit',  # For form throttling
+    "accounts",
     "home",
     "search",
     "flex",
@@ -59,7 +66,9 @@ INSTALLED_APPS = [
     "bookings",
     "partners",
     "p_methods",
-    # "profiles",
+    "profiles",
+    'revenue_management',
+    'captcha',
     # "staff_tools",
 ]
 
@@ -72,6 +81,9 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.middleware.locale.LocaleMiddleware",
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
+    'axes.middleware.AxesMiddleware',
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
 ]
 
@@ -97,6 +109,34 @@ TEMPLATES = [
         },
     },
 ]
+
+# Auth backends (include Axes for locking)
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',  # Axes first for locking
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+# Allauth settings
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'  # Users verify email before login
+ACCOUNT_LOGIN_METHODS = {'email'}  # Login with email
+SITE_ID = 1  # Required for allauth
+
+# Axes settings (lock after 5 failed attempts for 15 mins; customize per your risk level)
+AXES_FAILURE_LIMIT = 5
+AXES_COOLOFF_TIME = timedelta(minutes=15)
+
+# Ratelimit (global; we'll apply per-view later)
+RATELIMIT_ENABLE = True
+RATELIMIT_VIEW = 'ratelimit.views.RatelimitView'  # Fallback 403 page
+
+
+RATELIMIT_CACHE = 'default'  # Uses the shared cache above
+
+# CAPTCHA (uses image-based simple math; configure image backend if needed)
+CAPTCHA_OUTPUT_FORMAT = '(n) %(image)s %(hidden_field)s %(text_field)s'
+CAPTCHA_TIMEOUT = 5  # Expires in 5 mins
 
 WSGI_APPLICATION = "mtapp.wsgi.application"
 
@@ -297,6 +337,16 @@ WAGTAILADMIN_RICH_TEXT_EDITORS = {
     'minimal': {
         'OPTIONS': {
             'features': ['bold', 'italic', 'subscript', 'superscript', 'link']
+        }
+    }
+}
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',  # Local Redis; adjust for prod (e.g., REDIS_URL env var)
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
         }
     }
 }

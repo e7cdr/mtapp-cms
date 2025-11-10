@@ -1,7 +1,6 @@
 import json
 import urllib
 import logging
-import requests
 from django.db.models import Sum  # NEW: For aggregates
 
 from decimal import Decimal
@@ -11,6 +10,9 @@ from django.conf import settings
 from django.utils import timezone
 from django.contrib import messages
 from bookings.pdf_gen import generate_itinerary_pdf
+from django_ratelimit.decorators import ratelimit
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import never_cache
 
 from django.db.models import Q
 from bookings.utils import calculate_demand_factor, get_30_day_used_slots, get_exchange_rate, get_remaining_capacity, send_internal_confirmation_email, send_itinerary_email, send_preconfirmation_email, send_proposal_submitted_email, send_supplier_email
@@ -43,6 +45,11 @@ class BookingStartView(FormView):
     template_name = 'bookings/booking_start.html'
     form_class = ProposalForm
     success_url = reverse_lazy('bookings:customer_portal')  # Fallback, not used
+
+    @method_decorator(ratelimit(key='ip', rate='5/h', method='POST', block=True))
+    @method_decorator(never_cache)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

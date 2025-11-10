@@ -39,6 +39,9 @@ urlpatterns = urlpatterns + i18n_patterns (
     path("api/v2/", api_router.urls),
     path('i18n/', include('django.conf.urls.i18n')),
     path("search/", search_views.search, name="search"),
+    path('profile/', include('profiles.urls')),
+    path('accounts/', include('accounts.urls')),
+
 
 
     # For anything not caught by a more specific rule above, hand over to

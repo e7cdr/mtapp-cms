@@ -7,6 +7,7 @@ from .models import Booking, Proposal, ExchangeRate
 from tours.models import LandTourPage
 from django.utils.translation import gettext_lazy as _
 from django.contrib.contenttypes.models import ContentType
+from captcha.fields import CaptchaField
 
 logger = logging.getLogger(__name__)
 
@@ -32,13 +33,15 @@ class ProposalForm(forms.ModelForm):  # Changed to ModelForm
         initial='USD',
         help_text=_("Select the currency for pricing")
     )
+    captcha = CaptchaField()
 
     class Meta:
         model = Proposal
         fields = [
             'tour_type', 'tour_id', 'customer_name', 'customer_email', 'customer_phone',
             'customer_address', 'nationality', 'number_of_adults', 'number_of_children',
-            'travel_date', 'notes', 'child_ages', 'selected_configuration', 'selected_config'
+            'travel_date', 'notes', 'child_ages', 'selected_configuration', 'selected_config',
+            'captcha',
         ]
         widgets = {
             'travel_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'text'}),
