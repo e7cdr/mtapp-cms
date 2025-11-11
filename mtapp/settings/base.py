@@ -72,7 +72,7 @@ INSTALLED_APPS = [
     # "staff_tools",
 ]
 
-MIDDLEWARE = [
+MIDDLEWARE = [  # Order matters
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -81,9 +81,9 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.middleware.locale.LocaleMiddleware",
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'allauth.account.middleware.AccountMiddleware',
-    'axes.middleware.AxesMiddleware',
+    "django.contrib.sites.middleware.CurrentSiteMiddleware",  # CORRECT: Django's sites middleware
+    "allauth.account.middleware.AccountMiddleware",
+    "axes.middleware.AxesMiddleware",
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
 ]
 

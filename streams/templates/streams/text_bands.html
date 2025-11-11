@@ -22,6 +22,21 @@
   </div>
   <div class="item">{{self.textbox_1|richtext}}</div>
   <div class="item">{{self.textbox_2|richtext}}</div>
+  {% if self.social_media_icon %}
+    {% if social_links %}
+    <div class="social-media-wrap">
+        {% for link in social_links %}
+        <button type="button">
+            <a href="{{ link.url }}" class="{{ link.icon }}" 
+               {% if link.color %}style="color: {{ link.color }}"{% endif %}>
+                <!-- Optional: Add aria-label for accessibility, e.g., aria-label="{{ link.field|title }} link" -->
+            </a>
+        </button>
+        {% endfor %}
+    </div>
+    {% endif %}
+  {% endif %}
  </div>
  {% endif %}
+
 </section>

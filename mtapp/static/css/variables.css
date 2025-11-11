@@ -2,7 +2,7 @@
     /* Colora Variables */
     --yellow-0: #FFD700;   /* Vibrant accent */
     --yellow-10: #FFDB19;
-    --yellow-20: #FFDF33;
+    --yellow-20: #ffcf33;
     --yellow-30: #FFE34C;
     --yellow-40: #FFE766;
     --yellow-50: #FFEB7F;
@@ -16,7 +16,7 @@
     --yellow-dark-0: #FFD700;
     --yellow-dark-10: #E5C100;
     --yellow-dark-20: #CCAC00;
-    --yellow-dark-30: #B29600;
+    --yellow-dark-30: #c9ae18;
     --yellow-dark-40: #998100;
     --yellow-dark-50: #7F6B00;
     --yellow-dark-60: #665600;
@@ -71,7 +71,7 @@
   /* Darker variants (to black for shadows/dark mode) */
   --red-dark-0: #DA3535;
   --red-dark-10: #C43030;
-  --red-dark-20: #AE2A2A;
+  --red-dark-20: #de0000;
   --red-dark-30: #992525;
   --red-dark-40: #832020;
   --red-dark-50: #6D1B1B;

@@ -56,19 +56,19 @@ class AbstractTourPage(Page):
     )
     description = models.TextField(help_text=_("Description of the tour."))
     location = models.CharField(max_length=30, help_text=_('Location inside the country'))
-    cover_page_content = models.TextField(blank=True, help_text=_("Content for the tour's cover page."))
-    general_info = models.TextField(blank=True, help_text=_("General info like cancellation policy, inclusions."))
-    final_message = models.TextField(blank=True, help_text=_("Final message from the travel company."))
-    courtesies = models.TextField(default="Tour guiado por la ciudad", help_text=_("Tour inclusions"), blank=True)
+    cover_page_content = models.TextField(blank=True, help_text=_("Content for the tour's cover page in the PDF Generator."))
+    general_info = models.TextField(blank=True, help_text=_("General info like cancellation policy, inclusions in the PDF Generator."))
+    final_message = models.TextField(blank=True, help_text=_("Final message from the travel company in the PDF Generator. "))
+    courtesies = models.TextField(default="Guided city tour", help_text=_("Tour inclusions"), blank=True)
 
 
     amenity = StreamField([
         ('include', ListBlock(ChoiceBlock(choices=blocks.GLOBAL_ICON_CHOICES)))
     ], blank=True, use_json_field=True, help_text=_("Add as many amenities."))
 
-    no_inclusions = models.TextField(default="Ticket aéreo", help_text=_("Not included"), blank=True)
+    no_inclusions = models.TextField(default="Air Ticket", help_text=_("Not included"), blank=True)
     additional_notes = models.TextField(
-        default="Sujeto a disponibilidad. Consultar suplementos para festivos.", blank=True
+        default="Subject to availability", blank=True
     )
     hotel = models.CharField(max_length=50, default='LOCAL')
 
@@ -127,21 +127,21 @@ class AbstractTourPage(Page):
         choices=[('Per_room', 'Per Room'), ('Per_person', 'Per Person')],
         default='Per_person'
     )
-    max_children_per_room = models.PositiveIntegerField(default=1)
-    child_age_min = models.PositiveIntegerField(default=7)
-    child_age_max = models.PositiveIntegerField(default=12)
-    price_sgl = models.DecimalField(max_digits=10, decimal_places=2)
-    price_dbl = models.DecimalField(max_digits=10, decimal_places=2)
-    price_tpl = models.DecimalField(max_digits=10, decimal_places=2)
+    max_children_per_room = models.PositiveIntegerField(default=1, null=True, blank=True)
+    child_age_min = models.PositiveIntegerField(default=7, verbose_name="Child Minimum Age")
+    child_age_max = models.PositiveIntegerField(default=12, verbose_name="Child Maximum Age")
+    price_sgl = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Single Room Price")
+    price_dbl = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Double Room Price")
+    price_tpl = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Triple Room Price")
 
-    price_adult = models.DecimalField(max_digits=10, decimal_places=2)
-    price_chd = models.DecimalField(max_digits=10, decimal_places=2)
-    price_inf = models.DecimalField(max_digits=10, decimal_places=2)
-    seasonal_factor = models.DecimalField(max_digits=3, decimal_places=2, default=1.0)
-    demand_factor = models.DecimalField(max_digits=3, decimal_places=2, default=0.0)
+    price_adult = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Adults Price")
+    price_chd = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Children Price")
+    price_inf = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Infant Price")
+    seasonal_factor = models.DecimalField(max_digits=3, decimal_places=2, default=1.0, verbose_name="Seasonal Price Factor increase", help_text="1.0 = 0%. This will increase the price on certain seasons of the year like holidays")
+    demand_factor = models.DecimalField(max_digits=3, decimal_places=2, default=0.0, verbose_name="Demand Factor", help_text="The Demand Factor will increase price based on the total occupancy calculated for the next 30 days (counting the selected travel date). 0 = 0%. If 20%, this means the first booking will have an increased value of 0, and the last one 20%")
     rep_comm = models.PositiveIntegerField(default=0, help_text=_('Sales representative commission'))
-    yt_vid = models.URLField(default='www.none.com', help_text=_("This video will be shown in the Tours Watch Video."))
-    max_capacity = models.PositiveIntegerField(default=20)
+    yt_vid = models.URLField(default='www.none.com', help_text=_("This video will be shown in the Tours Watch Video."), verbose_name="Youtube Video")
+    max_capacity = models.PositiveIntegerField(default=20, help_text="Maximum Capacity is taken to calculate price increased based on the demand factor")
     available_slots = models.PositiveIntegerField(default=20)
 
     # Itinerary
@@ -195,7 +195,6 @@ class AbstractTourPage(Page):
             FieldPanel('is_all_inclusive'),
             FieldPanel('is_sold_out'),
         ], heading="Tour Current State"),
-
         MultiFieldPanel([
             FieldPanel('image'),
             FieldPanel('cover_image'),
@@ -204,26 +203,31 @@ class AbstractTourPage(Page):
             FieldPanel('pdf_images'),
             FieldPanel('yt_vid'),
         ], heading="Media"),
-        MultiFieldPanel([
-                FieldPanel('pricing_type'),
+            MultiFieldPanel([
+                FieldPanel('pricing_type', classname='pricing-type-selector'),  # JS target
+                FieldPanel('price_chd'),
+                FieldPanel('price_inf'),
+
+                # Per Room Panel (hidden by default; JS shows it)
                 MultiFieldPanel([
                     FieldPanel('price_sgl'),
                     FieldPanel('price_dbl'),
                     FieldPanel('price_tpl'),
-        ], heading="Prices Per Room"),
+                ], heading="Prices Per Room", classname='per-room-panel'),  # JS target
+                
+                # Per Person Panel (hidden by default; JS shows it)
                 MultiFieldPanel([
                     FieldPanel('price_adult'),
-                    FieldPanel('price_chd'),
-                    FieldPanel('price_inf'),
+                ], heading="Prices Per Person", classname='per-person-panel'),  # JS target
+                
+                MultiFieldPanel([
                     FieldPanel('max_children_per_room'),
-        ], heading="Prices Per Person (If per room, DON't fill ADULT PRICE)"),
-            MultiFieldPanel([
-                FieldPanel('price_subtext'),
-                FieldPanel('seasonal_factor'),
-                FieldPanel('demand_factor'),
-                FieldPanel('rep_comm'),
-            ],heading="Commissions and Factors"),
-        ], heading="Price & Comm"),
+                    FieldPanel('price_subtext'),
+                    FieldPanel('seasonal_factor'),
+                    FieldPanel('demand_factor'),
+                    FieldPanel('rep_comm'),
+                ], heading="Commissions and Factors"),
+            ], heading="Price & Comm"),
 
 
         FieldPanel('ref_code'),
@@ -251,6 +255,23 @@ class AbstractTourPage(Page):
         abstract = True  # Key: No DB table
         unique_together = [('locale', 'code_id', 'ref_code')]
 
+    @property
+    def active_prices(self):
+        """Returns dict of prices based on pricing_type. Use in templates/serializers."""
+        if self.pricing_type == 'Per_room':
+            return {
+                'sgl': self.price_sgl,
+                'dbl': self.price_dbl,
+                'tpl': self.price_tpl,
+            }
+        elif self.pricing_type == 'Per_person':
+            return {
+                'adult': self.price_adult,
+                'chd': self.price_chd,
+                'inf': self.price_inf,
+                'max_children_per_room': self.max_children_per_room,
+            }
+        return {}
 
     def get_itinerary_days(self):
         return self.itinerary
@@ -305,6 +326,31 @@ class AbstractTourPage(Page):
                 raise ValidationError("Start date must be before end date.")
         elif not self.start_date or not self.end_date:
             raise ValidationError("Both start date and end date are required.")
+        if self.available_slots > self.max_capacity:
+            raise ValidationError(_("Available slots cannot exceed max capacity."))
+        
+        if self.pricing_type == 'Per_room':
+            room_prices = [p for p in [self.price_sgl, self.price_dbl, self.price_tpl] if p not in (None, Decimal('0.00'))]
+            if not room_prices:
+                raise ValidationError("At least one per-room price required.")
+            
+            # Clear per-person (set to None, including if 0.00)
+            self.price_adult = None
+            self.price_chd = None
+            self.price_inf = None
+            self.max_children_per_room = None  # Optional: Clear child room limit too
+            
+        elif self.pricing_type == 'Per_person':
+            # Require at least one per-person price
+            if not any([self.price_adult, self.price_chd, self.price_inf]):
+                raise ValidationError("At least one per-person price (Adult, Child, or Infant) is required for 'Per Person'.")
+            
+            # Clear per-room
+            self.price_sgl = None
+            self.price_dbl = None
+            self.price_tpl = None
+        
+        # Existing validations...
         if self.available_slots > self.max_capacity:
             raise ValidationError(_("Available slots cannot exceed max capacity."))
 

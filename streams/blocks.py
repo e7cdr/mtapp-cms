@@ -9,8 +9,8 @@ this file in the models.py file where we want to use these blocks. And we're goo
 
 from wagtail import blocks
 from wagtail.images.blocks import ImageChooserBlock
-# from wagtail.blocks import CharBlock, StructBlock, ListBlock, PageChooserBlock
-
+from django.contrib.sites.shortcuts import get_current_site  # NEW: For safe site resolution
+from site_settings.models import FooterLinks
 
 
 GLOBAL_ICON_CHOICES = [
@@ -223,11 +223,23 @@ class HomeCardsBlock(Cards_Block):
         label = "Home Card"  # Optional: Distinguishes in admin dropdown
 
 colors = [
-    ('--cyan-dark-10', 'Cyan'),
-    ('--yellow-dark-20', 'Yellow'),
-    ('--red-dark-10', 'Red'),
-    ('--green2-dark-20', 'Green'),
+    ('--cyan-60', 'Sky Blue'),
+    ('--cyan-10', 'Cyan'),
+    ('--cyan-dark-70', 'Dark Cyan'),
+    ('--yellow-dark-30', 'Sand'),
+    ('--yellow-0', 'Yellow'),
+    ('--yellow-dark-40', 'Dark Yellow'),
+    ('--yellow-dark-70', 'Brown'),
+    ('--red-10', 'Red'),
+    ('--red-dark-20', 'Red Blood'),
+    ('--red-dark-60', 'Dark Red'),
+    ('--red-50', 'Pink'),
+    ('--green2-10', 'Green'),
+    ('--green2-dark-70', 'Dark Green'),
     ('--yellow-dark-100', 'Black'),
+    ('gray', 'Gray'),
+    ('--yellow-100', 'White'),
+
 ]
 
 class TextBand_Block(blocks.StructBlock):
@@ -237,11 +249,49 @@ class TextBand_Block(blocks.StructBlock):
     textbox_2 = blocks.RichTextBlock(required=True, features=["bold", "italic", "link"])
     background_image = ImageChooserBlock(required=False)
     background_color = blocks.ChoiceBlock(choices=colors, default='--yellow-dark-100')
+    social_media_icon = blocks.BooleanBlock(required=False, default=False, help_text="If checked, all social links configured in admin/settings will render.")
 
-    class Meta: #noqa
+    class Meta:  # noqa
         template = "streams/text_bands.html"
         icon = "doc-full"
         label = "Text Band"
+
+    def get_context(self, value, parent_context=None):
+            context = super().get_context(value, parent_context=parent_context)
+            
+            # Safe site fetch: Use get_current_site() to avoid request.site error
+            request = parent_context.get('request') if parent_context else None
+            if request:
+                try:
+                    site = get_current_site(request)
+                    footer_links = FooterLinks.for_site(site).first()
+                except Exception:  # Fallback if sites not configured
+                    footer_links = FooterLinks.objects.first()
+            else:
+                footer_links = FooterLinks.objects.first()  # Global fallback for non-request contexts
+            
+            # Define platforms with their metadata
+            platforms = [
+                {'field': 'facebook', 'icon': 'fab fa-facebook-square', 'color': None},
+                {'field': 'instagram', 'icon': 'fab fa-instagram', 'color': None},
+                {'field': 'tik_tok', 'icon': 'fab fa-tiktok', 'color': None},
+                {'field': 'youtube', 'icon': 'fab fa-youtube', 'color': 'red'},
+                {'field': 'whatsapp', 'icon': 'fab fa-whatsapp', 'color': 'green'},
+                {'field': 'x_tw', 'icon': 'fab fa-x-twitter', 'color': 'black'},
+            ]
+            
+            # Build filtered list: Only include if URL is set
+            social_links = []
+            for platform in platforms:
+                url = getattr(footer_links, platform['field'], None)
+                if url:
+                    platform_copy = platform.copy()
+                    platform_copy['url'] = url
+                    social_links.append(platform_copy)
+            
+            context['social_links'] = social_links
+            return context
+
 
 class Itinerary_Block(blocks.StructBlock):
 

@@ -1,4 +1,5 @@
 @import url('variables.css');
+@import url('footer.css');
 
 section {
     height: min-content;

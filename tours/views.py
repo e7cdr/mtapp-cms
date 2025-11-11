@@ -1,7 +1,8 @@
+from django.http import HttpResponse
 
-from p_methods.paypal_functions import generateAccessToken
 
-
+def test_hook(request):
+    return HttpResponse("🎉 HOOK WORKS! wagtail_hooks.py is loaded.")
 
 # import json
 # import re

@@ -11,6 +11,8 @@ from bookings.api_views import AvailableDatesView
 from .api import api_router
 from search import views as search_views
 
+from tours.views import test_hook
+
 
 
 
@@ -18,6 +20,7 @@ from search import views as search_views
 urlpatterns = [
     path("django-admin/", admin.site.urls),
     path("admin/", include(wagtailadmin_urls)),
+    # path('test-hook/', test_hook, name='test-hook'),
     path("documents/", include(wagtaildocs_urls)),
     path('api/available-dates/', AvailableDatesView.as_view(), name='available_dates_api'),  # FIXED: Matches JS fetch
     path('bookings/', include('bookings.urls', namespace='bookings')),
