@@ -130,8 +130,6 @@ AXES_COOLOFF_TIME = timedelta(minutes=15)
 # Ratelimit (global; we'll apply per-view later)
 RATELIMIT_ENABLE = True
 RATELIMIT_VIEW = 'ratelimit.views.RatelimitView'  # Fallback 403 page
-
-
 RATELIMIT_CACHE = 'default'  # Uses the shared cache above
 
 # CAPTCHA (uses image-based simple math; configure image backend if needed)
@@ -343,10 +341,12 @@ WAGTAILADMIN_RICH_TEXT_EDITORS = {
 
 CACHES = {
     'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379/1',  # Local Redis; adjust for prod (e.g., REDIS_URL env var)
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'default',  # Uses your main DB
+        'TIMEOUT': 300,  # 5 min default; tune for ratelimit
         'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-        }
+            'MAX_ENTRIES': 1000,  # Soft limit; evict old if full
+            'CULL_FREQUENCY': 3,  # Check for eviction 1/3 of time
+        },
     }
 }

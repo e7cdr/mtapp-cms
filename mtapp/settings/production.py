@@ -2,7 +2,7 @@ from .base import *
 from decouple import config
 
 
-DEBUG = True
+DEBUG = False
 LOGGING['loggers']['django.request']['level'] = 'DEBUG'
 ALLOWED_HOSTS = [config('ALLOWED_HOSTS')]
 STORAGES["staticfiles"]["BACKEND"] = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
@@ -14,7 +14,11 @@ EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 EMAIL_USE_TLS = True
-DEFAULT_FROM_EMAIL = 'info@milanotravel.com.ec'
+DEFAULT_FROM_EMAIL = 'reservations@milanotravel.com.ec'
+
+# Optional: Sessions on cache too (frees DB)
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'default'
 
 
 # 5. Security Settings

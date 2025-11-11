@@ -65,12 +65,12 @@
     border-radius: 9999px;
     justify-content: center;
     align-items: center;
-    width: 4rem;
-    height: 4rem;
+    width: 3rem;
+    height: 3rem;
     display: flex;
     z-index: 1001;
     right: 1.25rem;
-    bottom: 1.25rem;
+    bottom: 6.25rem;
     position: fixed;
     --bs-text-opacity: 1;
     color: rgba(var(--bs-white-rgb), var(--bs-text-opacity)) !important;

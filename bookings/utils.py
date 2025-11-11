@@ -26,7 +26,7 @@ def send_supplier_email(proposal: Proposal, token: ProposalConfirmationToken = N
         if not proposal.supplier_email:
             logger.error(f"Supplier email missing for proposal {proposal.id}")
             raise ValueError("Supplier email is required.")
-        
+
         subject = f"New Tour Proposal - {proposal.prop_id} - {tour or 'Unknown Tour'}"
 
         context = {
@@ -38,7 +38,7 @@ def send_supplier_email(proposal: Proposal, token: ProposalConfirmationToken = N
         }
         if token:
             context['confirm_url'] = f"{settings.SITE_URL}{reverse('bookings:confirm_proposal_by_token', args=[token.token])}"
-        
+
         message = render_to_string('bookings/emails/supplier_proposal.html', context)
         send_mail(
             subject,
@@ -53,19 +53,19 @@ def send_supplier_email(proposal: Proposal, token: ProposalConfirmationToken = N
     except Exception as e:
         logger.error(f"Failed to send supplier email for proposal {proposal.id}: {e}")
         return False
-    
+
 def send_preconfirmation_email(proposal: Proposal) -> None:
     subject = "Confirm Your Tour Proposal"
     duration = proposal.tour.duration_days if proposal.tour else 0
     end_date = proposal.travel_date + timedelta(days=duration)
-    
+
     # NEW: Extract pricing details for context
     tour = proposal.tour
     pricing_type = getattr(tour, 'pricing_type', 'Per_room') if tour else 'Per_room'
     price_adult = getattr(tour, 'price_adult', 0) if tour else 0
     price_child = getattr(tour, 'price_child', 0) if tour else 0
     price_infant = getattr(tour, 'price_inf', 0) if tour else 0  # Adjust field names if different
-    
+
     # Subtotals
     adult_subtotal = proposal.number_of_adults * price_adult
     child_subtotal = proposal.number_of_children * price_child
@@ -76,7 +76,7 @@ def send_preconfirmation_email(proposal: Proposal) -> None:
         'infant_subtotal': infant_subtotal,
         'total_breakdown': adult_subtotal + child_subtotal + infant_subtotal,
     }
-    
+
     message = render_to_string('bookings/emails/preconfirmation.html', {
         'proposal': proposal,
         'tour': tour,
@@ -128,11 +128,11 @@ def send_proposal_submitted_email(proposal: Proposal, tour=None, end_date=None) 
         if not proposal.customer_email:
             logger.error(f"Customer email missing for proposal {proposal.id}")
             raise ValueError("Customer email is required.")
-        
+
         subject = f"Your Tour Proposal Submitted - ID: {proposal.prop_id or 'N/A'}"
         duration = getattr(tour, 'duration_days', 0) if tour else 0
         end_date = end_date or (proposal.travel_date + timedelta(days=duration))
-        
+
         context = {
             'proposal': proposal,
             'tour': tour or 'Unknown Tour',
@@ -142,14 +142,14 @@ def send_proposal_submitted_email(proposal: Proposal, tour=None, end_date=None) 
             'proposal_url': f"{settings.SITE_URL}{reverse('bookings:proposal_success', args=[proposal.id])}",
             'is_company_tour': getattr(tour, 'is_company_tour', False),  # NEW: Explicit for template
         }
-        
+
         # Render with error logging
         try:
             message = render_to_string('bookings/emails/proposal_submitted.html', context)
         except Exception as render_e:
             logger.error(f"Template render failed for proposal_submitted.html (proposal {proposal.id}): {render_e}")
             raise
-        
+
         send_mail(
             subject,
             message,
@@ -163,17 +163,17 @@ def send_proposal_submitted_email(proposal: Proposal, tour=None, end_date=None) 
     except Exception as e:
         logger.error(f"Failed to send proposal submitted email for {proposal.id}: {e}")
         return False
-    
+
 def send_internal_confirmation_email(proposal: Proposal, tour=None, end_date=None) -> bool:
     """
     Notifies internal staff of new company tour proposal for review in portal.
     """
     try:
         # Internal recipients (hardcode or from settings)
-        internal_emails = [settings.DEFAULT_FROM_EMAIL, 'staff@milanotravel.com.ec']  # Add more as needed
-        
+        internal_emails = [settings.DEFAULT_FROM_EMAIL, 'reservations@milanotravel.com.ec']  # Add more as needed
+
         subject = f"Internal Review Needed: Company Tour Proposal {proposal.prop_id} - {tour or 'Unknown Tour'}"
-        
+
         context = {
             'proposal': proposal,
             'end_date': end_date,
@@ -182,7 +182,7 @@ def send_internal_confirmation_email(proposal: Proposal, tour=None, end_date=Non
             'portal_url': f"{settings.SITE_URL}/bookings/manage/proposals/",  # Link to confirm
             'configuration_details': proposal.room_config if proposal.room_config else [],
         }
-        
+
         message = render_to_string('bookings/emails/internal_proposal.html', context)
         send_mail(
             subject,
@@ -201,7 +201,7 @@ def send_internal_confirmation_email(proposal: Proposal, tour=None, end_date=Non
 def manage_proposals(request) -> HttpResponse:
     # Base queryset with safe eager-loading (no 'translations'; GenericFK via content_type)
     queryset = Proposal.objects.select_related('content_type', 'user').prefetch_related('confirmation_tokens')
-    
+
     # Status filter (from GET; default to pending for usability)
     status = request.GET.get('status')
     if status and status != 'all':
@@ -219,12 +219,12 @@ def manage_proposals(request) -> HttpResponse:
         queryset = queryset.filter(created_at__month=month)
     elif year:
         queryset = queryset.filter(created_at__year=year)
-    
+
     # Pagination (after filter)
     paginator = Paginator(queryset, 10)  # 10 per page
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
-    
+
     # Always render full template (includes partial for list)
     return render(request, 'bookings/manage_proposals.html', {
         'proposals': page_obj,  # Pass page_obj (has .object_list, pagination attrs)
@@ -244,53 +244,53 @@ def reject_proposal(request, proposal_id: int) -> HttpResponse:
 # @login_required  # Uncomment for login enforcement
 # @user_passes_test(lambda u: u.is_staff)  # Or staff-only
 def proposal_detail(request, proposal_id: int) -> HttpResponse:
-    
+
     proposal = get_object_or_404(
         Proposal.objects.select_related('content_type', 'user').prefetch_related('confirmation_tokens'),
         id=proposal_id
     )
-    
+
     if not proposal.tour:
         raise Http404("Tour not found for this proposal.")
-    
+
     tour = proposal.tour
     # Calculate end_date
     duration = getattr(tour, 'duration_days', 0)
     end_date = proposal.travel_date + timedelta(days=duration)
-    
+
     # Effective children/infants from ages (mirror compute_pricing)
     child_age_min = getattr(tour, 'child_age_min', 0)  # Assume 2 or model default
     effective_children_ages = [age for age in proposal.children_ages if age >= child_age_min]
     effective_infants_ages = [age for age in proposal.children_ages if age < child_age_min]
     effective_children = len(effective_children_ages)
     effective_infants = len(effective_infants_ages)
-    
+
     # FIXED: Determine tour_type for accurate price_adult in per_person
     tour_class_name = tour.__class__.__name__.lower()
     is_full_or_land = any(t in tour_class_name for t in ['fulltourpage', 'landtourpage'])
-    
+
     # Extract pricing details (mirror compute_pricing logic)
     pricing_type = getattr(tour, 'pricing_type', 'Per_room')
-    
+
     # Base prices (universal)
     price_child = Decimal(str(getattr(tour, 'price_child', getattr(tour, 'price_chd', '0'))))
     price_infant = Decimal(str(getattr(tour, 'price_inf', '0')))
-    
+
     # Room prices (if Per_room)
     price_sgl = Decimal(str(getattr(tour, 'price_sgl', '0')))
     price_dbl = Decimal(str(getattr(tour, 'price_dbl', '0')))
     price_tpl = Decimal(str(getattr(tour, 'price_tpl', '0')))
-    
+
     # FIXED: Set price_adult based on tour_type for per_person consistency
     if is_full_or_land:
         price_adult = price_sgl
     else:
         price_adult = Decimal(str(getattr(tour, 'price_adult', '0')))
-    
+
     # FIXED: Compute actual factors to match compute_pricing (for accurate subtotals summing to estimated_price)
     seasonal_factor = Decimal(str(getattr(tour, 'seasonal_factor', '1.0')))
     demand_factor = Decimal('0')
-    
+
     # Capacity-based demand (fallback, overridden below)
     if proposal.travel_date:
         try:
@@ -305,7 +305,7 @@ def proposal_detail(request, proposal_id: int) -> HttpResponse:
             demand_factor = Decimal('0')
             logger.warning(f"Error computing capacity demand_factor: {e}—default demand_factor=0")
     price_adjustment = Decimal('1') + Decimal('0.2') * demand_factor
-    
+
     # Override with 30-day demand
     try:
         demand_info = get_30_day_used_slots(proposal.object_id, tour.__class__)
@@ -318,7 +318,7 @@ def proposal_detail(request, proposal_id: int) -> HttpResponse:
         logger.debug(f"Computed 30-day demand_factor={demand_factor}, price_adjustment={price_adjustment}")
     except Exception as e:
         logger.warning(f"Error computing 30-day demand_factor: {e}—using fallback adjustment {price_adjustment}")
-    
+
     # Exchange rate
     currency = request.session.get('currency', 'USD')
     exchange_rate = get_exchange_rate(currency)
@@ -328,7 +328,7 @@ def proposal_detail(request, proposal_id: int) -> HttpResponse:
         request.session['currency'] = currency
         exchange_rate = Decimal('1.0')
     factor = seasonal_factor * price_adjustment * exchange_rate
-    
+
     # Adjusted rates (for "Qty x Rate")
     adjusted_price_adult = price_adult * factor
     adjusted_price_child = price_child * factor
@@ -336,10 +336,10 @@ def proposal_detail(request, proposal_id: int) -> HttpResponse:
     adjusted_price_sgl = price_sgl * factor
     adjusted_price_dbl = price_dbl * factor
     adjusted_price_tpl = price_tpl * factor
-    
+
     # FIXED: Use selected_config for configuration_details to match qty with subtotals
     configuration_details = proposal.selected_config if proposal.selected_config else {}
-    
+
     # Subtotals (qty * adjusted_rate—use effective for children/infants)
     adult_subtotal = proposal.number_of_adults * adjusted_price_adult
     child_subtotal = effective_children * adjusted_price_child
@@ -350,7 +350,7 @@ def proposal_detail(request, proposal_id: int) -> HttpResponse:
         'infant_subtotal': infant_subtotal,
         'total_breakdown': (adult_subtotal + child_subtotal + infant_subtotal).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),  # FIXED: Quantize for precision
     }
-    
+
     # Per_room subtotals (if config—apply factor if base)
     room_subtotals = {}
     if pricing_type == 'Per_room' and proposal.selected_config:
@@ -368,7 +368,7 @@ def proposal_detail(request, proposal_id: int) -> HttpResponse:
             'infants_subtotal': infants_sub,
             'total_breakdown': (singles_sub + doubles_sub + triples_sub + children_sub + infants_sub).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),  # FIXED: Quantize for precision
         }
-    
+
     context = {
         'proposal': proposal,
         'tour': tour,
@@ -389,7 +389,7 @@ def proposal_detail(request, proposal_id: int) -> HttpResponse:
         'effective_children': effective_children,  # NEW: For template
         'effective_infants': effective_infants,
     }
-    
+
     return render(request, 'bookings/proposal_detail.html', context)
 
 def payment_success(request, proposal_id: int) -> HttpResponse:
@@ -436,14 +436,14 @@ def payment_success(request, proposal_id: int) -> HttpResponse:
             currency=proposal.currency,
             user=proposal.user,
         )
-        
+
         # Update proposal to 'PAID' after Booking
         proposal.status = 'PAID'
         proposal.save()
-        
+
         # FIXED: Log for capacity test
         logger.info(f"Booking created from proposal {proposal_id}: booking_id={booking.id}, travel_date={booking.travel_date}, status={booking.status}, content_type_id={booking.content_type_id}, object_id={booking.object_id}")
-        
+
         try:
             itinerary_pdf = generate_itinerary_pdf(booking)
             send_itinerary_email(booking, itinerary_pdf)
@@ -451,7 +451,7 @@ def payment_success(request, proposal_id: int) -> HttpResponse:
         except Exception as e:
             logger.error(f"Failed to generate/send itinerary for booking {booking.id}: {e}")
             messages.warning(request, "Payment successful, but itinerary generation failed. Contact support.")
-        
+
         context = {
             'booking': booking,
             'tour': booking.tour,
@@ -470,7 +470,7 @@ def payment_cancel(request, proposal_id: int) -> HttpResponse:
         if proposal.status != 'SUPPLIER_CONFIRMED':
             messages.error(request, "Proposal not pending payment.")
             return redirect('home')
-        
+
         proposal.status = 'REJECTED'
         proposal.save()
         logger.info(f"Payment cancelled for proposal {proposal_id}")
@@ -487,17 +487,17 @@ def get_30_day_used_slots(tour_id, tour_model):
     """
     today = date.today()
     end_date = today + timedelta(days=30)
-    
+
     # Fetch tour for max_capacity/available_days
     tour = get_object_or_404(tour_model, id=tour_id)
     daily_capacity = tour.max_capacity or 0
     available_days_str = getattr(tour, 'available_days', '')  # e.g., '0,1,2,3'
     available_days = [int(d.strip()) for d in available_days_str.split(',') if d.strip()] if available_days_str else list(range(7))  # All days if empty
     logger.debug(f"Available days for tour {tour_id}: {available_days}")
-    
+
     total_slots = 0
     used_slots = 0
-    
+
     current_date = today
     while current_date <= end_date:
         weekday_python = current_date.weekday()  # 0=Mon, 6=Sun
@@ -505,7 +505,7 @@ def get_30_day_used_slots(tour_id, tour_model):
         if day_of_week_model not in available_days:
             current_date += timedelta(days=1)
             continue
-        
+
         total_slots += daily_capacity
         # Confirmed for this date
         adults_sum = Booking.objects.filter(
@@ -524,12 +524,12 @@ def get_30_day_used_slots(tour_id, tour_model):
         print(f"Date {current_date}: weekday_python={weekday_python}, day_model={day_of_week_model}, adults_sum={adults_sum}, children_sum={children_sum}, used_slots so far={used_slots}")
 
         current_date += timedelta(days=1)
-    
+
     if total_slots == 0:
         full_percent = Decimal('0')
     else:
         full_percent = Decimal(used_slots) / Decimal(total_slots)
-    
+
     logger.debug(f"30-day used_slots={used_slots}, total_slots={total_slots}, full_percent={full_percent}")
     return {
         'used_slots': used_slots,
@@ -554,21 +554,21 @@ def get_remaining_capacity(tour_id, travel_date, tour_model, duration_days=1):
     """
     if not travel_date:
         return {'trip_remaining': 0, 'per_day': [], 'is_full': True}
-    
+
     today = date.today()
     if travel_date < today:
         return {'trip_remaining': 0, 'per_day': [], 'is_full': True}
-    
+
     # Fetch tour instance
     tour = get_object_or_404(tour_model, id=tour_id)
-    
+
     # Parse available_days (e.g., '0,1,2,3' → [0,1,2,3]; all if empty)
     available_days_str = getattr(tour, 'available_days', '')
     available_days = [int(d.strip()) for d in available_days_str.split(',') if d.strip()] if available_days_str else list(range(7))
-    
+
     # ContentType for tour
     content_type = ContentType.objects.get_for_model(tour_model)
-    
+
     # Dates in range
     dates = [travel_date + timedelta(days=i) for i in range(duration_days)]
     per_day = []
@@ -579,11 +579,11 @@ def get_remaining_capacity(tour_id, travel_date, tour_model, duration_days=1):
         day_of_week = (d.weekday() + 6) % 7  # 0=Sun, 6=Sat
         if day_of_week not in available_days:
             continue
-        
+
         has_available_date = True
         # Daily capacity
         daily_capacity = tour.max_capacity or 0
-        
+
         # Confirmed count for this date
         adults_sum = Booking.objects.filter(
             content_type=content_type,
@@ -598,18 +598,18 @@ def get_remaining_capacity(tour_id, travel_date, tour_model, duration_days=1):
             status='CONFIRMED',
         ).aggregate(Sum('number_of_children'))['number_of_children__sum'] or 0
         confirmed = adults_sum + children_sum
-        
+
         remaining = max(0, daily_capacity - confirmed)
         min_remaining = min(min_remaining, remaining)
         if remaining == 0:
             is_full_any = True
-        
+
         per_day.append({
             'date': d.strftime('%Y-%m-%d'),
             'remaining': remaining,
             'total_daily': daily_capacity
         })
-    
+
     # FIXED: Handle no available dates
     trip_remaining = 0 if not has_available_date else (min_remaining if min_remaining != float('inf') else daily_capacity)
     return {
@@ -635,7 +635,7 @@ def get_exchange_rate(currency_code: str) -> Decimal:
     except ObjectDoesNotExist:
         logger.warning(f"Exchange rate not found for {currency_code}, attempting to fetch")
         return fetch_exchange_rate(currency_code)
-    
+
 def fetch_exchange_rate(currency_code: str) -> Decimal:
     try:
         response = requests.get(

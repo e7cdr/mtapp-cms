@@ -51,3 +51,14 @@ CSRF_COOKIE_SECURE = False
 SECURE_HSTS_SECONDS = 0  # Disables HSTS
 SECURE_HSTS_INCLUDE_SUBDOMAINS = False
 SECURE_HSTS_PRELOAD = False
+
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',  # Local Redis; adjust for prod (e.g., REDIS_URL env var)
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}
