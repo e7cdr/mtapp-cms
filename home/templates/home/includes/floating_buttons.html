@@ -17,7 +17,7 @@
 
 <!-- Language Toggle Form -->
 
-<form action="{% url 'set_language' %}" method="post" id="languageForm" class="lang-toggle">
+{% comment %} <form action="{% url 'set_language' %}" method="post" id="languageForm" class="lang-toggle">
     {% csrf_token %}
     <input type="hidden" name="language" id="languageInput">
     <input type="hidden" name="next" value="{{ request.get_full_path }}">
@@ -28,98 +28,7 @@
             {{ lang.name_local }}
         </span>
     </button>
-</form>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const button = document.getElementById('languageToggle');
-    const form = document.getElementById('languageForm');
-    const input = document.getElementById('languageInput');
-    const currentSpan = document.getElementById('currentLang');
-    
-    // Current language object
-    const currentLangObj = { 
-        code: '{{ LANGUAGE_CODE }}', 
-        name: '{% get_language_info for LANGUAGE_CODE as lang %}{{ lang.name_local }}' 
-    };
-    
-    // Build array from translations (all others)
-    const otherLanguages = [
-        {% if page %}
-            {% for translation in page.get_translations.live %}
-                { 
-                    code: '{{ translation.locale.language_code }}', 
-                    name: '{% get_language_info for translation.locale.language_code as lang %}{{ lang.name_local }}' 
-                },
-                {% endfor %}
-        {% endif %}
-    ];
-    
-    // Full array: Current + others (dedupe)
-    let languages = [currentLangObj, ...otherLanguages];
-    const seenCodes = new Set();
-    languages = languages.filter(lang => {
-        if (seenCodes.has(lang.code)) return false;
-        seenCodes.add(lang.code);
-        return true;
-    });
-    
-    // FIXED ORDER: Sort by language code (always [en, es, is])
-    languages.sort((a, b) => a.code.localeCompare(b.code));
-    
-    // Log for debugging
-    console.log('Current LANGUAGE_CODE:', '{{ LANGUAGE_CODE }}');
-    console.log('Sorted Languages array:', languages);
-    
-    if (languages.length <= 1) {
-        button.disabled = true;
-        console.log('Only one language; toggle disabled.');
-        return;
-    }
-    
-    // Find current index in sorted array (exact match first)
-    const currentCode = currentLangObj.code;
-    let currentIndex = languages.findIndex(lang => lang.code === currentCode);
-    if (currentIndex === -1) {
-        // Fallback: Normalized (e.g., 'en-us' -> 'en')
-        function normalizeCode(code) {
-            return code.toLowerCase().split('-')[0];
-        }
-        const normalizedCurrent = normalizeCode(currentCode);
-        currentIndex = languages.findIndex(lang => normalizeCode(lang.code) === normalizedCurrent);
-        console.log('Exact match failed; using normalized. Index:', currentIndex);
-    }
-    if (currentIndex === -1) {
-        currentIndex = 0;
-        console.log('No match found; defaulting to index 0.');
-    }
-    
-    console.log('Starting index:', currentIndex);
-    
-    // Set initial hidden input
-    input.value = languages[currentIndex].code;
-    
-    // Update display (for preview only)
-    function updateDisplay() {
-        const lang = languages[currentIndex];
-        currentSpan.textContent = lang.name;
-        input.value = lang.code;
-        console.log('Previewing:', lang.name, '(Index:', currentIndex, ')');
-    }
-    
-    // Cycle on click
-    button.addEventListener('click', function(e) {
-        e.preventDefault();
-        currentIndex = (currentIndex + 1) % languages.length;
-        updateDisplay();
-        
-        setTimeout(() => {
-            form.submit();
-        }, 150);
-    });
-});
-</script>
-
+</form> {% endcomment %}
 
 {% comment %} <!-- Currency Toggle Form -->
 <form id="currencyForm" class="currency-toggle">

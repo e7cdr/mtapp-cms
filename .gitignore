@@ -88,7 +88,7 @@ nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
-```
+
 
 ### Quick Tips
 - **Customize**: If you use Docker, add `docker-compose.override.yml`. For CI/CD, ignore `*.yml` if local-only.
@@ -96,4 +96,4 @@ coverage.xml
 - **Migrate to Prod**: As before, commit migrations/static, but regenerate `collectstatic` on PA.
 - **Backup Reminder**: Version DB dumps separately (e.g., via Git LFS or external) if needed, but don't commit live data.
 
-This should prevent future "oops" moments. If your setup has extras (e.g., Celery, Redis), let me know to tweak!
+This should prevent future "oops" moments. 

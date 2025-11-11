@@ -12,8 +12,8 @@ class Profile(models.Model):
     bio = models.TextField(blank=True, help_text=_("Biography"))
     email = models.EmailField(blank=True)
     phone = models.CharField(blank=True, null=True, max_length=15)
-    img = models.ImageField(blank=True, null=True)
-    is_sales_rep = models.BooleanField(help_text='If True, it would get commissions per sale')
+    img = models.ImageField(blank=True, null=True, upload_to='profiles/')
+    is_sales_rep = models.BooleanField(help_text='If True, it would get commissions per sale', default=False, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

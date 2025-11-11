@@ -1,13 +1,10 @@
-from datetime import timedelta, timezone
-from allauth.account.views import SignupView, LoginView
-from django.views.generic import TemplateView
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Sum, Q
-
-
-from accounts.forms import CustomSignupForm
+from django.db.models import Sum
 from bookings.models import Booking
+from accounts.forms import CustomSignupForm
+from allauth.account.views import SignupView
+from django.views.generic import TemplateView
 from revenue_management.models import Commission
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 class CustomSignupView(SignupView):
     template_name = 'accounts/signup.html'  # We'll create this

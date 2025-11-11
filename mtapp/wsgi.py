@@ -13,7 +13,7 @@ import os
 #     sys.path.append(path)
 
 # Django settings module
-os.environ['DJANGO_SETTINGS_MODULE'] = 'mtapp.settings.production'
+os.environ['DJANGO_SETTINGS_MODULE'] = 'mtapp.settings.dev'
 
 # Import and create WSGI application
 from django.core.wsgi import get_wsgi_application

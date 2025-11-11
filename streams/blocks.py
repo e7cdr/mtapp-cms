@@ -100,7 +100,8 @@ def create_icons_list(icon_choices=None):
 Icons_List = create_icons_list()  # Exports the default version
 
 class CarouselBlock(blocks.StructBlock):
-    caption = blocks.CharBlock(required=False, help_text="Carousel main title (optional)")  # Optional caption
+    carousel_title = blocks.CharBlock(required=True, help_text="Carousel main title")  # Optional caption
+    carousel_subtitle = blocks.CharBlock(required=False, help_text="Carousel subtitle above the title (optional)")  # Optional caption
     carousel = blocks.ListBlock(
         blocks.StructBlock([
             ('image', ImageChooserBlock()),
@@ -108,6 +109,8 @@ class CarouselBlock(blocks.StructBlock):
             ('link', blocks.PageChooserBlock(required=False, help_text="Optional link for the image. If provided, the image will be clickable.")),
         ]),
         )
+    search_bar = blocks.BooleanBlock(required=False, help_text="If True, Carousel will have available the Search Bar")
+    
 
     class Meta:
         template = "streams/carousel.html"
@@ -234,7 +237,6 @@ class TextBand_Block(blocks.StructBlock):
     textbox_2 = blocks.RichTextBlock(required=True, features=["bold", "italic", "link"])
     background_image = ImageChooserBlock(required=False)
     background_color = blocks.ChoiceBlock(choices=colors, default='--yellow-dark-100')
-
 
     class Meta: #noqa
         template = "streams/text_bands.html"

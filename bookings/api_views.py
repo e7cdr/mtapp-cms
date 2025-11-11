@@ -1,10 +1,10 @@
-from django.shortcuts import get_object_or_404
+from datetime import date
+from tours.models import LandTourPage
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from datetime import date
-
-from tours.models import LandTourPage
+from django.shortcuts import get_object_or_404
 from .utils import calculate_demand_factor, get_remaining_capacity  # From step 1
+
 
 class AvailableDatesView(APIView):
     def get(self, request):

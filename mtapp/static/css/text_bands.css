@@ -3,7 +3,8 @@
 section {
     height: min-content;
     box-sizing: border-box;
-        overflow:hidden;
+    overflow:hidden;
+    margin: 1rem 0 1rem 0;
 
 }
 
@@ -23,13 +24,18 @@ section {
 }
 
 .content-flex-1:hover, .content-flex-2:hover, .content-flex-3:hover {
-    scale: 1.04;
+    scale: 1.02;
 
 }
 
 
 .content-flex-1, .content-flex-2 {
     position: relative;
+}
+
+.content-flex-2 {
+    flex-wrap: wrap;
+    text-shadow: 0 0 2px gray;
 }
 
 #flex2-coverimg {
@@ -65,6 +71,9 @@ section {
     font-size: 20px;
     text-align: justify;
     font-family: "Roboto", sans-serif;
+    display: flex;
+    justify-content: center;
+
 }
 
 @media (max-width: 470px) {

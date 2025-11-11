@@ -22,13 +22,7 @@ class FlexPage(Page):
     """A generic flexible page model that can be extended by other apps."""
 
     template = "flex/flex_page.html"
-    page_image = models.ForeignKey(
-        'wagtailimages.Image',
-        blank=True,
-        null=True,
-        on_delete=models.SET_NULL,
-        related_name="+"
-    )
+
 
     content = StreamField(
         [
@@ -41,12 +35,16 @@ class FlexPage(Page):
         ],
         null=True,
         blank=True,
+        help_text="""
+        This is the page's body. Use the different blocks by clicking the Plus (+) icon. Carousel Block to add Cover Images. 
+        More than one images will incurred in the Slide effect. Text Band will add a text section with color background that 
+        occupies the whole width of the page. Explore Block will add a dedicated section to expand in detail any product, announce or service.
+        More blocks are currently being developed. If you need a specific design, please contact developer and show them the design you would like
+        to see implemented. Anything is possible!.
+        """,
     )
 
-    subtitle = models.CharField(max_length=100, null=True, blank=True) #
-
     content_panels = Page.content_panels + [
-        FieldPanel("page_image"),
         FieldPanel("content"),
 
     ]

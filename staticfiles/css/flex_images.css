@@ -10,7 +10,7 @@ body {
 }
 
 #image {
-    height: 18rem;
+    /* height: 18rem; */
     display: flex;
     position: relative;
     overflow: hidden;
@@ -36,7 +36,8 @@ img {
     display: flex; 
     width: stretch; 
     position: relative; 
-    justify-content: end
+    justify-content: end;
+    max-height: 30rem;
 
 }
 

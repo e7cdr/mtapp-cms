@@ -1,45 +1,55 @@
 import json
 import urllib
 import logging
-from django.db.models import Sum  # NEW: For aggregates
+import paypalrestsdk as paypal
 
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
+from decouple import config
 from datetime import date, datetime, timedelta
-from django.urls import reverse, reverse_lazy
+from bookings.pdf_gen import generate_itinerary_pdf
+
+from .forms import ProposalForm
+from partners.models import Partner
+from tours.models import LandTourPage
+from bookings.forms import ProposalForm
+from bookings.models import (
+    ExchangeRate, 
+    Proposal, 
+    Booking, 
+    ProposalConfirmationToken 
+    )
+
+from django.db.models import Q
 from django.conf import settings
 from django.utils import timezone
 from django.contrib import messages
-from bookings.pdf_gen import generate_itinerary_pdf
+from django.core.paginator import Paginator
+from django.urls import reverse, reverse_lazy
 from django_ratelimit.decorators import ratelimit
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
-
-from django.db.models import Q
-from bookings.utils import calculate_demand_factor, get_30_day_used_slots, get_exchange_rate, get_remaining_capacity, send_internal_confirmation_email, send_itinerary_email, send_preconfirmation_email, send_proposal_submitted_email, send_supplier_email
-from partners.models import Partner
-from reportlab.lib.pagesizes import A4
-from bookings.forms import ProposalForm
-from django.core.paginator import Paginator
-from django.http import Http404, JsonResponse, HttpResponse
 from django.template.loader import render_to_string
-from tours.models import LandTourPage
+from django.views.decorators.csrf import csrf_exempt
 from django.utils.translation import gettext_lazy as _
+from django.views.generic import FormView, TemplateView
+from django.http import Http404, JsonResponse, HttpResponse
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import get_object_or_404, render, redirect
-from django.views.decorators.csrf import csrf_exempt
-from bookings.models import ExchangeRate, Proposal, Booking, ProposalConfirmationToken
+
+from bookings.utils import (
+    calculate_demand_factor,
+    get_30_day_used_slots, 
+    get_exchange_rate, 
+    get_remaining_capacity, 
+    send_internal_confirmation_email, 
+    send_itinerary_email, 
+    send_preconfirmation_email, 
+    send_proposal_submitted_email, 
+    send_supplier_email 
+)
 
 
 logger = logging.getLogger(__name__)
-
-from django.views.generic import FormView
-from .forms import ProposalForm
-from .models import Proposal
-
-import paypalrestsdk as paypal
-from decouple import config
-from django.views.generic import TemplateView
-
 
 class BookingStartView(FormView):
     template_name = 'bookings/booking_start.html'
@@ -185,13 +195,27 @@ class BookingStartView(FormView):
             # Non-AJAX: re-render with errors
             return self.form_invalid(form)
      
+class ProposalSuccessView(TemplateView):
+    template_name = 'bookings/proposal_success.html'
+
+    def get_context_data(self, **kwargs):  # Fixed: get_context_data, not get_context
+        context = super().get_context_data(**kwargs)
+        proposal_id = self.kwargs['proposal_id']
+        proposal = get_object_or_404(Proposal, id=proposal_id)  # Fixed: get_object_or_404
+        tour = proposal.tour
+        context['proposal'] = proposal
+        context['tour'] = tour
+        context['tour_type'] = 'land'  # Or detect from proposal.content_type
+        context['site_url'] = settings.SITE_URL  # For links
+        context['is_company_tour'] = tour.is_company_tour
+        context['status_note'] = ' (Internal review pending)' if tour.is_company_tour else ' (Awaiting supplier confirmation)'
+        return context   
+
 paypal.configure({
     "mode": "sandbox",  # "live" for prod
     "client_id": config('PAYPAL_CLIENT_ID'),
     "client_secret": config('PAYPAL_CLIENT_SECRET'),
 })
-
-from decimal import Decimal, ROUND_HALF_UP
 
 def compute_pricing(tour_type, tour_id, form_data, session):
     logger.debug(f"compute_pricing inputs: form_data={form_data}, tour_type={tour_type}, tour_id={tour_id}")
@@ -532,7 +556,6 @@ class PaymentView(TemplateView):
                 return redirect('customer_portal')
         return JsonResponse({'error': 'Payment failed'}, status=400)
 
-
 @csrf_exempt
 def submit_proposal(request, tour_id):
     if request.method != 'POST':
@@ -665,23 +688,6 @@ def render_confirmation(request, tour_id):
 
     return render(request, 'bookings/partials/confirm_proposal.html', context)
 
-class ProposalSuccessView(TemplateView):
-    template_name = 'bookings/proposal_success.html'
-
-    def get_context_data(self, **kwargs):  # Fixed: get_context_data, not get_context
-        context = super().get_context_data(**kwargs)
-        proposal_id = self.kwargs['proposal_id']
-        proposal = get_object_or_404(Proposal, id=proposal_id)  # Fixed: get_object_or_404
-        tour = proposal.tour
-        context['proposal'] = proposal
-        context['tour'] = tour
-        context['tour_type'] = 'land'  # Or detect from proposal.content_type
-        context['site_url'] = settings.SITE_URL  # For links
-        context['is_company_tour'] = tour.is_company_tour
-        context['status_note'] = ' (Internal review pending)' if tour.is_company_tour else ' (Awaiting supplier confirmation)'
-        return context   
-
-
 def render_pricing(request, tour_type, tour_id):
     logger.debug(f"render_pricing called with POST: {request.POST}")
     # Prioritize currency from POST data
@@ -743,8 +749,6 @@ def render_pricing(request, tour_type, tour_id):
     response_content = render_to_string('bookings/partials/pricing_options.html', context, request=request)
     logger.debug(f"Rendered pricing_options.html with context: {context}")
     return HttpResponse(response_content, content_type='text/html')
-
-
 
 def confirm_proposal(request, proposal_id: int) -> HttpResponse:
     # Scoped to single object
@@ -984,7 +988,6 @@ def revert_to_booking_form(request, tour_type: str, tour_id: int) -> HttpRespons
     logger.debug(f"Rendering booking_form.html with context: {context}")
     return render(request, 'bookings/partials/booking_form.html', context)
 
-
 def get_bookings(request) -> JsonResponse:
     bookings = [{'id': b.pk, 'name': f"{b.customer_name} ({b.pk})"} for b in Booking.objects.all()]
     return JsonResponse({'bookings': bookings})
@@ -1021,8 +1024,6 @@ def get_default_user(request):
             email="mtweb@yourdomain.com",  # Replace with a valid email
             password="securepassworde7c"  # Use a secure password
         )
-
-from .models import Proposal, Booking
 
 def customer_portal(request):
     proposals = Proposal.objects.select_related('content_type', 'user').prefetch_related('confirmation_tokens')
@@ -1074,5 +1075,4 @@ def proposal_status(request, proposal_id: int) -> JsonResponse:
         })
     except Proposal.DoesNotExist:
         return JsonResponse({'error': 'Proposal not to found'}, status=404)
-
 

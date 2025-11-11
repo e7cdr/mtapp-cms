@@ -1,24 +1,24 @@
+import requests
+from venv import logger
 from datetime import date, timedelta
 from decimal import ROUND_HALF_UP, Decimal
-from venv import logger
 
-from django.core.exceptions import ObjectDoesNotExist
-from django.conf import settings
-from django.http import Http404, HttpResponse
-from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.conf import settings
+from django.db.models import Sum
+from django.contrib import messages
 from django.core.mail import send_mail
+from django.core.paginator import Paginator
+from django.http import Http404, HttpResponse
+from django.template.loader import render_to_string
+from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
-import requests
+from django.shortcuts import get_object_or_404, redirect, render
 
 
 from bookings.models import Booking, ExchangeRate, Proposal, ProposalConfirmationToken
 
-from django.template.loader import render_to_string
-from django.contrib import messages
-from django.core.paginator import Paginator
-
-from django.db.models import Sum
 from .pdf_gen import generate_itinerary_pdf
 
 def send_supplier_email(proposal: Proposal, token: ProposalConfirmationToken = None, tour=None, end_date=None) -> bool:
@@ -198,6 +198,7 @@ def send_internal_confirmation_email(proposal: Proposal, tour=None, end_date=Non
         logger.error(f"Failed to send internal email for proposal {proposal.id}: {e}")
         return False
 
+@login_required
 def manage_proposals(request) -> HttpResponse:
     # Base queryset with safe eager-loading (no 'translations'; GenericFK via content_type)
     queryset = Proposal.objects.select_related('content_type', 'user').prefetch_related('confirmation_tokens')
