@@ -1,6 +1,6 @@
-{% extends 'base.html' %} {% load static i18n tour_filters custom_filters wagtailimages_tags%} 
+{% extends 'base.html' %} {% load static i18n tour_filters custom_filters wagtailcore_tags wagtailimages_tags%}
 {% block title %}{{ self.title }}
-{% endblock %} 
+{% endblock %}
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/detail_page.css' %}" />
 <body>
@@ -13,7 +13,7 @@
    <div class="cover-text">
     <h1>{{self.name}}</h1>
     <h2 class="cover-text-duration">
-     {% if self.duration_days > 1 %}{{self.duration_days}} days,{% else %}{{self.duration_days}} day {% endif %} 
+     {% if self.duration_days > 1 %}{{self.duration_days}} days,{% else %}{{self.duration_days}} day {% endif %}
      {% if not self.duration_days == 1 %}{{self.nights}} nights
      {% endif %}
     </h2>
@@ -107,6 +107,18 @@
           >Pricing &amp; Details</a
          >
         </li>
+        <li class="nav-item" role="presentation">
+         <a
+          class="nav-link"
+          id="cxl-policy-tab"
+          data-bs-toggle="tab"
+          href="#cxl-policy"
+          role="tab"
+          aria-selected="false"
+          tabindex="-1"
+          >CXL Policy</a
+         >
+        </li>
        </ul>
       </nav>
       <hr />
@@ -115,11 +127,11 @@
        <div class="tab-pane fade show active" id="description" role="tabpanel" aria-labelledby="description-tab">
         <h2>Description</h2>
         <p>{{ self.code_id }}</p>
-        <p id="tour-id">{{self.description}}</p>
+        <p id="tour-id">{{self.description|richtext}}</p>
         <p><strong>Destination:</strong> {{self.destination}}</p>
         <p><strong>Hotel:</strong> {{self.hotel}}</p>
         <p><strong>Dates:</strong> {{self.start_date}} - {{self.end_date}}</p>
-        <p><strong>Not Included:</strong> {{self.no_inclusions}}</p>
+        <p><strong style="font-size:Large; color: Red">Not Included:</strong> {{self.no_inclusions|richtext}}</p>
        </div>
       <!-- Itinerary -->
       <div class="tab-pane fade hidden" id="itinerary" role="tabpanel" aria-labelledby="itinerary-tab">
@@ -142,12 +154,12 @@
           </nav>
           <hr />
           <h2>Itinerary</h2>
-          <div class="tab-content">  
+          <div class="tab-content">
               {% for block in self.itinerary %}
-              <div 
-                  class="tab-pane fade {% if forloop.first %}show active{% endif %}" 
-                  id="day-{{ block.value.day }}" 
-                  role="tabpanel" 
+              <div
+                  class="tab-pane fade {% if forloop.first %}show active{% endif %}"
+                  id="day-{{ block.value.day }}"
+                  role="tabpanel"
                   aria-labelledby="day-{{ block.value.day }}-tab"
               >
                   <h3>Day {{ block.value.day }}</h3>
@@ -179,7 +191,7 @@
        <!-- Optional Activities -->
        <div class="tab-pane fade hidden" id="notes" role="tabpanel" aria-labelledby="notes-tab">
         <h2>Additional Notes</h2>
-        <p>{{self.additional_notes}}</p>
+        <p>{{self.additional_notes|richtext}}</p>
        </div>
 
        <!-- Flight Details -->
@@ -198,13 +210,20 @@
          <tbody>
           <tr>
            <th scope="row">Duration</th>
-           <td>9 days, 8 nights</td>
+           <td> {% if self.duration_days > 1 %}{{self.duration_days}} days,{% else %}{{self.duration_days}} day {% endif %}
+                 {% if not self.duration_days == 1 %}{{self.nights}} nights
+                 {% endif %}</td>
            <td></td>
           </tr>
 
           <tr>
            <th scope="row">Status</th>
-           <td>Special Offer</td>
+           <td> {% if self.is_sold_out %}
+               SOLD OUT
+                {% endif %} {% if self.is_special_offer %}
+                Special Offer
+                {% endif %}
+                </td>
            <td></td>
           </tr>
 
@@ -212,25 +231,37 @@
            <th scope="row">Price per person</th>
            <td>
             <span class="price">
-             2500 USD
+             ${{self.price_adult}} USD
              <span class="currency-symbol"></span>
             </span>
            </td>
-           <td></td>
+           <td>{{self.price_subtext}}</td>
           </tr>
+          {%if not self.price_adult > 0 %}
           <tr>
            <th scope="row">Single</th>
-           <td>1 USD <span class="currency-symbol"></span></td>
+           <td>${{self.price_sgl}} USD <span class="currency-symbol"></span></td>
+           <td></td>
+          </tr>
+            <tr>
+           <th scope="row">Double</th>
+           <td>${{self.price_dbl}} USD <span class="currency-symbol"></span></td>
            <td></td>
           </tr>
           <tr>
            <th scope="row">Triple</th>
-           <td>1 USD <span class="currency-symbol"></span></td>
+           <td>${{self.price_tpl}} USD <span class="currency-symbol"></span></td>
            <td></td>
           </tr>
+          {% endif %}
           <tr>
            <th scope="row">Child</th>
-           <td>30 USD <span class="currency-symbol"></span></td>
+           <td>${{self.price_chd}} USD <span class="currency-symbol"></span></td>
+           <td></td>
+          </tr>
+            <tr>
+           <th scope="row">Infant</th>
+           <td>${{self.price_inf}} USD <span class="currency-symbol"></span></td>
            <td></td>
           </tr>
           <tr>
@@ -240,6 +271,15 @@
           </tr>
          </tbody>
         </table>
+       </div>
+       <!-- CXL Policies -->
+       <div class="tab-pane fade hidden" id="cxl-policy" role="tabpanel" aria-labelledby="cxl-policy-tab">
+        <h2>CXL Policy</h2>
+        {% if self.cxl_policies %}
+            {{ self.cxl_policies|richtext }}
+        {% else %}
+            <p>No CXL policy specified.</p>
+        {% endif %}
        </div>
        <!-- Cancellation Policy -->
       </div>

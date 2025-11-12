@@ -4,6 +4,11 @@ body {
     margin: 0;
 }
 
+ul {
+    list-style-type: auto;
+    margin-left: 1.8rem;
+}
+
 .detail-container {
     width: 100%;
 }

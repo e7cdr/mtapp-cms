@@ -136,7 +136,7 @@
         </div>
         {% endif %}
         <div class="card-description">
-        {{tour.description}}
+        {{tour.description|richtext}}
         </div>
         <p class="am">Amenities: <b><span class="tour-am-count"></span></b></p>  <!-- Generic class; use data-id in JS -->        <div class="card-amenities grid-7-c">
             {% if tour.amenity %}
@@ -171,7 +171,7 @@
         </div>
         </div>
         {% empty %}  <!-- Optional: Handle empty filtered results -->
-            <p class="text-muted text-center">{% trans "No tours match your filters." %}</p>        
+            <p class="text-muted text-center">{% trans "No tours match your filters." %}</p>
         {% endfor %}
         </div>
   </div>

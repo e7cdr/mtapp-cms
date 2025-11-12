@@ -36,8 +36,8 @@
   // Wait for DOM ready
   document.addEventListener('DOMContentLoaded', () => {
    // Initialize tour tabs
-   initTabs('#tourTabs', '.tab-pane');
+   initTabs('#tourTabs', '.main-tabs-content .tab-pane');
 
-   // Initialize itinerary tabs
-   initTabs('#itinerary-days', '#itinerary div');
-  });
+    // Initialize itinerary tabs (narrowed selector: only day panes)
+    initTabs('#itinerary-days', '#itinerary .tab-content .tab-pane');
+    });
