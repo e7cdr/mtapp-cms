@@ -60,7 +60,7 @@ class AbstractTourPage(Page):
     general_info = RichTextField(blank=True, help_text=_("General info like cancellation policy, inclusions in the PDF Generator."))
     final_message = RichTextField(blank=True, help_text=_("Final message from the travel company in the PDF Generator. "))
     courtesies = RichTextField(default="Guided city tour", help_text=_("Tour inclusions"), blank=True)
-    cxl_policies = RichTextField(blank=True, null=True, default="")
+    cxl_policies = RichTextField(blank=True, null=True, default="", verbose_name="Cancellation Policies")
 
     amenity = StreamField([
         ('include', ListBlock(ChoiceBlock(choices=blocks.GLOBAL_ICON_CHOICES)))
@@ -83,9 +83,9 @@ class AbstractTourPage(Page):
 
     # Codes
     ref_code = models.CharField(
-        max_length=20, 
-        blank=True, 
-        null=True, 
+        max_length=20,
+        blank=True,
+        null=True,
         help_text="""This is the Referal Code. This is used for referencing a third party tour. Most of the time,
         large tour operators have their own tour code, so this field can be used to reference by that code so it is easy to find it in large databases.
                 """
@@ -195,6 +195,7 @@ class AbstractTourPage(Page):
             FieldPanel('amenity'),
             FieldPanel('no_inclusions'),
             FieldPanel('additional_notes'),
+            FieldPanel('cxl_policies'),
             FieldPanel('supplier_email'),
             FieldPanel('is_company_tour'),
             # FieldPanel('cover_page_content'),
@@ -236,12 +237,12 @@ class AbstractTourPage(Page):
                     FieldPanel('price_dbl'),
                     FieldPanel('price_tpl'),
                 ], heading="Prices Per Room", classname='per-room-panel'),  # JS target
-                
+
                 # Per Person Panel (hidden by default; JS shows it)
                 MultiFieldPanel([
                     FieldPanel('price_adult'),
                 ], heading="Prices Per Person", classname='per-person-panel'),  # JS target
-                
+
                 MultiFieldPanel([
                     FieldPanel('max_children_per_room'),
                     FieldPanel('price_subtext'),
@@ -335,28 +336,28 @@ class AbstractTourPage(Page):
             raise ValidationError("Both start date and end date are required.")
         if self.available_slots > self.max_capacity:
             raise ValidationError(_("Available slots cannot exceed max capacity."))
-        
+
         if self.pricing_type == 'Per_room':
             room_prices = [p for p in [self.price_sgl, self.price_dbl, self.price_tpl] if p not in (None, Decimal('0.00'))]
             if not room_prices:
                 raise ValidationError("At least one per-room price required.")
-            
+
             # Clear per-person (set to None, including if 0.00)
             self.price_adult = None
             self.price_chd = None
             self.price_inf = None
             self.max_children_per_room = None  # Optional: Clear child room limit too
-            
+
         elif self.pricing_type == 'Per_person':
             # Require at least one per-person price
             if not any([self.price_adult, self.price_chd, self.price_inf]):
                 raise ValidationError("At least one per-person price (Adult, Child, or Infant) is required for 'Per Person'.")
-            
+
             # Clear per-room
             self.price_sgl = None
             self.price_dbl = None
             self.price_tpl = None
-        
+
         # Existing validations...
         if self.available_slots > self.max_capacity:
             raise ValidationError(_("Available slots cannot exceed max capacity."))
@@ -475,7 +476,7 @@ class ToursIndexPage(RoutablePageMixin, Page):
         elif self.pricing_type == 'Per_person':
             return self.price_adult or self.price_chd or self.price_inf or 0
         return 0
-    
+
     def get_context(self, request: HttpRequest):
         print("*** get_context TOP: Called with GET", dict(request.GET))  # TEMP
         context = super().get_context(request)

@@ -110,7 +110,7 @@ class CarouselBlock(blocks.StructBlock):
         ]),
         )
     search_bar = blocks.BooleanBlock(required=False, help_text="If True, Carousel will have available the Search Bar")
-    
+
 
     class Meta:
         template = "streams/carousel.html"
@@ -244,9 +244,9 @@ colors = [
 
 class TextBand_Block(blocks.StructBlock):
     '''Three bands with text. #1 and #3 with background color. #2 with cover image'''
-    band_title = blocks.CharBlock(required=True, max_length=36)
-    textbox_1 = blocks.RichTextBlock(required=True, features=["bold", "italic", "link"])
-    textbox_2 = blocks.RichTextBlock(required=True, features=["bold", "italic", "link"])
+    band_title = blocks.CharBlock(required=False, max_length=36)
+    textbox_1 = blocks.RichTextBlock(required=True)
+    textbox_2 = blocks.RichTextBlock(required=True)
     background_image = ImageChooserBlock(required=False)
     background_color = blocks.ChoiceBlock(choices=colors, default='--yellow-dark-100')
     social_media_icon = blocks.BooleanBlock(required=False, default=False, help_text="If checked, all social links configured in admin/settings will render.")
@@ -258,7 +258,7 @@ class TextBand_Block(blocks.StructBlock):
 
     def get_context(self, value, parent_context=None):
             context = super().get_context(value, parent_context=parent_context)
-            
+
             # Safe site fetch: Use get_current_site() to avoid request.site error
             request = parent_context.get('request') if parent_context else None
             if request:
@@ -269,7 +269,7 @@ class TextBand_Block(blocks.StructBlock):
                     footer_links = FooterLinks.objects.first()
             else:
                 footer_links = FooterLinks.objects.first()  # Global fallback for non-request contexts
-            
+
             # Define platforms with their metadata
             platforms = [
                 {'field': 'facebook', 'icon': 'fab fa-facebook-square', 'color': None},
@@ -279,7 +279,7 @@ class TextBand_Block(blocks.StructBlock):
                 {'field': 'whatsapp', 'icon': 'fab fa-whatsapp', 'color': 'green'},
                 {'field': 'x_tw', 'icon': 'fab fa-x-twitter', 'color': 'black'},
             ]
-            
+
             # Build filtered list: Only include if URL is set
             social_links = []
             for platform in platforms:
@@ -288,7 +288,7 @@ class TextBand_Block(blocks.StructBlock):
                     platform_copy = platform.copy()
                     platform_copy['url'] = url
                     social_links.append(platform_copy)
-            
+
             context['social_links'] = social_links
             return context
 
