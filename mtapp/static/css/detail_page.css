@@ -263,6 +263,7 @@ body {
 .nav-item a:hover {
     background-color:#dc2626;
     scale: 1.1;
+    color: white;
 }
 
 
@@ -321,6 +322,75 @@ body {
 .pricing-table:hover {
   transform: scale(1.05);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.pricing-table thead th {
+background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+color: white;
+padding: 1rem;
+text-align: left;
+font-weight: 600;
+font-size: 0.95rem;
+letter-spacing: 0.5px;
+text-transform: uppercase;
+}
+.pricing-table tbody tr {
+transition: background-color 0.3s ease, transform 0.2s ease;
+border-bottom: 1px solid #f0f0f0;
+}
+.pricing-table tbody tr:hover {
+background: linear-gradient(135deg, #f8f9ff 0%, #f0f2ff 100%);
+transform: translateY(-1px);
+box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+.pricing-table tbody tr:last-child {
+border-bottom: none;
+}
+.pricing-table th,
+.pricing-table td {
+padding: 1rem;
+vertical-align: top;
+}
+.pricing-table th {
+font-weight: 600;
+color: #333;
+width: 25%;
+}
+.pricing-table td {
+color: #555;
+font-size: 0.95rem;
+}
+.pricing-table .price {
+font-weight: 700;
+color: #667eea;
+font-size: 1.1rem;
+}
+.pricing-table .currency-symbol {
+opacity: 0.7;
+font-size: 0.8rem;
+margin-left: 0.25rem;
+}
+/* Responsive: Stack on mobile */
+@media (max-width: 768px) {
+.pricing-table {
+font-size: 0.9rem;
+}
+.pricing-table th,
+.pricing-table td {
+padding: 0.75rem 0.5rem;
+display: block;
+width: 100%;
+text-align: right;
+border-bottom: 1px solid #f0f0f0;
+}
+.pricing-table th::before {
+content: attr(data-label) ": ";
+float: left;
+font-weight: 600;
+color: #333;
+}
+.pricing-table tbody tr:hover {
+transform: none;
 }
 
 

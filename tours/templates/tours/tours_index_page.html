@@ -1,29 +1,22 @@
 {% extends "base.html" %}
 {% load static i18n wagtailcore_tags wagtailimages_tags wagtailroutablepage_tags tour_filters %}
 
-{% block title %}{% trans "Tours" %} - Milano Travel{% endblock %}
+{% block title %} {{self.title}}{% endblock %}
 
 {% block content %}
 <link rel="stylesheet" href='{% static "css/card_style.css" %}'/>
 <link rel="stylesheet" href='{% static "css/layout.css" %}'/>
 
 
-<!--TODO:
-1: Remove Tailwind to create vanilla CSS
-
--->
 {% block body_content %}
 {% for block in page.body_content %}
 {% include_block block %}
 {% endfor %}
 {% endblock %}
 
-
 <section>
     <div class="layout">
         <div class="area-1">
-
-
     {% if self.intro %}<div class="intro">{{ self.intro|richtext }}</div>{% endif %}
     </div>
     <div class="area-2">
@@ -31,140 +24,160 @@
     <div id="filterCollapse">
         <div class="filter-card card-body">
             <h2>{% trans "Filter Tours" %}</h2>
-            <form method="get" action="{% pageurl self %}">
+        <form id="filterForm" method="get" action="{% pageurl self %}">
+            <div>
+                <!-- Tour Type -->
                 <div>
-                    <!-- Tour Type (limited now; expand later) -->
-                    <div>
-                        <label for="tour_type" class="form-label">{% trans "Tour Type" %}</label>
-                        <select name="tour_type" id="tour_type" class="form-select">
-                            <option value="">{% trans "All" %}</option>
-                            <option value="land" {% if request.GET.tour_type == 'land' %}selected{% endif %}>{% trans "Land Tours" %}</option>
-                            <!-- TODO: Enable when models added -->
-                            <option value="day" disabled>{% trans "Day Tours" %}</option>
-                            <option value="full" disabled>{% trans "Full Tours" %}</option>
-                        </select>
-                    </div>
-
-                    <!-- Min Price -->
-                    {% comment %} <div>
-                        <label for="min_price" class="form-label">{% trans "Min Price" %}</label>
-                        <input type="number" name="min_price" id="min_price" class="form-control"
-                               value="{{ request.GET.min_price }}" min="0" step="0.01">
-                    </div>
-
-                    <!-- Max Price -->
-                    <div>
-                        <label for="max_price" class="form-label">{% trans "Max Price" %}</label>
-                        <input type="number" name="max_price" id="max_price" class="form-control"
-                               value="{{ request.GET.max_price }}" min="0" step="0.01">
-                    </div> {% endcomment %}
-
-                    <!-- Status -->
-                    <div>
-                        <label for="status" class="form-label">{% trans "Status" %}</label>
-                        <select name="status" id="status" class="form-select">
-                            <option value="">{% trans "All" %}</option>
-                            <option value="on_discount" {% if request.GET.status == 'on_discount' %}selected{% endif %}>{% trans "On Discount" %}</option>
-                            <option value="special_offer" {% if request.GET.status == 'special_offer' %}selected{% endif %}>{% trans "Special Offer" %}</option>
-                            <option value="sold_out" {% if request.GET.status == 'sold_out' %}selected{% endif %}>{% trans "Sold Out" %}</option>
-                        </select>
-                    </div>
-
-                        <!-- By Destination -->
-                    <div>
-                        <label for="destination" class="form-label">{% trans "Destination" %}</label>
-                        <select name="destination" id="destination" class="form-select">
-                            <option value="">{% trans "All" %}</option>
-                            <option value="Ecuador" {% if request.GET.destination == 'Ecuador' %}selected{% endif %}>{% trans "Ecuador" %}</option>
-                            <option value="Colombia" {% if request.GET.destination == 'Colombia' %}selected{% endif %}>{% trans "Colombia" %}</option>
-                            <option value="Iceland" {% if request.GET.destination == 'Iceland' %}selected{% endif %}>{% trans "Iceland" %}</option>
-                        </select>
-                    </div>
-
-                    <!-- Submit & Clear -->
-                    <div class="submit-button">
-                        <button type="submit" class="btn btn-primary">{% trans "Apply Filters" %}</button>
-                        {% if request.GET %}
-                            <a href="{% pageurl self %}" class="btn btn-secondary">{% trans "Clear Filters" %}</a>
-                        {% endif %}
-                    </div>
+                    <label for="tour_type" class="form-label">{% trans "Tour Type" %}</label>
+                    <select name="tour_type" id="tour_type" class="form-select">
+                        <option value="">{% trans "All" %}</option>
+                        <option value="land" {% if request.GET.tour_type == 'land' %}selected{% endif %}>{% trans "Land Tours" %}</option>
+                        <option value="day" disabled>{% trans "Day Tours" %}</option>
+                        <option value="full" disabled>{% trans "Full Tours" %}</option>
+                    </select>
                 </div>
-            </form>
+
+                <!-- Min Price -->
+                <div>
+                    <label for="min_price" class="form-label">{% trans "Min Price" %}</label>
+                    <input type="number" name="min_price" id="min_price" class="form-control"
+                        value="{{ request.GET.min_price }}" min="0" step="0.01">
+                </div>
+
+                <!-- Max Price -->
+                <div>
+                    <label for="max_price" class="form-label">{% trans "Max Price" %}</label>
+                    <input type="number" name="max_price" id="max_price" class="form-control"
+                        value="{{ request.GET.max_price }}" min="0" step="0.01">
+                </div>
+
+                <!-- Status -->
+                <div>
+                    <label for="status" class="form-label">{% trans "Status" %}</label>
+                    <select name="status" id="status" class="form-select">
+                        <option value="">{% trans "All" %}</option>
+                        <option value="on_discount" {% if request.GET.status == 'on_discount' %}selected{% endif %}>{% trans "On Discount" %}</option>
+                        <option value="special_offer" {% if request.GET.status == 'special_offer' %}selected{% endif %}>{% trans "Special Offer" %}</option>
+                        <option value="sold_out" {% if request.GET.status == 'sold_out' %}selected{% endif %}>{% trans "Sold Out" %}</option>
+                    </select>
+                </div>
+
+                <!-- NEW: Pricing Type -->
+                <div>
+                    <label for="pricing_type" class="form-label">{% trans "Pricing Type" %}</label>
+                    <select name="pricing_type" id="pricing_type" class="form-select">
+                        <option value="">{% trans "All" %}</option>
+                        <option value="Per_room" {% if request.GET.pricing_type == 'Per_room' %}selected{% endif %}>{% trans "Per Room" %}</option>
+                        <option value="Per_person" {% if request.GET.pricing_type == 'Per_person' %}selected{% endif %}>{% trans "Per Person" %}</option>
+                    </select>
+                </div>
+
+                <!-- Dynamic Destination -->
+                <div>
+                    <label for="destination" class="form-label">{% trans "Destination" %}</label>
+                    <select name="destination" id="destination" class="form-select">
+                        <option value="">{% trans "All" %}</option>
+                        {% for dest in unique_destinations %}
+                            <option value="{{ dest }}" {% if request.GET.destination == dest %}selected{% endif %}>{{ dest }}</option>
+                        {% empty %}
+                            <!-- Only show if no dynamic; hardcoded fallback -->
+                            <option value="Ecuador" {% if request.GET.destination == 'Ecuador' %}selected{% endif %}>Ecuador</option>
+                            <option value="Colombia" {% if request.GET.destination == 'Colombia' %}selected{% endif %}>Colombia</option>
+                            <option value="Iceland" {% if request.GET.destination == 'Iceland' %}selected{% endif %}>Iceland</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Submit & Clear -->
+                <div class="submit-button">
+                    <button type="submit" class="btn btn-primary">{% trans "Apply Filters" %}</button>
+                    {% if request.GET %}
+                        <a id="clearFilters" href="{% pageurl self %}" class="btn btn-secondary">{% trans "Clear Filters" %}</a>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
         </div>
     </div>
         </div>
     <div class="area-3">
         <h1>{% trans "Available Tours" %}</h1>
-        <div class="result-container">
-<!-- Results -->
-    {% if tours_pag %}
-    {% block tours %}
-    {% for tour in tours %}
-    <div class="card">
-    <!-- Top Card Side-->
-        {% if tour.is_on_discount %}
-        <div class="sticker new-sticker">On Discount</div>
+        <div class="result-container" id="resultsContainer">
+    <!-- Results -->
+        {% if tours_pag %}
+        {% for tour in tours_pag %}
+        <div class="card" data-tour-id="{{ tour.id }}">        <!-- Top Card Side-->
+            {% if tour.is_on_discount %}
+            <div class="sticker new-sticker">On Discount</div>
+            {% endif %}
+            {% if tour.is_special_offer %}
+            <div class="sticker special-offer-sticker">Special Offer</div>
+            {% endif %}
+            {% if tour.is_all_inclusive %}
+            <div class="sticker new-sticker">All Inclusive</div>
+            {% endif %}
+            {% if tour.is_sold_out %}
+            <div class="sticker special-offer-sticker">Sold Out!</div>
+            {% endif %}
+            <div class="image-zone">
+                <a href="{{tour.url}}">
+                {% image tour.cover_image fill-315x200 as img %}
+                <img src="{{img.url}}" alt="Tours cover image">
+                <div class="card-country">{{tour.destination}}</div>
+                <div class="card-location">{{tour.location}}</div>
+                </a>
+            </div>
+        <!-- Bottom Card Side-->
+        <div class="text-zone">
+            <div class="card-subtitle">{{tour.subtitle}}</div>
+        {% if tour.name %}
+        <div class="card-title">
+            <a href="{{tour.url}}">{{tour.name}}</a>
+        </div>
         {% endif %}
-        {% if tour.is_special_offer %}
-        <div class="sticker special-offer-sticker">Special Offer</div>
-        {% endif %}
-        {% if tour.is_all_inclusive %}
-        <div class="sticker new-sticker">All Inclusive</div>
-        {% endif %}
-        {% if tour.is_sold_out %}
-        <div class="sticker special-offer-sticker">Sold Out!</div>
-        {% endif %}
-    <div class="image-zone"><a href="{{tour.url}}">
-      {% image tour.cover_image fill-315x200 as img %}
-      <img src="{{img.url}}" alt="Tours cover image">
-      <div class="card-country">{{tour.destination}}</div>
-      <div class="card-location">{{tour.location}}</div>
-      </a>
-    </div>
-      <!-- Bottom Card Side-->
-      <div class="text-zone">
-         <div class="card-subtitle">{{tour.subtitle}}</div>
-      {% if tour.name %}
-      <div class="card-title">
-        <a href="{{tour.url}}">{{tour.name}}</a>
-      </div>
-      {% endif %}
-     <div class="card-description">
-      {{tour.description}}
-     </div>
-        <p class="am">Amenities: <b><span id="total-am"></span></b></p>
-        <div class="card-amenities grid-7-c">
-        {% for block in tour.amenity %}
-            {% for choice in block.value %}
-            <i class="card-icon {{ choice }}" title="{{ choice|get_choice_label }}"></i>
-            {% empty %}
-            <i class="card-icon fa-question" title="No amenities specified"></i>
-            {% endfor %}
-        {% empty %}
-            <i class="card-icon fa-question" title="No amenities specified"></i>
+        <div class="card-description">
+        {{tour.description}}
+        </div>
+        <p class="am">Amenities: <b><span class="tour-am-count"></span></b></p>  <!-- Generic class; use data-id in JS -->        <div class="card-amenities grid-7-c">
+            {% if tour.amenity %}
+                {% for block in tour.amenity %}
+                    {% if block.block_type == 'include' %}
+                        {% for choice in block.value %}
+                            {% if choice %}
+                                <i class="card-icon {{ choice }}" title="{{ choice|get_choice_label:GLOBAL_ICON_CHOICES }}"></i>
+                            {% endif %}
+                        {% empty %}
+                            <i class="card-icon fa-question" title="No amenities specified"></i>
+                        {% endfor %}
+                    {% endif %}
+                {% empty %}
+                    <i class="card-icon fa-question" title="No amenities specified"></i>
+                {% endfor %}
+            {% else %}
+                <i class="card-icon fa-question" title="No amenities specified"></i>
+            {% endif %}
+        </div>
+            <div class="flex-box">
+            {% comment %} <div class="card-price cell-5">${{tour.price_dbl}}</div> {% endcomment %}
+            <div class="card-price">Ask for Price</div>
+            {% if not tour.is_sold_out %}
+            <button class="card-button conic-gradient-animation">
+                <a href="https://api.whatsapp.com/send/?phone=593967359549&text=Hello%2C+I+am+interested+in+{{tour.name}}+from+your+webpage&type=phone_number&app_absent=0">Book</a></button>
+            {% else %}
+            <button class="card-button">Sold Out</button>
+            {% endif %}
+                <p class="estimated-text">{{tour.pricing_type}} / {{tour.price_subtext}}</p>
+            </div>
+        </div>
+        </div>
+        {% empty %}  <!-- Optional: Handle empty filtered results -->
+            <p class="text-muted text-center">{% trans "No tours match your filters." %}</p>        
         {% endfor %}
         </div>
-     <div class="flex-box">
-      {% comment %} <div class="card-price cell-5">${{tour.price_dbl}}</div> {% endcomment %}
-      <div class="card-price">Ask for Price</div>
-      {% if not tour.is_sold_out %}
-      <button class="card-button conic-gradient-animation">
-        <a href="https://api.whatsapp.com/send/?phone=593967359549&text=Hello%2C+I+am+interested+in+{{tour.name}}+from+your+webpage&type=phone_number&app_absent=0">Book</a></button>
-     {% else %}
-      <button class="card-button">Sold Out</button>
-      {% endif %}
-         <p class="estimated-text">{{tour.pricing_type}} / {{tour.price_subtext}}</p>
-     </div>
-    </div>
-   </div>
-   </div>
   </div>
-  {% endfor %}
-{% endblock tours %}
 
 {% if tours_pag.paginator.num_pages > 1 %}
-    <nav aria-label="Tour pagination">
-        <ul class="pagination justify-content-center">
+        <nav aria-label="Tour pagination" class="pagination-nav" data-has-next="{% if tours_pag.has_next %}true{% else %}false{% endif %}">        <ul class="pagination justify-content-center">
             {% if tours_pag.has_previous %}
                 <li class="page-item">
                     <a class="page-link" href="?{{ request.GET|add_page_param:1 }}">First</a>
@@ -201,14 +214,11 @@
         <p class="text-muted">{% trans "No tours available." %}</p>
     {% endif %}
 </div>
-
-    <script>
-        // Example of HTMLCollection.length
-    const totalAm = document.getElementsByClassName('card-icon').length;
-    document.getElementById('total-am').textContent = totalAm;
-
-    </script>
-
 </section>
+{% block extra_js %}
+
+<script src="{% static 'js/tours_index.js' %}"></script>
+{% endblock %}
 
 {% endblock %}
+

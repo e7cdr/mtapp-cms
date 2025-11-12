@@ -16,7 +16,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from wagtail.models import Page
 from wagtail.api import APIField
 from wagtail.search import index
-from wagtail.fields import StreamField
+from wagtail.fields import StreamField, RichTextField
 from wagtail.images.models import Image
 from wagtail.documents.models import Document
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel
@@ -54,23 +54,23 @@ class AbstractTourPage(Page):
         default="Ecuador",
         help_text=_("Select the destination country.")
     )
-    description = models.TextField(help_text=_("Description of the tour."))
+    description = RichTextField(help_text=_("Description of the tour."))
     location = models.CharField(max_length=30, help_text=_('Location inside the country'))
-    cover_page_content = models.TextField(blank=True, help_text=_("Content for the tour's cover page in the PDF Generator."))
-    general_info = models.TextField(blank=True, help_text=_("General info like cancellation policy, inclusions in the PDF Generator."))
-    final_message = models.TextField(blank=True, help_text=_("Final message from the travel company in the PDF Generator. "))
-    courtesies = models.TextField(default="Guided city tour", help_text=_("Tour inclusions"), blank=True)
-
+    cover_page_content = RichTextField(blank=True, help_text=_("Content for the tour's cover page in the PDF Generator."))
+    general_info = RichTextField(blank=True, help_text=_("General info like cancellation policy, inclusions in the PDF Generator."))
+    final_message = RichTextField(blank=True, help_text=_("Final message from the travel company in the PDF Generator. "))
+    courtesies = RichTextField(default="Guided city tour", help_text=_("Tour inclusions"), blank=True)
+    cxl_policies = RichTextField(blank=True, null=True, default="")
 
     amenity = StreamField([
         ('include', ListBlock(ChoiceBlock(choices=blocks.GLOBAL_ICON_CHOICES)))
     ], blank=True, use_json_field=True, help_text=_("Add as many amenities."))
 
-    no_inclusions = models.TextField(default="Air Ticket", help_text=_("Not included"), blank=True)
-    additional_notes = models.TextField(
-        default="Subject to availability", blank=True
+    no_inclusions = RichTextField(default="Air Ticket", help_text=_("Not included"), blank=True)
+    additional_notes = RichTextField(
+                default="Subject to availability", blank=True
     )
-    hotel = models.CharField(max_length=50, default='LOCAL')
+    hotel = models.CharField(max_length=50, default='LOCAL', help_text="If applicable")
 
     # Flags: TODO Custom validation, if sold out, none of the others can be on
     is_on_discount = models.BooleanField(default=False)
@@ -82,8 +82,15 @@ class AbstractTourPage(Page):
 
 
     # Codes
-    ref_code = models.CharField(max_length=20, blank=True, null=True)
-    code_id = models.CharField(max_length=15, editable=False)
+    ref_code = models.CharField(
+        max_length=20, 
+        blank=True, 
+        null=True, 
+        help_text="""This is the Referal Code. This is used for referencing a third party tour. Most of the time,
+        large tour operators have their own tour code, so this field can be used to reference by that code so it is easy to find it in large databases.
+                """
+        )
+    code_id = models.CharField(max_length=15, editable=False, help_text="This is the Tours unique internal ID. Other companies might use this code as reference. Without this ID, it would be impossible to render the tours.")
 
     # Media
     image = models.ForeignKey(
@@ -117,7 +124,7 @@ class AbstractTourPage(Page):
     )
 
     # Supplier & Pricing (common)
-    supplier_email = models.EmailField(blank=True, help_text=_("Supplier contact email"))
+    supplier_email = models.EmailField(blank=True, help_text=_("Supplier contact email. If This is a in House/company tour, check the next box and skip this email field."))
     is_company_tour = models.BooleanField(
         default=False,
         help_text=_("If True, skip supplier confirmation and go direct to payment (company-run tour).")
@@ -125,7 +132,8 @@ class AbstractTourPage(Page):
     pricing_type = models.CharField(
         max_length=20,
         choices=[('Per_room', 'Per Room'), ('Per_person', 'Per Person')],
-        default='Per_person'
+        default='Per_person',
+        help_text=""
     )
     max_children_per_room = models.PositiveIntegerField(default=1, null=True, blank=True)
     child_age_min = models.PositiveIntegerField(default=7, verbose_name="Child Minimum Age")
@@ -158,7 +166,7 @@ class AbstractTourPage(Page):
                         ),
                         (
                             "highlight",
-                            RichTextBlock(required=True, features=["bold", "italic"], max_chars=300),  # Note: Use max_chars, not max_length
+                            RichTextBlock(required=True, max_chars=300),  # Note: Use max_chars, not max_length
                         ),
                     ]
                 ),
@@ -176,33 +184,47 @@ class AbstractTourPage(Page):
     content_panels = Page.content_panels + [
 
         MultiFieldPanel([
-            FieldPanel('name'),
-            FieldPanel('destination'),
-            FieldPanel('description'),
-            FieldPanel('location'),
-            FieldPanel('cover_page_content'),
-            FieldPanel('general_info'),
-            FieldPanel('final_message'),
+            MultiFieldPanel([
+                FieldPanel('name'),
+                FieldPanel('description'),
+                FieldPanel('destination'),
+                FieldPanel('location'),
+            ], heading="Basic Info"),
+            FieldPanel('hotel'),
             FieldPanel('courtesies'),
             FieldPanel('amenity'),
             FieldPanel('no_inclusions'),
             FieldPanel('additional_notes'),
-            FieldPanel('hotel'),
+            FieldPanel('supplier_email'),
+            FieldPanel('is_company_tour'),
+            # FieldPanel('cover_page_content'),
+            # FieldPanel('general_info'),
+            # FieldPanel('final_message'),
         ], heading="Content Fields"),
+        MultiFieldPanel([
+            # FieldPanel('image'),
+            FieldPanel('cover_image'),
+            # FieldPanel('logo_image'),
+            # FieldPanel('pdf_file'),
+            # FieldPanel('pdf_images'),
+            FieldPanel('yt_vid'),
+        ], heading="Media"),
+        MultiFieldPanel([
+            FieldPanel('max_capacity'),
+            FieldPanel('available_slots'),
+            FieldPanel('itinerary'),
+            FieldPanel('start_date'),
+            FieldPanel('end_date'),
+            FieldPanel('available_days'),
+            FieldPanel('child_age_min'),
+            FieldPanel('child_age_max'),
+        ], heading="Tour Configuration"),
         MultiFieldPanel([
             FieldPanel('is_on_discount'),
             FieldPanel('is_special_offer'),
             FieldPanel('is_all_inclusive'),
             FieldPanel('is_sold_out'),
         ], heading="Tour Current State"),
-        MultiFieldPanel([
-            FieldPanel('image'),
-            FieldPanel('cover_image'),
-            FieldPanel('logo_image'),
-            FieldPanel('pdf_file'),
-            FieldPanel('pdf_images'),
-            FieldPanel('yt_vid'),
-        ], heading="Media"),
             MultiFieldPanel([
                 FieldPanel('pricing_type', classname='pricing-type-selector'),  # JS target
                 FieldPanel('price_chd'),
@@ -228,23 +250,8 @@ class AbstractTourPage(Page):
                     FieldPanel('rep_comm'),
                 ], heading="Commissions and Factors"),
             ], heading="Price & Comm"),
-
-
         FieldPanel('ref_code'),
         FieldPanel('code_id', read_only=True),
-        FieldPanel('supplier_email'),
-        FieldPanel('is_company_tour'),
-        MultiFieldPanel([
-            FieldPanel('max_capacity'),
-            FieldPanel('available_slots'),
-            FieldPanel('itinerary'),
-            FieldPanel('start_date'),
-            FieldPanel('end_date'),
-            FieldPanel('available_days'),
-            FieldPanel('child_age_min'),
-            FieldPanel('child_age_max'),
-        ], heading="Tour Configuration"),
-
     ]
 
 
@@ -460,58 +467,111 @@ class ToursIndexPage(RoutablePageMixin, Page):
         verbose_name = "Tours List Page"
         verbose_name_plural = "Tours Indices"
 
+    @property
+    def base_price(self):
+        """Fallback to first available price for filtering."""
+        if self.pricing_type == 'Per_room':
+            return self.price_dbl or self.price_sgl or self.price_tpl or 0
+        elif self.pricing_type == 'Per_person':
+            return self.price_adult or self.price_chd or self.price_inf or 0
+        return 0
+    
     def get_context(self, request: HttpRequest):
-            context = super().get_context(request)
+        print("*** get_context TOP: Called with GET", dict(request.GET))  # TEMP
+        context = super().get_context(request)
 
-            # Base queryset: Live, public child pages in current locale
-            tours_qs = LandTourPage.objects.live().public().filter(locale=self.locale).specific()
+        # Base queryset
+        tours_qs = LandTourPage.objects.live().public().filter(locale=self.locale).specific()
+        print("*** Base QS count:", tours_qs.count())  # TEMP
 
-            # Apply filters from request.GET (unchanged)
-            tour_type = request.GET.get('tour_type')
-            status = request.GET.get('status')
-            min_price = request.GET.get('min_price')
-            max_price = request.GET.get('max_price')
-            destination = request.GET.get('destination')
+        # Dynamic unique destinations
+        filtered_qs = tours_qs.exclude(destination__exact='')  # Filter blanks first
+        unique_destinations = list(filtered_qs.values_list('destination', flat=True).distinct().order_by('destination'))
+        print("*** Unique destinations:", unique_destinations, "(len:", len(unique_destinations), ")")  # TEMP
 
-            if status:
-                status_map = {
-                    'on_discount': Q(is_on_discount=True),
-                    'special_offer': Q(is_special_offer=True),
-                    'sold_out': Q(is_sold_out=True),
-                }
-                if status in status_map:
-                    tours_qs = tours_qs.filter(status_map[status])
+        # Apply filters
+        tour_type = request.GET.get('tour_type')
+        status = request.GET.get('status')
+        min_price = request.GET.get('min_price')
+        max_price = request.GET.get('max_price')
+        destination = request.GET.get('destination')
+        pricing_type = request.GET.get('pricing_type', '').strip()
 
-            if min_price:
-                min_price_dec = Decimal(min_price)
-                tours_qs = tours_qs.filter(price_dbl__gte=min_price_dec)
-            if max_price:
-                max_price_dec = Decimal(max_price)
-                tours_qs = tours_qs.filter(price_dbl__lte=max_price_dec)
-            if destination:
-                tours_qs = tours_qs.filter(destination=destination)
+        print("*** Raw pricing_type:", pricing_type)  # TEMP
 
-            # NEW: Manual pagination with Paginator
-            paginator = Paginator(tours_qs, 12)  # 12 tours per page; adjust as needed
-            page_num = request.GET.get('page')
-            try:
-                tours_pag = paginator.page(page_num)
-            except PageNotAnInteger:
-                # If page is not an integer, deliver first page
-                tours_pag = paginator.page(1)
-            except EmptyPage:
-                # If page is out of range, deliver last page
-                tours_pag = paginator.page(paginator.num_pages)
+        if tour_type == 'land':
+            pass
 
-            def get_tours():
-                land_tour = LandTourPage.objects.live().public().filter(locale=self.locale).specific()
-                return land_tour
+        if status:
+            status_map = {
+                'on_discount': Q(is_on_discount=True),
+                'special_offer': Q(is_special_offer=True),
+                'sold_out': Q(is_sold_out=True),
+            }
+            if status in status_map:
+                tours_qs = tours_qs.filter(status_map[status])
+                print("*** Applied status", status, "- count:", tours_qs.count())  # TEMP
 
-            context = super().get_context(request)
-            context['tours'] = get_tours()
-            context['tours_pag'] = tours_pag
-            context['active_filters'] = request.GET  # For template to show selected options
-            return context
+        if destination:
+            tours_qs = tours_qs.filter(destination=destination)
+            print("*** Applied destination", destination, "- count:", tours_qs.count())  # TEMP
+
+        # Pricing type filter (fixed—no .title())
+        pricing_type = request.GET.get('pricing_type', '').strip()
+        print("*** Raw pricing_type:", pricing_type)  # TEMP
+
+        if pricing_type and pricing_type != '':
+            valid_types = ['Per_room', 'Per_person']
+            if pricing_type in valid_types:  # Exact match—no normalize
+                tours_qs = tours_qs.filter(pricing_type=pricing_type)
+                print("*** Applied pricing_type", pricing_type, "- count:", tours_qs.count())  # TEMP
+            else:
+                print("*** Invalid pricing_type", pricing_type, "(not in", valid_types, ")")  # TEMP
+        else:
+            print("*** Skipped pricing_type (empty)")  # TEMP
+
+        # Price min/max
+        if min_price:
+            min_price_dec = Decimal(min_price)
+            price_min_q = (
+                Q(price_dbl__gte=min_price_dec) | Q(price_sgl__gte=min_price_dec) | Q(price_tpl__gte=min_price_dec) |
+                Q(price_adult__gte=min_price_dec) | Q(price_chd__gte=min_price_dec) | Q(price_inf__gte=min_price_dec)
+            )
+            tours_qs = tours_qs.filter(price_min_q)
+            print("*** Applied min_price", min_price, "- count:", tours_qs.count())  # TEMP
+
+        if max_price:
+            max_price_dec = Decimal(max_price)
+            price_max_q = (
+                Q(price_dbl__lte=max_price_dec) | Q(price_sgl__lte=max_price_dec) | Q(price_tpl__lte=max_price_dec) |
+                Q(price_adult__lte=max_price_dec) | Q(price_chd__lte=max_price_dec) | Q(price_inf__lte=max_price_dec)
+            )
+            tours_qs = tours_qs.filter(price_max_q)
+            print("*** Applied max_price", max_price, "- count:", tours_qs.count())  # TEMP
+
+        # Order & Paginate
+        tours_qs = tours_qs.order_by('-start_date')
+        paginator = Paginator(tours_qs, 12)
+        page_num = request.GET.get('page')
+        try:
+            tours_pag = paginator.page(page_num)
+        except PageNotAnInteger:
+            tours_pag = paginator.page(1)
+        except EmptyPage:
+            tours_pag = paginator.page(paginator.num_pages)
+
+        # Context
+        context['tours'] = tours_qs
+        context['tours_pag'] = tours_pag
+        context['active_filters'] = request.GET
+        context['GLOBAL_ICON_CHOICES'] = blocks.GLOBAL_ICON_CHOICES
+        context['unique_destinations'] = unique_destinations
+
+        print("*** Context unique_destinations len:", len(context.get('unique_destinations', [])))  # TEMP
+        print("*** Final QS count:", tours_qs.count(), "- paginated len:", len(tours_pag))  # TEMP: Fixed .count() → len()
+        print("*** get_context END")  # TEMP
+
+        return context
 
     @path('all/', name='all')
     def all_tours(self, request):

@@ -53,11 +53,13 @@ def get_choice_label(value):
     return value  # Fallback to the value if no label is found
 
 @register.filter
-def label_from_choice(value, choices):
+def get_choice_label(value, choices):
     """
-    Returns the label for a given choice value from a list of tuples.
+    Returns the label for a choice value from a CHOICES list/tuple.
+    e.g., 'fa-laptop' -> 'Business Center'
     """
-    for choice_value, label in choices:
-        if choice_value == value:
-            return label
-    return value  # Fallback to value if no match
+    if not value or not choices:
+        return value or 'Unknown'
+    choice_dict = dict(choices)  # {'fa-laptop': 'Business Center', ...}
+    return choice_dict.get(value, value)  # Fallback to value
+

@@ -67,6 +67,8 @@
 
 .result-container {
     animation: scale-in 1.1s linear;
+    display: flex;
+    flex-wrap: wrap;
 
 }
 
@@ -75,7 +77,12 @@
     border-radius: 1rem;
     padding: 0.5rem;
     animation: scale-in 1s linear;
+    height: 100%;
 
+}
+
+#filterCollapse {
+    height: 100%;
 }
 
 .submit-button {
@@ -104,5 +111,14 @@
 
 
 
+}
+
+#resultsContainer.loading {
+    opacity: 0.6;
+    transition: opacity 0.3s ease;
+}
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
 }
 

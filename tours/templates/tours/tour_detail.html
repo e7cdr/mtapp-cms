@@ -1,10 +1,8 @@
 {% extends 'base.html' %} {% load static i18n tour_filters custom_filters wagtailimages_tags%} 
-{% block title %}{{ tour.title }}
-- Milano Travel
+{% block title %}{{ self.title }}
 {% endblock %} 
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/detail_page.css' %}" />
-<link rel="stylesheet" type="text/css" href="https://www.paypalobjects.com/webstatic/en_US/developer/docs/css/cardfields.css" />
 <body>
  <div class="detail-container">
   <div class="cover-image-container">
@@ -97,7 +95,6 @@
          >
         </li>
 
-        {% comment %}
         <li class="nav-item" role="presentation">
          <a
           class="nav-link"
@@ -110,7 +107,6 @@
           >Pricing &amp; Details</a
          >
         </li>
-        {% endcomment %}
        </ul>
       </nav>
       <hr />
@@ -123,39 +119,47 @@
         <p><strong>Destination:</strong> {{self.destination}}</p>
         <p><strong>Hotel:</strong> {{self.hotel}}</p>
         <p><strong>Dates:</strong> {{self.start_date}} - {{self.end_date}}</p>
-
-        <p><strong>Not Included:</strong>{{self.no_inclusions}}</p>
+        <p><strong>Not Included:</strong> {{self.no_inclusions}}</p>
        </div>
-       <!-- Itinerary -->
-       {% for block in self.itinerary %}
-       <div class="tab-pane fade hidden" id="itinerary" role="tabpanel" aria-labelledby="itinerary-tab">
-        <nav class="section-nav">
-         <ul id="itinerary-days" role="tablist">
-          <li class="nav-item" role="presentation">
-           <a
-            class="nav-link active"
-            id="day-{{block.value.day}}-tab"
-            data-bs-toggle="tab"
-            href="#day-{{block.value.day}}"
-            role="tab"
-            aria-selected="false"
-            tabindex="-1"
-            >Day {{block.value.day}}</a
-           >
-          </li>
-         </ul>
-        </nav>
-        <h2>Itinerary</h2>
-        <div class="fade show active" id="day-{{block.value.day}}">
-         <h3>Day {{block.value.day}}</h3>
-         <p>{{block.value.description}}</p>
-         <h4>Highlights</h4>
-         <ul>
-          <li>{{block.value.highlight}}</li>
-         </ul>
-        </div>
-       </div>
-       {% endfor %}
+      <!-- Itinerary -->
+      <div class="tab-pane fade hidden" id="itinerary" role="tabpanel" aria-labelledby="itinerary-tab">
+          <nav class="section-nav">
+              <ul id="itinerary-days" role="tablist">
+                  {% for block in self.itinerary %}
+                  <li class="nav-item" role="presentation">
+                      <a
+                          class="nav-link {% if forloop.first %}active{% endif %}"
+                          id="day-{{ block.value.day }}-tab"
+                          data-bs-toggle="tab"
+                          href="#day-{{ block.value.day }}"
+                          role="tab"
+                          aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
+                          tabindex="{% if forloop.first %}0{% else %}-1{% endif %}"
+                          >Day {{ block.value.day }}</a>
+                  </li>
+                  {% endfor %}
+              </ul>
+          </nav>
+          <hr />
+          <h2>Itinerary</h2>
+          <div class="tab-content">  
+              {% for block in self.itinerary %}
+              <div 
+                  class="tab-pane fade {% if forloop.first %}show active{% endif %}" 
+                  id="day-{{ block.value.day }}" 
+                  role="tabpanel" 
+                  aria-labelledby="day-{{ block.value.day }}-tab"
+              >
+                  <h3>Day {{ block.value.day }}</h3>
+                  <p>{{ block.value.description }}</p>
+                  <h4>Highlights</h4>
+                  <ul>
+                      <li>{{ block.value.highlight }}</li>
+                  </ul>
+              </div>
+              {% endfor %}
+          </div>
+      </div>
 
        <!-- Amenities -->
        {% if self.amenity %}
@@ -214,7 +218,6 @@
            </td>
            <td></td>
           </tr>
-
           <tr>
            <th scope="row">Single</th>
            <td>1 USD <span class="currency-symbol"></span></td>
@@ -230,7 +233,6 @@
            <td>30 USD <span class="currency-symbol"></span></td>
            <td></td>
           </tr>
-
           <tr>
            <th scope="row">Currency</th>
            <td>USD</td>
@@ -249,7 +251,4 @@
 </body>
 
 <script src="{% static 'js/tour_detail.js' %}"></script>
-<script src="https://www.paypal.com/sdk/js?client-id=test"></script>
-<script src="{% static 'js/app.js' %}"></script>
-
 {% endblock %}
