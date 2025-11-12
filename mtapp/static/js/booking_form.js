@@ -283,49 +283,101 @@ document.addEventListener('DOMContentLoaded', function () {
         toggleAges();  // Initial
     }
 
-    document.getElementById('submitProposal').addEventListener('click', function (e) {
-        e.preventDefault();
-        const form = document.getElementById('bookingForm');
-        const formData = new FormData(form);
-        const tourId = parseInt(document.getElementById('id_tour_id').value);
-        const saveUrl = form.action;  // /bookings/start/<tour_id>/
+document.getElementById('submitProposal').addEventListener('click', function (e) {
+    e.preventDefault();
+    const form = document.getElementById('bookingForm');
+    const formData = new FormData(form);
+    const tourId = parseInt(document.getElementById('id_tour_id').value);
+    const saveUrl = form.action; // /bookings/start/<tour_id>/
 
-        // Step 1: POST to save session (validate form)
-        fetch(saveUrl, {
-            method: 'POST',
-            body: formData,
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-            .then(response => {
-                if (!response.ok) {
-                    return response.text().then(text => { throw new Error(text); });
+    // Helper: Show nice error toast (Bootstrap alert)
+    function showError(message, title = 'Oops!') {
+        // Create toast container if missing
+        let toastContainer = document.getElementById('errorToastContainer');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'errorToastContainer';
+            toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+            document.body.appendChild(toastContainer);
+        }
+        
+        // Build toast HTML
+        const toastHtml = `
+            <div class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true" style="font-size:Large;">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <strong>${title}</strong><br>${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        `;
+        toastContainer.innerHTML = toastHtml;
+        
+        // Show toast
+        const toast = new bootstrap.Toast(toastContainer.firstElementChild);
+        toast.show();
+    }
+
+    // Helper: Parse server errors (JSON or text)
+    function parseErrorResponse(response) {
+        return response.text().then(text => {
+            try {
+                const data = JSON.parse(text);
+                if (data.errors && Array.isArray(data.errors)) {
+                    // Extract messages from errors array (e.g., [{"message": "Name required"}])
+                    const messages = data.errors.map(err => err.message || err).filter(msg => msg);
+                    return messages.length > 0 ? messages.join('; ') : 'Validation failed.';
                 }
-                return response.json();  // Assume view returns {'success': true} on valid
+                return data.message || data.error || 'Unknown server error.';
+            } catch (e) {
+                // Non-JSON (e.g., HTML error page) - fallback
+                return text.trim() || 'Something went wrong. Please try again.';
+            }
+        });
+    }
+
+    // Step 1: POST to save session (validate form)
+    fetch(saveUrl, {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+        .then(response => {
+            if (!response.ok) {
+                return parseErrorResponse(response).then(errorMsg => {
+                    throw new Error(errorMsg);  // Now user-friendly
+                });
+            }
+            return response.json(); // Assume view returns {'success': true} on valid
+        })
+        .then(data => {
+            if (!data.success) {
+                throw new Error(data.error || 'Validation failed');
+            }
+            // Step 2: Now fetch confirm (session saved)
+            const confirmUrl = `/bookings/confirm/${tourId}/`;
+            return fetch(confirmUrl, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
             })
-            .then(data => {
-                if (!data.success) throw new Error(data.error || 'Validation failed');
-                // Step 2: Now fetch confirm (session saved)
-                const confirmUrl = `/bookings/confirm/${tourId}/`;
-                return fetch(confirmUrl, {
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                })
-                    .then(confirmResponse => {
-                        if (!confirmResponse.ok) {
-                            return confirmResponse.text().then(text => { throw new Error(text); });
-                        }
-                        return confirmResponse.text();
-                    });
-            })
-            .then(html => {
-                document.getElementById('confirmationContent').innerHTML = html;
-                new bootstrap.Modal(document.getElementById('confirmationModal')).show();
-            })
-            .catch(error => {
-                console.error('Load error:', error);
-                alert(error.message || 'Error preparing confirmation. Please check form and try again.');
-            });
-            
-    });
+                .then(confirmResponse => {
+                    if (!confirmResponse.ok) {
+                        return parseErrorResponse(confirmResponse).then(errorMsg => {
+                            throw new Error(errorMsg);
+                        });
+                    }
+                    return confirmResponse.text();
+                });
+        })
+        .then(html => {
+            document.getElementById('confirmationContent').innerHTML = html;
+            new bootstrap.Modal(document.getElementById('confirmationModal')).show();
+        })
+        .catch(error => {
+            console.error('Booking error:', error);
+            showError(error.message || 'Error preparing confirmation. Please check form and try again.');
+        });
+});
 
     
     // Confirm in Modal (POST with formData for save)

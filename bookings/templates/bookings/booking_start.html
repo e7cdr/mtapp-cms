@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static i18n wagtailimages_tags custom_filters %}
+{% load static i18n wagtailimages_tags wagtailcore_tags custom_filters %}
 
 {% block title %}Booking Form{% endblock %}
 {% block extra_css %}
@@ -113,7 +113,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="additional_notes" class="form-label">Additional Notes</label>
-                                    <p>{{tour.additional_notes}}</p>
+                                    <p>{{tour.additional_notes|richtext}}</p>
                                 </div>
 
                             </div>

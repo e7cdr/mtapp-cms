@@ -3,10 +3,10 @@ import urllib
 import logging
 import paypalrestsdk as paypal
 
-from decimal import Decimal, ROUND_HALF_UP
 from decouple import config
 from datetime import date, datetime, timedelta
 from bookings.pdf_gen import generate_itinerary_pdf
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP  # Add InvalidOperation if not imported
 
 from .forms import ProposalForm
 from partners.models import Partner
@@ -191,10 +191,15 @@ class BookingStartView(FormView):
         else:
             print(f"DEBUG Post: Form invalid - errors: {form.errors}")  # Add this for validation fails
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({'success': False, 'error': form.errors}, status=400)
+                # FIXED: Flatten errors to list of strings for JS
+                error_messages = []
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        error_messages.append(f"{field.title() if field != '__all__' else 'Form'}: {error}")
+                return JsonResponse({'success': False, 'errors': error_messages}, status=400)
             # Non-AJAX: re-render with errors
             return self.form_invalid(form)
-     
+
 class ProposalSuccessView(TemplateView):
     template_name = 'bookings/proposal_success.html'
 
@@ -216,6 +221,10 @@ paypal.configure({
     "client_id": config('PAYPAL_CLIENT_ID'),
     "client_secret": config('PAYPAL_CLIENT_SECRET'),
 })
+
+
+
+logger = logging.getLogger(__name__)  # Assuming defined; add if needed
 
 def compute_pricing(tour_type, tour_id, form_data, session):
     logger.debug(f"compute_pricing inputs: form_data={form_data}, tour_type={tour_type}, tour_id={tour_id}")
@@ -260,7 +269,7 @@ def compute_pricing(tour_type, tour_id, form_data, session):
     currency = form_data.get('currency', session.get('currency', 'USD')).upper()
     session['currency'] = currency
 
-# Demand factor from capacity (fallback if no date)
+    # Demand factor from capacity (fallback if no date)
     if travel_date:
         try:
             travel_date = date.fromisoformat(travel_date)
@@ -313,21 +322,20 @@ def compute_pricing(tour_type, tour_id, form_data, session):
     if number_of_children > 0 and len(child_ages) != number_of_children:
         logger.warning(f"Child ages count ({len(child_ages)}) does not match number_of_children ({number_of_children})")
         return []
-    
+
     if not child_ages and number_of_children > 0:
         child_ages = [child_age_min] * number_of_children
         children = number_of_children
         infants = 0
-    max_children_per_room = getattr(tour, 'max_children_per_room', 1)
+    max_children_per_room = getattr(tour, 'max_children_per_room', 1) or 1  # FIXED: or 1 handles None
     logger.debug(f"Parsed: infants={infants}, children={children}, max_children_per_room={max_children_per_room}")
-
     # Seasonal factor from model
     try:
-        seasonal_factor = Decimal(str(tour.seasonal_factor))
+        seasonal_factor = Decimal(str(tour.seasonal_factor or '1.0'))  # FIXED: Null default to 1.0
         if seasonal_factor <= 0:
             logger.warning(f"Invalid seasonal_factor in tour {tour_id}: {seasonal_factor}, using default 1.0")
             seasonal_factor = Decimal('1.0')
-    except (ValueError, TypeError):
+    except (InvalidOperation, ValueError, TypeError):
         logger.warning(f"Invalid seasonal_factor in tour {tour_id}: {tour.seasonal_factor}, using default 1.0")
         seasonal_factor = Decimal('1.0')
     logger.debug(f"Seasonal factor from tour: {seasonal_factor}")
@@ -335,19 +343,10 @@ def compute_pricing(tour_type, tour_id, form_data, session):
     # Demand factor from 30-day capacity (global—scale model demand_factor)
     demand_info = get_30_day_used_slots(tour_id, tour.__class__)
     full_percent = demand_info['full_percent']
-    model_demand_factor = Decimal(str(getattr(tour, 'demand_factor', '0')))  # FIXED: From model (e.g., 0.2)
+    model_demand_factor = Decimal(str(getattr(tour, 'demand_factor', '0') or '0'))  # FIXED: Null default to 0
     demand_factor = model_demand_factor * full_percent  # e.g., 0.2 * 0.5 = 0.1 (10% adjustment)
     logger.debug(f"30-day used_slots={demand_info['used_slots']}, full_percent={full_percent}, model_demand_factor={model_demand_factor}, demand_factor={demand_factor}")
     price_adjustment = Decimal('1') + demand_factor  # 1 + 0.1 = 1.1 (10%)
-    # try:
-    #     demand_factor = Decimal(str(tour.demand_factor))
-    #     if demand_factor < 0:
-    #         logger.warning(f"Invalid demand_factor in tour {tour_id}: {demand_factor}, using default 0")
-    #         demand_factor = Decimal('1.0')
-    # except (ValueError, TypeError):
-    #     logger.warning(f"Invalid demand_factor in tour {tour_id}: {tour.demand_factor}, using default 0")
-    #     demand_factor = Decimal('1.0')
-    # price_adjustment = demand_factor
     logger.debug(f"Demand factor from tour: {demand_factor}, Price adjustment: {price_adjustment}")
 
     # Use global get_exchange_rate
@@ -359,41 +358,60 @@ def compute_pricing(tour_type, tour_id, form_data, session):
         exchange_rate = Decimal('1.0')
     logger.debug(f"Exchange rate for {currency}: {exchange_rate}")
 
-    # Pricing for FullTour
+    # Pricing for FullTour - FIXED: Add null defaults & try/except
     if tour_type.lower() == 'full':
-        if payment_type == 'cash' and all(getattr(tour, f'price_{field}_cash') is not None for field in ['sgl', 'dbl', 'tpl', 'chd', 'inf']):
-            price_sgl = Decimal(str(tour.price_sgl_cash))
-            price_dbl = Decimal(str(tour.price_dbl_cash))
-            price_tpl = Decimal(str(tour.price_tpl_cash))
-            price_chd = Decimal(str(tour.price_chd_cash))
-            price_inf = Decimal(str(tour.price_inf_cash))
-            price_adult = price_sgl
-            logger.debug(f"Using cash pricing for FullTour: sgl={price_sgl}, dbl={price_dbl}, tpl={price_tpl}, chd={price_chd}, inf={price_inf}")
-        else:
-            price_sgl = Decimal(str(tour.price_sgl_regular))
-            price_dbl = Decimal(str(tour.price_dbl_regular))
-            price_tpl = Decimal(str(tour.price_tpl_regular))
-            price_chd = Decimal(str(tour.price_chd_regular))
-            price_inf = Decimal(str(tour.price_inf_regular))
-            price_adult = price_sgl
-            logger.debug(f"Using regular pricing for FullTour: sgl={price_sgl}, dbl={price_dbl}, tpl={price_tpl}, chd={price_chd}, inf={price_inf}")
+        try:
+            if payment_type == 'cash' and all(getattr(tour, f'price_{field}_cash') not in (None, '') for field in ['sgl', 'dbl', 'tpl', 'chd', 'inf']):
+                price_sgl = Decimal(str(tour.price_sgl_cash or '0'))
+                price_dbl = Decimal(str(tour.price_dbl_cash or '0'))
+                price_tpl = Decimal(str(tour.price_tpl_cash or '0'))
+                price_chd = Decimal(str(tour.price_chd_cash or '0'))
+                price_inf = Decimal(str(tour.price_inf_cash or '0'))
+                price_adult = price_sgl
+                logger.debug(f"Using cash pricing for FullTour: sgl={price_sgl}, dbl={price_dbl}, tpl={price_tpl}, chd={price_chd}, inf={price_inf}")
+            else:
+                price_sgl = Decimal(str(tour.price_sgl_regular or '0'))
+                price_dbl = Decimal(str(tour.price_dbl_regular or '0'))
+                price_tpl = Decimal(str(tour.price_tpl_regular or '0'))
+                price_chd = Decimal(str(tour.price_chd_regular or '0'))
+                price_inf = Decimal(str(tour.price_inf_regular or '0'))
+                price_adult = price_sgl
+                logger.debug(f"Using regular pricing for FullTour: sgl={price_sgl}, dbl={price_dbl}, tpl={price_tpl}, chd={price_chd}, inf={price_inf}")
+        except (InvalidOperation, ValueError, TypeError) as e:
+            logger.error(f"Decimal conversion failed for full tour {tour_id}: {e} - Prices: sgl={tour.price_sgl_regular}, etc.")
+            price_sgl = price_dbl = price_tpl = price_chd = price_inf = price_adult = Decimal('0')
+    
     elif tour_type.lower() == 'land':
-        price_sgl = Decimal(str(tour.price_sgl))
-        price_dbl = Decimal(str(tour.price_dbl))
-        price_tpl = Decimal(str(tour.price_tpl))
-        price_chd = Decimal(str(tour.price_chd))
-        price_inf = Decimal(str(tour.price_inf))
-        price_adult = price_sgl
-
-        logger.debug(f"Using pricing for LandTour: sgl={price_sgl}, dbl={price_dbl}, tpl={price_tpl}, chd={price_chd}, inf={price_inf}")
-    else:
-        if tour_type.lower() != 'day':
-            logger.warning(f"Invalid pricing_type '{tour.pricing_type}' for {tour_type} tour {tour_id}; skipping configs")
-            return []  # Or raise ValueError for strict
-        price_adult = Decimal(str(tour.price_adult))
-        price_chd = Decimal(str(tour.price_child))
-        price_inf = Decimal(str(tour.price_inf))
-        logger.debug(f"Using pricing for DayTour: adult={price_adult}, child={price_chd}, inf={price_inf}")
+        try:
+            price_sgl = Decimal(str(tour.price_sgl or '0'))
+            price_dbl = Decimal(str(tour.price_dbl or '0'))
+            price_tpl = Decimal(str(tour.price_tpl or '0'))
+            price_chd = Decimal(str(tour.price_chd or '0'))
+            price_inf = Decimal(str(tour.price_inf or '0'))
+            
+            # FIXED: Set price_adult based on pricing_type
+            if tour.pricing_type == 'Per_room':
+                price_adult = price_sgl  # Use room SGL as adult base (your original logic)
+            else:  # Per_person
+                price_adult = Decimal(str(tour.price_adult or '0'))  # Use dedicated adult price
+            
+            logger.debug(f"Using pricing for LandTour: sgl={price_sgl}, adult={price_adult}, chd={price_chd}, inf={price_inf}")
+        except (InvalidOperation, ValueError, TypeError) as e:
+            logger.error(f"Decimal conversion failed for land tour {tour_id}: {e}")
+            price_sgl = price_dbl = price_tpl = price_chd = price_inf = price_adult = Decimal('0')    
+ 
+    else:  # 'day'
+        try:
+            if tour_type.lower() != 'day':
+                logger.warning(f"Invalid pricing_type '{tour.pricing_type}' for {tour_type} tour {tour_id}; skipping configs")
+                return []  # Or raise ValueError for strict
+            price_adult = Decimal(str(tour.price_adult or '0'))
+            price_chd = Decimal(str(tour.price_child or '0'))  # Note: price_child? Confirm field name
+            price_inf = Decimal(str(tour.price_inf or '0'))
+            logger.debug(f"Using pricing for DayTour: adult={price_adult}, child={price_chd}, inf={price_inf}")
+        except (InvalidOperation, ValueError, TypeError) as e:
+            logger.error(f"Decimal conversion failed for day tour {tour_id}: {e} - Prices: adult={tour.price_adult}, etc.")
+            price_adult = price_chd = price_inf = Decimal('0')
 
     configurations = []
     children_exceed_room_limit = False
