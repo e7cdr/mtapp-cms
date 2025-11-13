@@ -8,4 +8,6 @@ urlpatterns = [
     path('login/', auth_views.LoginView.as_view(template_name='accounts/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('dashboard/', views.DashboardView.as_view(), name='dashboard'),
+    path('admin/ratelimit-inspect/', views.inspect_ratelimit, name='ratelimit_inspect'),
+
 ] + allauth_urls  # Includes email confirm, etc.

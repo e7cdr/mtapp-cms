@@ -13,6 +13,44 @@ section {
     position: relative;
 }
 
+.captcha {
+    justify-self: center;
+    margin-bottom: 2rem;
+}
+
+.captcha-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 15px 0;
+    font-size: 16px;  /* Bigger text for mobile */
+}
+
+.captcha-wrapper img {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 25rem;  /* Slightly smaller to reduce pixelation */
+    image-rendering: -webkit-optimize-contrast;  /* Sharper on WebKit (Chrome/Safari) */
+    image-rendering: crisp-edges;  /* Firefox/Edge */
+}
+
+.captcha-wrapper input[type="text"] {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: bold;
+}
+
+#refresh-captcha {
+    font-size: 0.85em;
+    padding: 4px 8px;
+}
+#refresh-captcha:hover {
+    background-color: #f8f9fa;
+}
+
 .tour-title {
     position: absolute;
     top: 0;

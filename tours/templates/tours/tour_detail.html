@@ -254,16 +254,20 @@
            <td></td>
           </tr>
           {% endif %}
+            {% if not self.price_chd == 0 %}
           <tr>
            <th scope="row">Child</th>
            <td>${{self.price_chd}} USD <span class="currency-symbol"></span></td>
            <td></td>
           </tr>
+          {% endif %}
+            {% if not self.price_inf == 0 %}
             <tr>
            <th scope="row">Infant</th>
            <td>${{self.price_inf}} USD <span class="currency-symbol"></span></td>
            <td></td>
           </tr>
+        {% endif %}
           <tr>
            <th scope="row">Currency</th>
            <td>USD</td>
@@ -278,7 +282,7 @@
         {% if self.cxl_policies %}
             {{ self.cxl_policies|richtext }}
         {% else %}
-            <p>No CXL policy specified.</p>
+            <p>No Cancellation policies specified.</p>
         {% endif %}
        </div>
        <!-- Cancellation Policy -->

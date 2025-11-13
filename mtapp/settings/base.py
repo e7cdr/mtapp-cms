@@ -127,14 +127,21 @@ SITE_ID = 1  # Required for allauth
 AXES_FAILURE_LIMIT = 5
 AXES_COOLOFF_TIME = timedelta(minutes=15)
 
-# Ratelimit (global; we'll apply per-view later)
+# Ratelimit
 RATELIMIT_ENABLE = True
-RATELIMIT_VIEW = 'ratelimit.views.RatelimitView'  # Fallback 403 page
+RATELIMIT_VIEW = 'accounts.views.ratelimit_exceeded'  # Fallback 403 page
 RATELIMIT_CACHE = 'default'  # Uses the shared cache above
 
-# CAPTCHA (uses image-based simple math; configure image backend if needed)
-CAPTCHA_OUTPUT_FORMAT = '(n) %(image)s %(hidden_field)s %(text_field)s'
-CAPTCHA_TIMEOUT = 5  # Expires in 5 mins
+# CAPTCHA: Reduce blurriness/distortion
+CAPTCHA_NOISE = 0  # FIXED: 0 = clean (no lines/curves); 1 = minimal dots; 2 = default lines
+CAPTCHA_HIGH_SECURITY = False  # Optional: Disables extra distortion if True
+CAPTCHA_CHALLENGE_FUNCT = 'captcha.helpers.math_challenge'  # Keep math; switch to 'word' for text if preferred
+CAPTCHA_FONTS = ['/path/to/static/fonts/clean_font.ttf']  # Optional: Upload a bold, clear TTF (e.g., Arial Bold) to static/fonts/ for sharper text
+CAPTCHA_FOREGROUND_COLOR = '#000000'  # Black text for contrast
+CAPTCHA_BACKGROUND_COLOR = '#ffffff'  # White bg (less gray = crisper)
+CAPTCHA_IMAGE_SIZE = (200, 35)  # Wider/shorter for easier reading (default 200x75)
+CAPTCHA_TIMEOUT = 10  # Longer expiry = less re-solves
+CAPTCHA_OUTPUT_FORMAT = '<div class="captcha-wrapper">%(image)s <input type="text" name="%(text_field)s" id="%(text_field_id)s">%(hidden_field)s</div>'  # Custom: Image + input side-by-side
 
 WSGI_APPLICATION = "mtapp.wsgi.application"
 

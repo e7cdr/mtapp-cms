@@ -10,9 +10,9 @@ from wagtail.documents import urls as wagtaildocs_urls
 from bookings.api_views import AvailableDatesView
 from .api import api_router
 from search import views as search_views
+from accounts.views import captcha_refresh
 
-from tours.views import test_hook
-
+# from tours.views import test_hook
 
 
 
@@ -25,6 +25,9 @@ urlpatterns = [
     path('api/available-dates/', AvailableDatesView.as_view(), name='available_dates_api'),  # FIXED: Matches JS fetch
     path('bookings/', include('bookings.urls', namespace='bookings')),
     path('p-methods/', include('p_methods.urls', namespace='p_methods')),
+    path('captcha/', include('captcha.urls')),
+    path('captcha/refresh/', captcha_refresh, name='captcha_refresh'),  # FIXED: Custom global view
+
 
 
     ]
@@ -44,6 +47,8 @@ urlpatterns = urlpatterns + i18n_patterns (
     path("search/", search_views.search, name="search"),
     path('profile/', include('profiles.urls')),
     path('accounts/', include('accounts.urls')),
+
+
 
 
 

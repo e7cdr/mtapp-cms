@@ -18,10 +18,10 @@
                 </div>
             {% endfor %}
         {% endif %}
-        
+
         <div id="booking-form-container" data-duration="{{ tour_duration|default:0 }}">
-            <form id="bookingForm" method="post" 
-                  action="{% url 'bookings:booking_start' tour.id|default:0 %}" 
+            <form id="bookingForm" method="post"
+                  action="{% url 'bookings:booking_start' tour.id|default:0 %}"
                   class="booking-form card">
                 {% csrf_token %}
 
@@ -218,11 +218,17 @@
                     </div>
                 </div>
 
-                <div class="text-center">
+                <div class="text-center captcha-section">
                     {% if form.captcha.errors %}
-                        <p class="error">Invalid CAPTCHA. Try again.</p>
+                        <p class="error text-danger">Invalid CAPTCHA. Try again.</p>
                     {% endif %}
-                    <button type="button" id="submitProposal" class="btn btn-primary">{% trans "Submit Proposal" %}</button>  <!-- Changed to type="button" + ID -->                
+                    <div class="captcha-wrapper d-inline-block text-center">
+                        {{ form.captcha.label_tag }}  <!-- Math prompt, e.g., "3 + 5 = ?" -->
+                        {{ form.captcha }}  <!-- Image + hidden + input -->
+                        <button type="button" id="refresh-captcha" class="btn btn-sm btn-outline-secondary ms-2">Refresh Image</button>
+                    </div>
+                    <small class="text-muted d-block mt-2">Enter the math challenge above to verify you're human.</small>
+                    <button type="button" id="submitProposal" class="btn btn-primary mt-3">{% trans "Submit Proposal" %}</button>
                 </div>
                 <!-- Confirmation Modal -->
                 <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
@@ -263,8 +269,11 @@
 
 <!-- Flatpickr CSS/JS (kept for date picker) -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="{% static 'js/booking_form.js'%}"></script>
+
+
 
 
 {% endblock %}

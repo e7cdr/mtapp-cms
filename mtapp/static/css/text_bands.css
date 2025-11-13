@@ -45,7 +45,7 @@ section {
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 0; 
+    z-index: 0;
     object-fit: cover;
 }
 
@@ -72,7 +72,6 @@ section {
     font-size: 20px;
     text-align: justify;
     font-family: "Roboto", sans-serif;
-    display: flex;
     justify-content: center;
 
 }

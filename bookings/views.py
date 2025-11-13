@@ -13,10 +13,10 @@ from partners.models import Partner
 from tours.models import LandTourPage
 from bookings.forms import ProposalForm
 from bookings.models import (
-    ExchangeRate, 
-    Proposal, 
-    Booking, 
-    ProposalConfirmationToken 
+    ExchangeRate,
+    Proposal,
+    Booking,
+    ProposalConfirmationToken
     )
 
 from django.db.models import Q
@@ -38,14 +38,14 @@ from django.shortcuts import get_object_or_404, render, redirect
 
 from bookings.utils import (
     calculate_demand_factor,
-    get_30_day_used_slots, 
-    get_exchange_rate, 
-    get_remaining_capacity, 
-    send_internal_confirmation_email, 
-    send_itinerary_email, 
-    send_preconfirmation_email, 
-    send_proposal_submitted_email, 
-    send_supplier_email 
+    get_30_day_used_slots,
+    get_exchange_rate,
+    get_remaining_capacity,
+    send_internal_confirmation_email,
+    send_itinerary_email,
+    send_preconfirmation_email,
+    send_proposal_submitted_email,
+    send_supplier_email
 )
 
 
@@ -56,7 +56,9 @@ class BookingStartView(FormView):
     form_class = ProposalForm
     success_url = reverse_lazy('bookings:customer_portal')  # Fallback, not used
 
-    @method_decorator(ratelimit(key='ip', rate='5/h', method='POST', block=True))
+    # @method_decorator(ratelimit(key='ip', rate='5/h', method='POST', block=True)) Uncomment for more strict security for anom users
+    @method_decorator(ratelimit(key='user', rate='10/d', method='POST', block=True)) # Uncomment for per user
+    # @method_decorator(ratelimit(key='user:ip', rate='8/h', method='POST', block=True))
     @method_decorator(never_cache)
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
@@ -139,7 +141,7 @@ class BookingStartView(FormView):
             selected_index = int(selected_config_str) if selected_config_str.isdigit() else 0
             selected_room_config = configs[selected_index] if selected_index < len(configs) else {}
 
-            
+
 
             # Store in session—no save yet
             proposal_data = {
@@ -214,7 +216,7 @@ class ProposalSuccessView(TemplateView):
         context['site_url'] = settings.SITE_URL  # For links
         context['is_company_tour'] = tour.is_company_tour
         context['status_note'] = ' (Internal review pending)' if tour.is_company_tour else ' (Awaiting supplier confirmation)'
-        return context   
+        return context
 
 paypal.configure({
     "mode": "sandbox",  # "live" for prod
@@ -313,7 +315,7 @@ def compute_pricing(tour_type, tour_id, form_data, session):
     except (ValueError, TypeError) as e:
         logger.warning(f"Invalid child ages values: {child_ages}, error: {str(e)}")
         child_ages = []
-    
+
 
     child_age_min = tour.child_age_min
     child_age_max = tour.child_age_max
@@ -380,7 +382,7 @@ def compute_pricing(tour_type, tour_id, form_data, session):
         except (InvalidOperation, ValueError, TypeError) as e:
             logger.error(f"Decimal conversion failed for full tour {tour_id}: {e} - Prices: sgl={tour.price_sgl_regular}, etc.")
             price_sgl = price_dbl = price_tpl = price_chd = price_inf = price_adult = Decimal('0')
-    
+
     elif tour_type.lower() == 'land':
         try:
             price_sgl = Decimal(str(tour.price_sgl or '0'))
@@ -388,18 +390,18 @@ def compute_pricing(tour_type, tour_id, form_data, session):
             price_tpl = Decimal(str(tour.price_tpl or '0'))
             price_chd = Decimal(str(tour.price_chd or '0'))
             price_inf = Decimal(str(tour.price_inf or '0'))
-            
+
             # FIXED: Set price_adult based on pricing_type
             if tour.pricing_type == 'Per_room':
                 price_adult = price_sgl  # Use room SGL as adult base (your original logic)
             else:  # Per_person
                 price_adult = Decimal(str(tour.price_adult or '0'))  # Use dedicated adult price
-            
+
             logger.debug(f"Using pricing for LandTour: sgl={price_sgl}, adult={price_adult}, chd={price_chd}, inf={price_inf}")
         except (InvalidOperation, ValueError, TypeError) as e:
             logger.error(f"Decimal conversion failed for land tour {tour_id}: {e}")
-            price_sgl = price_dbl = price_tpl = price_chd = price_inf = price_adult = Decimal('0')    
- 
+            price_sgl = price_dbl = price_tpl = price_chd = price_inf = price_adult = Decimal('0')
+
     else:  # 'day'
         try:
             if tour_type.lower() != 'day':
@@ -446,7 +448,7 @@ def compute_pricing(tour_type, tour_id, form_data, session):
                             (children * price_chd) +
                             (infants * price_inf)
                         )
-                        total_price *= seasonal_factor * price_adjustment * exchange_rate 
+                        total_price *= seasonal_factor * price_adjustment * exchange_rate
                         rounded_price = total_price.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
                         config = {
                             'singles': singles,
@@ -774,36 +776,36 @@ def confirm_proposal(request, proposal_id: int) -> HttpResponse:
         Proposal.objects.select_related('content_type'),
         id=proposal_id
     )
-    
+
     tour = proposal.tour
     if not tour:
         messages.error(request, "Tour not found for this proposal.")
         return redirect('bookings:manage_proposals')
-    
+
     is_company_tour = getattr(tour, 'is_company_tour', False)
     pending_status = 'PENDING_INTERNAL' if is_company_tour else 'PENDING_SUPPLIER'
-    
+
     if proposal.status != pending_status:
         messages.error(request, f"Proposal not pending {'internal' if is_company_tour else 'supplier'} confirmation.")
         return redirect('bookings:manage_proposals')
-    
+
     # Placeholder payment link (PayPal placeholder—update later)
     proposal.payment_link = f"{settings.SITE_URL}/p-methods/paypal/checkout/{proposal.id}/"
     # proposal.payment_link = f"{settings.SITE_URL}/bookings/payment/success/{proposal.id}/"  # FIXED: Use existing success view for fake checkout        proposal.status = 'SUPPLIER_CONFIRMED'
 
     proposal.status = 'SUPPLIER_CONFIRMED'
     proposal.save()
-    
+
     # FIX: Call without extra kwargs (func handles tour/end_date internally)
     send_preconfirmation_email(proposal)
-    
+
     # Clear stray session (defensive)
     if 'proposal_data' in request.session:
         del request.session['proposal_data']
-    
+
     msg = f"Proposal {proposal.prop_id or proposal.id} confirmed ({'internally' if is_company_tour else 'by supplier'}). Payment link sent to {proposal.customer_email}."
     messages.success(request, msg)
-    
+
     return redirect('bookings:manage_proposals')
 
 def confirm_proposal_by_token(request, token: str) -> HttpResponse:
@@ -816,12 +818,12 @@ def confirm_proposal_by_token(request, token: str) -> HttpResponse:
         if not proposal.tour:
             messages.error(request, "Tour not found.")
             return render(request, 'bookings/confirmation_error.html')
-        
+
         # For company tours: Redirect to portal (no token support)
         if getattr(proposal.tour, 'is_company_tour', False):
             messages.info(request, "Company tour proposals must be confirmed via the internal portal.")
             return redirect('bookings:manage_proposals')
-        
+
         # Normal supplier flow
         proposal.payment_link = f"{settings.SITE_URL}/p-methods/paypal/checkout/{proposal.id}/"  # FIXED: Checkout page        proposal.status = 'SUPPLIER_CONFIRMED'
         proposal.save()
@@ -835,7 +837,7 @@ def confirm_proposal_by_token(request, token: str) -> HttpResponse:
     except ProposalConfirmationToken.DoesNotExist:
         messages.error(request, "Invalid confirmation link.")  # FIXED: "Reject" → "Invalid"
         return render(request, 'bookings/confirmation_error.html')
-    
+
 def child_ages(request) -> HttpResponse:
     number_of_children = int(request.GET.get('number_of_children', 0))
     tour_type = request.GET.get('tour_type', 'land')
@@ -1046,12 +1048,12 @@ def get_default_user(request):
 def customer_portal(request):
     proposals = Proposal.objects.select_related('content_type', 'user').prefetch_related('confirmation_tokens')
     bookings = Booking.objects.select_related('content_type', 'user')
-    
+
     # Search/filter logic (email/ID/status)
     email = request.GET.get('email', '').strip()
     id_filter = request.GET.get('id', '').strip()
     status = request.GET.get('status', 'all')
-    
+
     if email:
         proposals = proposals.filter(customer_email__icontains=email)
         bookings = bookings.filter(customer_email__icontains=email)
@@ -1068,13 +1070,13 @@ def customer_portal(request):
         proposals = proposals.filter(status=status)
         bookings = bookings.filter(status=status)
         logger.info(f"Filtering by status: {status}")
-    
+
     # Pagination (separate—10 each)
     proposals_paginator = Paginator(proposals, 10)
     bookings_paginator = Paginator(bookings, 10)
     proposals = proposals_paginator.get_page(request.GET.get('proposals_page', 1))
     bookings = bookings_paginator.get_page(request.GET.get('bookings_page', 1))
-    
+
     context = {
         'proposals': proposals,
         'bookings': bookings,

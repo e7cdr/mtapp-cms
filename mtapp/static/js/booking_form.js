@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     loadPricing();  // Initial
- 
+
     // Update selected config on radio change
     window.updateSelectedConfiguration = function () {
         const selectedRadio = document.querySelector('input[name="configuration"]:checked');
@@ -281,7 +281,44 @@ document.addEventListener('DOMContentLoaded', function () {
 
         childrenInput.addEventListener('change', toggleAges);
         toggleAges();  // Initial
+
     }
+
+
+    // CAPTCHA Refresh Handler (custom endpoint)
+document.addEventListener('click', function(e) {
+    if (e.target.id !== 'refresh-captcha') return;
+    e.preventDefault();
+    console.log('Refresh clicked! Custom endpoint');
+
+    const $captchaSection = e.target.closest('.captcha-section');
+    if (!$captchaSection) return console.error('Section missing');
+
+    const $captchaImg = $captchaSection.querySelector('img[src*="/captcha/image/"]');
+    const $hiddenInput = $captchaSection.querySelector('input[name="captcha_0"]');
+    const $textInput = $captchaSection.querySelector('input[name="captcha_1"]');
+
+    if (!$captchaImg || !$hiddenInput || !$textInput) return console.error('Elements missing');
+
+    fetch('/captcha/refresh/')  // FIXED: Plain custom path
+        .then(r => {
+            if (!r.ok) throw new Error(r.status);
+            return r.json();
+        })
+        .then(data => {
+            console.log('New hash:', data.hash);
+            $hiddenInput.value = data.hash;
+            $captchaImg.src = `/captcha/image/${data.hash}/?v=${Date.now()}`;  // Lib image unchanged
+            $textInput.value = '';
+
+            e.target.textContent = 'Refreshed!';
+            setTimeout(() => e.target.textContent = 'Refresh Image', 1000);
+            $textInput.focus();
+        })
+        .catch(err => console.error('Err:', err));
+});
+console.log('Custom CAPTCHA listener added');
+
 
 document.getElementById('submitProposal').addEventListener('click', function (e) {
     e.preventDefault();
@@ -300,7 +337,7 @@ document.getElementById('submitProposal').addEventListener('click', function (e)
             toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
             document.body.appendChild(toastContainer);
         }
-        
+
         // Build toast HTML
         const toastHtml = `
             <div class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true" style="font-size:Large;">
@@ -313,7 +350,7 @@ document.getElementById('submitProposal').addEventListener('click', function (e)
             </div>
         `;
         toastContainer.innerHTML = toastHtml;
-        
+
         // Show toast
         const toast = new bootstrap.Toast(toastContainer.firstElementChild);
         toast.show();
@@ -379,7 +416,7 @@ document.getElementById('submitProposal').addEventListener('click', function (e)
         });
 });
 
-    
+
     // Confirm in Modal (POST with formData for save)
     document.addEventListener('click', function (e) {
         if (e.target.id === 'confirmSubmit') {

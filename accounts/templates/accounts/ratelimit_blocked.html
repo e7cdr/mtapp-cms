@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Rate Limit Exceeded{% endblock %}
+
+{% block content %}
+<div class="container mx-auto p-8 text-center max-w-md">
+    <h1 class="text-2xl font-bold text-red-600 mb-4">Hold On!</h1>
+    <p class="mb-4">You've hit our submission limit ({{ hits }}/{{ max_hits }} proposals per hour).</p>
+    <p class="mb-6">This helps prevent spam. Try again in about {{ time_left|time:"H:i" }} ({{ retry_after|floatformat:0 }} mins).</p>
+    
+    <div class="space-y-4">
+        <a href="{{ form_url }}" class="block bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">Back to Form</a>
+        <p class="text-sm text-gray-500">Need help? <a href="{% url 'contact' %}" class="text-blue-500">Contact us</a>.</p>
+    </div>
+</div>
+{% endblock %}
