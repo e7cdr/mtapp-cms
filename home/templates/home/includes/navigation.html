@@ -22,11 +22,11 @@
               <span id="currentLang">
                   {% load lang_filters %}  <!-- Load your custom filter; adjust app name if needed -->
                   {% get_language_info for LANGUAGE_CODE as lang %}
-              <span id="flagIcon" class="fi fi-{{ LANGUAGE_CODE|language_to_flag }}" aria-hidden="true"></span> 
+              <span id="flagIcon" class="fi fi-{{ LANGUAGE_CODE|language_to_flag }}" aria-hidden="true"></span>
               {% comment %} <span id="langName">{{ lang.name_local }}</span> {% endcomment %}
               </span>
           </button>
-      </form>  
+      </form>
     </a>
     <ul class="navbar-menu">
       {% for navbar_page in navbar_pages %}
@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const currentSpan = document.getElementById('currentLang');
     const flagIcon = document.getElementById('flagIcon');
     const langName = document.getElementById('langName');
-    
+
     // Flag mapping (mirrors your Python filter; extend as needed)
     const flagMapping = {
         'en-us': 'us',
@@ -79,6 +79,8 @@ document.addEventListener('DOMContentLoaded', function() {
         'fr': 'fr',
         'de': 'de',
         'it': 'it',
+        'is': 'is',
+        'pl': 'pl',
         'pt-br': 'br',
         'pt-pt': 'pt',
         'ja': 'jp',
@@ -86,25 +88,25 @@ document.addEventListener('DOMContentLoaded', function() {
         'zh-hant': 'tw',  // Traditional Chinese (Taiwan)
         // Add more: 'ar': 'sa', etc. Default: 'gb'
     };
-    
+
     // Current language object
-    const currentLangObj = { 
-        code: '{{ LANGUAGE_CODE }}', 
-        name: '{% get_language_info for LANGUAGE_CODE as lang %}{{ lang.name_local }}' 
+    const currentLangObj = {
+        code: '{{ LANGUAGE_CODE }}',
+        name: '{% get_language_info for LANGUAGE_CODE as lang %}{{ lang.name_local }}'
     };
-    
+
     // Build array from translations (all others)
     const otherLanguages = [
         {% if page %}
             {% for translation in page.get_translations.live %}
-                { 
-                    code: '{{ translation.locale.language_code }}', 
-                    name: '{% get_language_info for translation.locale.language_code as lang %}{{ lang.name_local }}' 
+                {
+                    code: '{{ translation.locale.language_code }}',
+                    name: '{% get_language_info for translation.locale.language_code as lang %}{{ lang.name_local }}'
                 },
                 {% endfor %}
         {% endif %}
     ];
-    
+
     // Full array: Current + others (dedupe)
     let languages = [currentLangObj, ...otherLanguages];
     const seenCodes = new Set();
@@ -113,20 +115,20 @@ document.addEventListener('DOMContentLoaded', function() {
         seenCodes.add(lang.code);
         return true;
     });
-    
+
     // FIXED ORDER: Sort by language code (always [en, es, is])
     languages.sort((a, b) => a.code.localeCompare(b.code));
-    
+
     // Log for debugging
     console.log('Current LANGUAGE_CODE:', '{{ LANGUAGE_CODE }}');
     console.log('Sorted Languages array:', languages);
-    
+
     if (languages.length <= 1) {
         button.disabled = true;
         console.log('Only one language; toggle disabled.');
         return;
     }
-    
+
     // Find current index in sorted array (exact match first)
     const currentCode = currentLangObj.code;
     let currentIndex = languages.findIndex(lang => lang.code === currentCode);
@@ -143,37 +145,37 @@ document.addEventListener('DOMContentLoaded', function() {
         currentIndex = 0;
         console.log('No match found; defaulting to index 0.');
     }
-    
+
     console.log('Starting index:', currentIndex);
-    
+
     // Set initial hidden input
     input.value = languages[currentIndex].code;
-    
+
   // Update display (now handles flag + name)
   function updateDisplay() {
       const lang = languages[currentIndex];
       input.value = lang.code;
-      
+
       if (langName) {  // Guard if somehow missing
           langName.textContent = lang.name;
       }
-      
+
       // Update flag: New class format for v6+
       const flagCode = flagMapping[lang.code] || 'gb';
       flagIcon.className = `fi fi-${flagCode}`;
-      
+
       console.log('Previewing:', lang.name, '(Flag:', flagCode, '; Index:', currentIndex, ')');
   }
-    
+
     // Initial display update (ensures flag/name sync on load)
     updateDisplay();
-    
+
     // Cycle on click
     button.addEventListener('click', function(e) {
         e.preventDefault();
         currentIndex = (currentIndex + 1) % languages.length;
         updateDisplay();
-        
+
         setTimeout(() => {
             form.submit();
         }, 150);

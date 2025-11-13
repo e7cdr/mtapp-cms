@@ -197,6 +197,7 @@ WAGTAIL_CONTENT_LANGUAGES = LANGUAGES = [
     ('es', 'Spanish'),
     ('fr', 'French'),
     ('is', 'Icelandic'),
+    ('pl', 'Polski'),
 ]
 
 USE_TZ = True

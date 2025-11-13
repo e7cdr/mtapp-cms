@@ -9,7 +9,6 @@ These blocks will appear in the StreamField options when creating or editing pag
 
 """
 
-from django.db import models
 from wagtail.admin.panels import FieldPanel
 from wagtail.fields import StreamField
 from wagtail.models import Page
@@ -29,6 +28,7 @@ class FlexPage(Page):
             ("explore_block", blocks.ExploreBlock()),
             ("carousel", blocks.CarouselBlock()),
             ("text_band", blocks.TextBand_Block()),
+            ("flex_images", blocks.Flex_Images_Block()),
             # ("call_to_action", CallToActionBlock()),
             # ("testimonial", TestimonialBlock()),
             # ("faq", FAQBlock()),
@@ -36,8 +36,8 @@ class FlexPage(Page):
         null=True,
         blank=True,
         help_text="""
-        This is the page's body. Use the different blocks by clicking the Plus (+) icon. Carousel Block to add Cover Images. 
-        More than one images will incurred in the Slide effect. Text Band will add a text section with color background that 
+        This is the page's body. Use the different blocks by clicking the Plus (+) icon. Carousel Block to add Cover Images.
+        More than one images will incurred in the Slide effect. Text Band will add a text section with color background that
         occupies the whole width of the page. Explore Block will add a dedicated section to expand in detail any product, announce or service.
         More blocks are currently being developed. If you need a specific design, please contact developer and show them the design you would like
         to see implemented. Anything is possible!.
