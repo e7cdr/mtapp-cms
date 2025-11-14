@@ -123,7 +123,6 @@
       <!-- Amenities -->
        {% if self.amenity %}
        <div aria-labelledby="amenities">
-        <h2>Amenities</h2>
         {% if amenity_labels %}
         <ul>
          {% for label in amenity_labels %}
@@ -273,7 +272,6 @@
        </div>
        <!-- Cancellation Policies -->
        <div class="tab-pane fade hidden" id="cxl-policy" role="tabpanel" aria-labelledby="cxl-policy-tab">
-        <h2>Cancellation Policy</h2>
         {% if self.cxl_policies %}
             {{ self.cxl_policies|richtext }}
         {% else %}
