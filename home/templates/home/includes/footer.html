@@ -5,11 +5,26 @@
 {% endblock %}
 <footer>
  <div class="footer-container">
-  <div>
+    {% if settings.site_settings.BrandSettings %}
+    <div class="contact-info-block">
+        <div class="address">
+            {{settings.site_settings.BrandSettings.address|richtext}}
+            <p>{{settings.site_settings.BrandSettings.telephone}}</p>
+        </div>
+    </div>
+    {%else%}
+        <div class="contact-info-block">
+        <div class="address">
+            Configure contact information in Site Settings/Brand Settings
+        </div>
+    </div>
+    {%endif%}
+  <div class="brand-wrap">
    <a href="/">
     <img src="{% static 'default_media/logo.png' %}" alt="Milano Travel Logo" />
    </a>
-   <div class="social-media-wrap">
+  </div>
+     <div class="social-media-wrap">
     {% if settings.site_settings.FooterLinks.facebook %}
     <button type="button">
      <a href="{{settings.site_settings.FooterLinks.facebook}}" class="fab fa-facebook-square"></a>
@@ -41,7 +56,6 @@
     </button>
     {% endif %}
    </div>
-  </div>
   <hr />
   <div class="footer-copyright">
    <p>© Copyright 2025. All Rights Reserved.</p>

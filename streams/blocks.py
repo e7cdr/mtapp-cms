@@ -165,7 +165,7 @@ class Video_Text_Block(blocks.StructBlock):
     class Meta: #noqa
         template = "streams/video_text_content.html"
         icon = "media"
-        label = "Video Block"
+        label = "Video with Text Blocks"
 
 class Cards_Block(blocks.StructBlock):
     image = ImageChooserBlock(required=True, help_text="Product image")
@@ -292,7 +292,6 @@ class TextBand_Block(blocks.StructBlock):
             context['social_links'] = social_links
             return context
 
-
 class Itinerary_Block(blocks.StructBlock):
 
     itinerary = blocks.ListBlock(
@@ -314,3 +313,20 @@ class Flex_Images_Block(blocks.StructBlock):
         template = "streams/flex_images.html"
         icon = "image"
         label = "Flex images"
+
+
+class CTA_Block_2B(blocks.StructBlock):
+    """A text box with title, subtitle above title, description and two buttons that send user to another page"""
+    cta_title = blocks.CharBlock(required=True, help_text="The main title.", max_length=33)
+    cta_subtitle = blocks.CharBlock(required=True, help_text="Above the main title", max_length=11)
+    cta_description = blocks.RichTextBlock(required=True, help_text="Describe in detail your Call To Action",)
+    button_link_1 = blocks.URLBlock(required=False, help_text="URL to send the user by clicking the left button")
+    button_link_2 = blocks.URLBlock(required=False, help_text="URL to send the user by clicking the right button")
+    icon = ImageChooserBlock(required=False, help_text="Icon right next to the first button text.")
+    image = ImageChooserBlock(required=False, help_text="This image will appear below the CTA")
+    background_color = blocks.ChoiceBlock(choices=colors, default='--yellow-dark-100', help_text="Text box background color")
+
+    class Meta:
+        template = "streams/cta_2_buttons.html"
+        icon = "text"
+        label = "CTA 2 Buttons"

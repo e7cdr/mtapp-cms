@@ -1,6 +1,8 @@
 from django.db import models
 from wagtail.contrib.settings.models import BaseGenericSetting, register_setting
 from wagtail.admin.panels import FieldPanel
+from wagtail.fields import RichTextField
+
 
 @register_setting # Decorator to register the setting with Wagtail
 class FooterLinks(BaseGenericSetting): # Inherit from BaseGenericSetting to create a generic setting
@@ -40,10 +42,13 @@ class BrandSettings(BaseGenericSetting):
         related_name='+',
         verbose_name="Company Logo"
     )
-
+    address = RichTextField(blank=True, null=True, default="Honorato Vasquez")
+    telephone = models.CharField(max_length=20, blank=False, null=False, default='+593')
     panels = [
         FieldPanel('company_name'),
         FieldPanel('logo'),
+        FieldPanel('address'),
+        FieldPanel('telephone'),
     ]
 
     class Meta:

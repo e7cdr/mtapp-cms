@@ -226,7 +226,7 @@
                 </td>
            <td></td>
           </tr>
-
+          {% if self.pricing_type == 'Per_person' %}
           <tr>
            <th scope="row">Price per person</th>
            <td>
@@ -237,31 +237,40 @@
            </td>
            <td>{{self.price_subtext}}</td>
           </tr>
+          
+          {% endif %}
+
           {%if not self.price_adult > 0 %}
+          {%if self.price_sgl %}
           <tr>
            <th scope="row">Single</th>
            <td>${{self.price_sgl}} USD <span class="currency-symbol"></span></td>
            <td></td>
           </tr>
+          {%endif%}
+            {%if self.price_dbl %}
             <tr>
            <th scope="row">Double</th>
            <td>${{self.price_dbl}} USD <span class="currency-symbol"></span></td>
            <td></td>
           </tr>
+          {% endif %}
+          {%if self.price_tpl %}
           <tr>
            <th scope="row">Triple</th>
            <td>${{self.price_tpl}} USD <span class="currency-symbol"></span></td>
            <td></td>
           </tr>
           {% endif %}
-            {% if not self.price_chd == 0 %}
+          {% endif %}
+            {% if not self.price_chd is None or 0 %}
           <tr>
            <th scope="row">Child</th>
            <td>${{self.price_chd}} USD <span class="currency-symbol"></span></td>
            <td></td>
           </tr>
           {% endif %}
-            {% if not self.price_inf == 0 %}
+            {% if not self.price_inf is None or 0 %}
             <tr>
            <th scope="row">Infant</th>
            <td>${{self.price_inf}} USD <span class="currency-symbol"></span></td>

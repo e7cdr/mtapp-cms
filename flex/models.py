@@ -29,6 +29,8 @@ class FlexPage(Page):
             ("carousel", blocks.CarouselBlock()),
             ("text_band", blocks.TextBand_Block()),
             ("flex_images", blocks.Flex_Images_Block()),
+            ("video_text_block", blocks.Video_Text_Block()),
+            ("cta_2B", blocks.CTA_Block_2B()),
             # ("call_to_action", CallToActionBlock()),
             # ("testimonial", TestimonialBlock()),
             # ("faq", FAQBlock()),

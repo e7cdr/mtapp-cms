@@ -12,7 +12,7 @@
                 {% image item.image original as img%}
                 <img src="{{img.url}}" class="flex-image" alt="Picture of {{item.caption}}">
                 <p class="caption">
-                    <a href="{% if request.GET.destination == '{{item.caption}}'%}http://127.0.0.1:8000/en/tours/?tour_type=&status=&destination={{item.caption}}{% endif %}">
+                    <a href="{% if request.GET.destination == '{{item.caption}}'%}https://www.milanotravel.com.ec/en/tours/?tour_type=&status=&destination={{item.caption}}{% endif %}">
                         {{item.caption}}
                     </a>
                 </p>
