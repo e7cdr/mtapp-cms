@@ -1,0 +1,68 @@
+
+h2 {
+    color: white;
+    font-variant: small-caps;
+}
+
+.swiper {
+    width: 100%;
+    height: 300px;
+}
+
+.swiper-navigation-icon {
+    color: slateblue;
+}
+
+.swiper-slide {
+    height: auto;
+}
+
+.thumb-swiper1-container 
+.swiper-wrapper
+.swiper-slide img { 
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-height: 33rem;
+    object-fit: cover;
+
+}
+
+.thumb-swiper2-container 
+.swiper-wrapper 
+.swiper-slide img { 
+    display: block;
+    width: 100%;
+    height: 5rem;
+    max-height: 10rem;
+    object-fit: cover;
+    border-radius: 1rem;
+
+}
+
+.thumb-swiper1-container {
+    height: 80%;
+ 
+
+
+}
+.thumb-swiper2-container {
+    height: 10%;
+    margin-top: 0.3rem;
+    
+}
+
+.thumb-swiper2-container .swiper-slide {
+    width: 25%;
+    height: 100%;
+    opacity: 0.3;
+}
+
+.thumb-swiper1-container {
+    transition: 0.9s ease;
+}
+
+.thumb-swiper2-container .swiper-slide-thumb-active {
+    opacity: 1;
+    transition: 0.9s ease;
+}

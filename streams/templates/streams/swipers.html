@@ -1,0 +1,125 @@
+{% load static wagtailimages_tags custom_filters wagtailcore_tags %}
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.css" />
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.js"></script>
+{% endblock %}
+
+{% if self.variations == 'thumbnail' %}
+<link rel="stylesheet" href="{% static 'css/swipers/thumb_swiper.css' %}"/>
+<section>
+    <div style="--swiper-navigation-color: #fff; --swiper-pagination-color: #fff" class="swiper thumb-swiper1-container">
+        {% if self.swiper_title%}
+        <h1>{{self.swiper_title}}</h1>
+        {% endif %}
+        <div class="swiper-wrapper">
+            {% for item in value.images %}
+            <div class="swiper-slide">
+                {% image item.image original as img %}
+                   {% if item.link %}
+                    <a href="{{ item.link.url }}">
+                {% endif %}
+                <img
+                src="{{ img.url }}"
+                alt="{{ item.caption|default:'Swiper images' }}"
+                id="slide-{{ forloop.counter }}"
+                />
+            </div>
+            {% empty %}
+                <p>No images found. Please go to the admin panel to add them.</p>
+            {% endfor %}
+        </div>
+        <div class="swiper-button-next"></div>
+        <div class="swiper-button-prev"></div>
+    </div>
+    <div class="swiper thumb-swiper2-container">
+        <div class="swiper-wrapper">
+            {% for item in value.images %}
+            <div class="swiper-slide">
+                {% image item.image original as img %}
+                   {% if item.link %}
+                    <a href="{{ item.link.url }}">
+                {% endif %}
+                <img
+                src="{{ img.url }}"
+                alt="{{ item.caption|default:'Swiper images' }}"
+                id="slide-{{ forloop.counter }}"
+                />
+            </div>
+            {% empty %}
+                <p>No images found. Please go to the admin panel to add them.</p>
+            {% endfor %}
+        </div>            
+    </div>
+    <script src="{% static 'js/swipers/thumb_swiper.js' %}"></script>
+</section>
+{% elif self.variations == 'basic' %}
+<link rel="stylesheet" href="{% static 'css/swipers/basic_swiper.css' %}"/>
+<section>
+    <div class="basic-swiper-container swiper">
+            {% if self.swiper_title%}
+        <h1>{{self.swiper_title}}</h1>
+        {% endif %}
+    <div class="swiper-wrapper">
+            {% for item in value.images %}
+            <div class="swiper-slide">
+                {% image item.image original as img %}
+                   {% if item.link %}
+                    <a href="{{ item.link.url }}">
+                {% endif %}
+                <img
+                src="{{ img.url }}"
+                alt="{{ item.caption|default:'Swiper images' }}"
+                id="slide-{{ forloop.counter }}"
+                />
+            </div>
+            {% empty %}
+                <p>No images found. Please go to the admin panel to add them.</p>
+            {% endfor %}
+        </div>
+    </div>
+        <div class="swiper-pagination"></div>
+        <div class="swiper-button-next"></div>
+        <div class="swiper-button-prev"></div>
+    </div>
+<script src="{% static 'js/swipers/basic_swiper.js' %}"></script>
+</section>
+{%elif self.variations == 'framed'%}
+<link rel="stylesheet" href="{% static 'css/swipers/framed_swiper.css' %}"/>
+<!-- Framed swiper -->
+ <section>
+    <div class="framed-swiper-container">
+        {% if self.swiper_title%}
+        <h1>{{self.swiper_title}}</h1>
+        {% endif %}
+        <div class="swiper-wrapper">
+                            {% for item in value.images %}
+            <div class="swiper-slide">
+                {% image item.image original as img %}
+                   {% if item.link %}
+                    <a href="{{ item.link.url }}">
+                {% endif %}
+                <img
+                src="{{ img.url }}"
+                alt="{{ item.caption|default:'Swiper images' }}"
+                id="slide-{{ forloop.counter }}"
+                />
+            </div>
+            {% empty %}
+                <p>No images found. Please go to the admin panel to add them.</p>
+            {% endfor %}
+        </div>
+        <div class="swiper-pagination"></div>
+        <div class="swiper-button-next"></div>
+        <div class="swiper-button-prev"></div>
+        <svg>
+            <filter id="mask">
+                <feturbulence x="0" y="0" baseFrequency="0.02" numOctaves="5" seed="6"></feturbulence>
+                <feDisplacementMap in="SourceGraphic" scale="20" />
+            </filter>
+        </svg>
+        </div>
+<script src="{% static 'js/swipers/framed_swiper.js' %}"></script>
+</section>
+{% endif %}

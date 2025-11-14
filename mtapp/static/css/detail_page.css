@@ -199,10 +199,10 @@ body {
 
 }
 
-.tab-section div {
-    padding-bottom: 1.5rem;
+    /* .tab-section div {
+        padding-bottom: 1.5rem;
 
-}
+    } */
 
 .tab-card {
     transition: all 0.3s ease;

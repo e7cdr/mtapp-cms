@@ -1,0 +1,74 @@
+
+svg {
+    width: 0;
+    height: 0;
+}
+
+h1 {
+    font-family: "Cinzel", serif;
+    color: rgb(161, 161, 161);
+    font-weight: 600;
+    font-size: clamp(3rem, 4vw, 5rem);
+    margin-bottom: 30px;
+}
+
+h2 {
+    color: white;
+    font-variant: small-caps;
+}
+
+.framed-swiper-container {
+    width: 100%;
+    overflow: hidden;
+    
+
+}
+
+.swiper-slide {
+    text-align: center;
+    font-size: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 20rem;
+    height: auto !important;
+}
+
+.swiper-slide img {
+    width: 95%;
+    height: 100%;
+    object-fit: cover;
+    max-height: 23rem;
+    
+    
+}
+
+.swiper-wrapper {
+    height: 30rem;
+} 
+
+.swiper-slide::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    width: 99%;
+    height: 82%;
+    border: 18px solid #ffffff;
+    filter: url(#mask);
+    z-index: 1;
+    transform: translate(0%, 10%);
+
+}
+
+
+.swiper-slide:nth-child(2n){
+    rotate: -5deg;
+    transition: 0.7s ease;
+
+}
+
+.swiper-slide:nth-child(2n + 1){
+    rotate: 8deg;
+    transition: 0.7s ease;
+}
+

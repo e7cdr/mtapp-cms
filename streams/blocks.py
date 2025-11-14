@@ -330,3 +330,28 @@ class CTA_Block_2B(blocks.StructBlock):
         template = "streams/cta_2_buttons.html"
         icon = "text"
         label = "CTA 2 Buttons"
+
+
+swipers = [
+    ('basic', 'Basic Swiper'),
+    ('framed', 'Framed Pictures'),
+    ('thumbnail', 'With Thumbnail Navigation'),
+
+]
+
+class Swipers(blocks.StructBlock):
+    """Swiper design with different variations"""
+    swiper_title = blocks.CharBlock(required=False, help_text="The main title.", max_length=33)
+    images = blocks.ListBlock(
+        blocks.StructBlock([
+            ('image', ImageChooserBlock()),
+            ('caption', blocks.CharBlock(required=False, max_length=40 , help_text="Optional caption for the image")),
+            ('link', blocks.PageChooserBlock(required=False, help_text="Optional link for the image. If provided, the image will be clickable.")),
+        ]),
+        ) 
+    variations = blocks.ChoiceBlock(choices=swipers, default='basic')
+   
+    class Meta:
+        template = "streams/swipers.html"
+        icon = "image"
+        label = "Swiper"

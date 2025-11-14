@@ -180,6 +180,18 @@ class AbstractTourPage(Page):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    description_content = StreamField(
+        [
+            ("swipers", blocks.Swipers()),
+
+        ],
+        null=True,
+        blank=True,
+        help_text="""
+        This content will only be added inside the description content
+        """,
+    )
+
     # Shared panels (extend in children)
     content_panels = Page.content_panels + [
 
@@ -187,6 +199,7 @@ class AbstractTourPage(Page):
             MultiFieldPanel([
                 FieldPanel('name'),
                 FieldPanel('description'),
+                FieldPanel('description_content'),
                 FieldPanel('destination'),
                 FieldPanel('location'),
             ], heading="Basic Info"),
