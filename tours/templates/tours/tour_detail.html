@@ -118,6 +118,7 @@
         <p><strong>Destination:</strong> {{self.destination}}</p>
         <p><strong>Hotel:</strong> {{self.hotel}}</p>
         <p><strong>Dates:</strong> {{self.start_date}} - {{self.end_date}}</p>
+        <p>{{self.no_inclusions|richtext}}</p>
 
       <!-- Amenities -->
        {% if self.amenity %}
@@ -133,12 +134,12 @@
         <p>No amenities.</p>
         {% endif %} {% endif %}
        </div>
+    </div>
         <!-- Optional Activities -->
         <div class="tab-pane fade hidden" id="notes" role="tabpanel" aria-labelledby="notes-tab">
-            <h2>Additional Notes</h2>
-            <p>{{self.additional_notes|richtext}}</p>
+        <h2>Additional Notes</h2>
+        <p>{{self.additional_notes|richtext}}</p>
         </div>
-       </div>
 
       <!-- Itinerary -->
       <div class="tab-pane fade hidden" id="itinerary" role="tabpanel" aria-labelledby="itinerary-tab">
