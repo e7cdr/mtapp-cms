@@ -75,20 +75,6 @@
           >Itinerary</a
          >
         </li>
-
-        <li class="nav-item" role="presentation">
-         <a
-          class="nav-link"
-          id="amenities-tab"
-          data-bs-toggle="tab"
-          href="#amenities"
-          role="tab"
-          aria-selected="false"
-          tabindex="-1"
-          >Amenities</a
-         >
-        </li>
-
         <li class="nav-item" role="presentation">
          <a class="nav-link" id="notes-tab" data-bs-toggle="tab" href="#notes" role="tab" aria-selected="false" tabindex="-1"
           >Additional Notes</a
@@ -125,16 +111,36 @@
       <div class="tab-content">
        <!-- Description -->
        <div class="tab-pane fade show active" id="description" role="tabpanel" aria-labelledby="description-tab">
-        {% for block in page.description_content %} 
-        {% include_block block %} 
-        {% endfor %} 
-        <h2>Description</h2>
+        {% for block in page.description_content %}
+        {% include_block block %}
+        {% endfor %}
         <p id="tour-id">{{self.description|richtext}}</p>
         <p><strong>Destination:</strong> {{self.destination}}</p>
         <p><strong>Hotel:</strong> {{self.hotel}}</p>
         <p><strong>Dates:</strong> {{self.start_date}} - {{self.end_date}}</p>
         <p><strong style="font-size:Large; color: Red">Not Included:</strong> {{self.no_inclusions|richtext}}</p>
+
+      <!-- Amenities -->
+       {% if self.amenity %}
+       <div aria-labelledby="amenities">
+        <h2>Amenities</h2>
+        {% if amenity_labels %}
+        <ul>
+         {% for label in amenity_labels %}
+         <li>{{ label }}</li>
+         {% endfor %}
+        </ul>
+        {% else %}
+        <p>No amenities.</p>
+        {% endif %} {% endif %}
        </div>
+       <!-- Optional Activities -->
+       <div class="tab-pane fade hidden" id="notes" role="tabpanel" aria-labelledby="notes-tab">
+        <h2>Additional Notes</h2>
+        <p>{{self.additional_notes|richtext}}</p>
+       </div>
+       </div>
+
       <!-- Itinerary -->
       <div class="tab-pane fade hidden" id="itinerary" role="tabpanel" aria-labelledby="itinerary-tab">
           <nav class="section-nav">
@@ -155,7 +161,6 @@
               </ul>
           </nav>
           <hr />
-          <h2>Itinerary</h2>
           <div class="tab-content">
               {% for block in self.itinerary %}
               <div
@@ -174,27 +179,6 @@
               {% endfor %}
           </div>
       </div>
-
-       <!-- Amenities -->
-       {% if self.amenity %}
-       <div class="tab-pane fade hidden" id="amenities" role="tabpanel" aria-labelledby="amenities-tab">
-        <h2>Amenities</h2>
-
-        {% if amenity_labels %}
-        <ul>
-         {% for label in amenity_labels %}
-         <li>{{ label }}</li>
-         {% endfor %}
-        </ul>
-        {% else %}
-        <p>No amenities.</p>
-        {% endif %} {% endif %}
-       </div>
-       <!-- Optional Activities -->
-       <div class="tab-pane fade hidden" id="notes" role="tabpanel" aria-labelledby="notes-tab">
-        <h2>Additional Notes</h2>
-        <p>{{self.additional_notes|richtext}}</p>
-       </div>
 
        <!-- Flight Details -->
 
@@ -239,7 +223,7 @@
            </td>
            <td>{{self.price_subtext}}</td>
           </tr>
-          
+
           {% endif %}
 
           {%if not self.price_adult > 0 %}
