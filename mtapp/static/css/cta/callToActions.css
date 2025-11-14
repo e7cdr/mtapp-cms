@@ -1,0 +1,121 @@
+@import url('variables.css');
+
+
+.cta-section {
+    width: auto;
+    color: white;
+    font-family:system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    border-radius: 1rem 1rem 1rem 1rem;
+    box-shadow: 0 0 4px black;
+    transition: 0.3s ease-in-out;
+}
+
+
+.basic-cta-container {
+    padding: 1.3rem;
+    transition: 0.4s ease-in-out;
+
+}
+
+.action-button, .action-button-2 {
+    display: inline-block;
+    padding: 0.6rem;
+    border-radius: 0.5rem;
+    text-align: center;
+    margin-block: 1.5rem;
+    font-size: 1rem;
+    font-weight: 700;
+    transition: 0.3s ease-in-out;
+}
+
+.action-button-2 {
+    background-color: #282828;
+    color: #ffffff;
+    transition: 0.3s ease-in-out;
+    box-shadow: 0 0 3px white;
+    margin-left: 0.5rem;
+}
+
+.action-button {
+    background-color: #fff;
+    color: #282828;
+    transition: 0.3s ease-in-out;
+    box-shadow: 0 0 3px white;
+}
+
+.action-button:hover {
+    color: white;
+    background-color: #282828;
+    box-shadow: 0 0 3px white;
+    scale: 1.05;
+}
+
+.action-button-2:hover {
+    color: #282828;
+    background-color: #fff;
+    box-shadow: 0 0 3px white;
+    scale: 1.05;
+}
+
+.list-container {
+
+    list-style-type: circle;
+    padding-inline-start: 1.3rem;
+    column-count: 3; /* Creates 3 columns */
+    column-gap: 2rem; /* Optional: Space between columns (adjust as needed) */
+    /* column-rule: 1px solid #555; Optional: Thin line between columns for visual separation */
+}
+
+.list-container li {
+    break-inside: avoid; /* Keeps each <li> intact in one column */
+    margin-bottom: 0.5rem; /* Optional: Vertical spacing between items */
+    transition: 0.3s ease-in-out;
+
+}
+
+.top-text-side h1 {
+    margin-bottom: 0.5rem;
+    transition: 0.3s ease-in-out;
+
+}
+
+.top-text-side p {
+    margin-bottom: 0.5rem;
+    color: rgb(157, 157, 157);
+    transition: 0.3s ease-in-out;
+
+}
+
+.top-text-side p:hover, .list-container li:hover {
+    color: red;
+}
+
+.cta-image-container {
+    height: auto;
+    position: relative;
+    padding: 0;
+    margin: 0;
+}
+
+.cta-image-container img {
+    border-radius: 1rem 1rem 1rem 1rem;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.caption-zoom {
+    color: white;
+    text-shadow: 0 0 2px black;
+    position: absolute;
+    top: 80%;
+    right: 45%;
+    margin: 0;
+    padding: 0;
+    font-size: xx-large;
+
+}
+
+
+
+

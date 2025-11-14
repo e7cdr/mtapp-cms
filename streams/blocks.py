@@ -315,20 +315,33 @@ class Flex_Images_Block(blocks.StructBlock):
         label = "Flex images"
 
 
+position = [
+    ('top', 'Top Side'),
+    ('bottom', 'Bottom Side'),
+]
 class CTA_Block_2B(blocks.StructBlock):
     """A text box with title, subtitle above title, description and two buttons that send user to another page"""
-    cta_title = blocks.CharBlock(required=True, help_text="The main title.", max_length=33)
-    cta_subtitle = blocks.CharBlock(required=True, help_text="Above the main title", max_length=11)
-    cta_description = blocks.RichTextBlock(required=True, help_text="Describe in detail your Call To Action",)
-    button_link_1 = blocks.URLBlock(required=False, help_text="URL to send the user by clicking the left button")
-    button_link_2 = blocks.URLBlock(required=False, help_text="URL to send the user by clicking the right button")
-    icon = ImageChooserBlock(required=False, help_text="Icon right next to the first button text.")
+    image_position = blocks.ChoiceBlock(choices=position, default='bottom', help_text="Text box background color")
     image = ImageChooserBlock(required=False, help_text="This image will appear below the CTA")
+    caption = blocks.CharBlock(required=False, help_text="Caption at the base of the image", max_length=33)
+    include_cta = blocks.BooleanBlock(required=False, help_text="By checking the box, a Call To Action with buttons and a bullet point list will be available")
     background_color = blocks.ChoiceBlock(choices=colors, default='--yellow-dark-100', help_text="Text box background color")
+    cta_title = blocks.CharBlock(required=False, help_text="The main title.", max_length=33)
+    cta_description = blocks.RichTextBlock(required=False, help_text="Describe in detail your Call To Action",)
+    button_1_text = blocks.CharBlock(required=False, help_text="Button text.", max_length=33)
+    button_link_1 = blocks.PageChooserBlock(required=False, help_text="Optional link to send the user by clicking the left button")
+    button_2_text = blocks.CharBlock(required=False, help_text="The main title.", max_length=33)
+    button_link_2 = blocks.PageChooserBlock(required=False, help_text="Optional link to send the user by clicking the right button")
+    list = blocks.ListBlock(
+        blocks.StructBlock([
+            ('element', blocks.CharBlock(required=False, max_length=33, help_text="Bullet point list element")),
+        ])
+    )
+
 
     class Meta:
-        template = "streams/cta_2_buttons.html"
-        icon = "text"
+        template = "streams/cta.html"
+        icon = "doc-full"
         label = "CTA 2 Buttons"
 
 
