@@ -22,13 +22,11 @@ urlpatterns = [
     path("admin/", include(wagtailadmin_urls)),
     # path('test-hook/', test_hook, name='test-hook'),
     path("documents/", include(wagtaildocs_urls)),
-    path('api/available-dates/', AvailableDatesView.as_view(), name='available_dates_api'),  # FIXED: Matches JS fetch
+    path('api/available-dates/', AvailableDatesView.as_view(), name='available_dates_api'),
     path('bookings/', include('bookings.urls', namespace='bookings')),
     path('p-methods/', include('p_methods.urls', namespace='p_methods')),
     path('captcha/', include('captcha.urls')),
-    path('captcha/refresh/', captcha_refresh, name='captcha_refresh'),  # FIXED: Custom global view
-
-
+    path('api/captcha-refresh/', captcha_refresh, name='captcha_refresh'),
 
     ]
 
@@ -47,8 +45,6 @@ urlpatterns = urlpatterns + i18n_patterns (
     path("search/", search_views.search, name="search"),
     path('profile/', include('profiles.urls')),
     path('accounts/', include('accounts.urls')),
-
-
 
 
 

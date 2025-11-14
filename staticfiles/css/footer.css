@@ -16,11 +16,23 @@ footer {
     border-radius: 1rem;
     margin-inline: 0.5rem;
     width: auto;
+    display: flex;
+    flex-wrap: wrap;
 
 }
 
+.contact-info-block {
+    flex-basis: 45%;
+}
+
+.brand-wrap {
+    flex-shrink: 0;
+    width: 100%;
+    flex-basis: 50%;
+    text-align-last: justify;
+}
+
 .footer-container div {
-    text-align: center;
     align-content: center;
     display: block;
 
@@ -50,11 +62,19 @@ footer {
 
 }
 
-.social-media-wrap {
+.address {
+    text-align: left;
+    margin: 0 1rem;
+}
 
+.social-media-wrap {
+    flex-basis: 100%;
+    display: flex;
+    justify-content: center;
     margin-top: 1.5rem;
     margin-bottom: 1rem;
     margin-inline: calc(var(--spacing) * -4);
+    text-align: center;
 
 }
 
@@ -62,6 +82,7 @@ footer {
     background-color: white;
     width: 2.5rem;
     color: #38bdf8;
+    text-align-last: center;
     box-shadow: 0 3px 3px 1px rgba(0, 0, 0, 0.15);
     outline: 2px solid transparent;
     outline-offset: 2px;
@@ -92,9 +113,9 @@ footer {
 }
 
 .footer-copyright {
-    align-items: center;
     flex-direction: column;
-    display: flex
+    display: flex;
+    text-align: center;
 
 }
 

@@ -285,39 +285,46 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
 
-    // CAPTCHA Refresh Handler (custom endpoint)
-document.addEventListener('click', function(e) {
-    if (e.target.id !== 'refresh-captcha') return;
-    e.preventDefault();
-    console.log('Refresh clicked! Custom endpoint');
+    document.addEventListener('click', function(e) {
+        if (e.target.id !== 'refresh-captcha') return;
+        e.preventDefault();
+        console.log('Refresh clicked! API path');
 
-    const $captchaSection = e.target.closest('.captcha-section');
-    if (!$captchaSection) return console.error('Section missing');
+        const $captchaSection = e.target.closest('.captcha-section');
+        if (!$captchaSection) return console.error('Section missing');
 
-    const $captchaImg = $captchaSection.querySelector('img[src*="/captcha/image/"]');
-    const $hiddenInput = $captchaSection.querySelector('input[name="captcha_0"]');
-    const $textInput = $captchaSection.querySelector('input[name="captcha_1"]');
+        const $captchaImg = $captchaSection.querySelector('img[src*="/captcha/image/"]');
+        const $hiddenInput = $captchaSection.querySelector('input[name="captcha_0"]');
+        const $textInput = $captchaSection.querySelector('input[name="captcha_1"]');
 
-    if (!$captchaImg || !$hiddenInput || !$textInput) return console.error('Elements missing');
+        if (!$captchaImg || !$hiddenInput || !$textInput) return console.error('Elements missing');
 
-    fetch('/captcha/refresh/')  // FIXED: Plain custom path
-        .then(r => {
-            if (!r.ok) throw new Error(r.status);
-            return r.json();
-        })
-        .then(data => {
-            console.log('New hash:', data.hash);
-            $hiddenInput.value = data.hash;
-            $captchaImg.src = `/captcha/image/${data.hash}/?v=${Date.now()}`;  // Lib image unchanged
-            $textInput.value = '';
+        const domain = 'https://www.milanotravel.com.ec';
+        const refreshUrl = `${domain}/api/captcha-refresh/`;
+        console.log('Fetching:', refreshUrl);
+        fetch(refreshUrl)
+            .then(r => {
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                return r.json();
+            })
+            .then(data => {
+                console.log('New hash:', data.hash);
+                $hiddenInput.value = data.hash;
+                $captchaImg.src = `${domain}/captcha/image/${data.hash}/?v=${Date.now()}`;  // Lib image
+                $textInput.value = '';
 
-            e.target.textContent = 'Refreshed!';
-            setTimeout(() => e.target.textContent = 'Refresh Image', 1000);
-            $textInput.focus();
-        })
-        .catch(err => console.error('Err:', err));
-});
-console.log('Custom CAPTCHA listener added');
+                e.target.textContent = 'Refreshed!';
+                e.target.disabled = true;
+                setTimeout(() => {
+                    e.target.textContent = 'Refresh Image';
+                    e.target.disabled = false;
+                }, 1000);
+
+                $textInput.focus();
+            })
+            .catch(err => console.error('Err:', err));
+    });
+    console.log('API CAPTCHA listener added');
 
 
 document.getElementById('submitProposal').addEventListener('click', function (e) {
