@@ -46,6 +46,8 @@ class HomePage(Page):
             ("explore_block", blocks.ExploreBlock()),
             ("video_text_content", blocks.Video_Text_Block()),
             ("text_band", blocks.TextBand_Block()),
+            ("swipers", blocks.Swipers()),
+
 
         ],
         null=True,

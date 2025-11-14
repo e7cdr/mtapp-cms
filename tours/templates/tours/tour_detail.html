@@ -102,7 +102,7 @@
           role="tab"
           aria-selected="false"
           tabindex="-1"
-          >CXL Policy</a
+          >Cancellation Policy</a
          >
         </li>
        </ul>
@@ -118,7 +118,6 @@
         <p><strong>Destination:</strong> {{self.destination}}</p>
         <p><strong>Hotel:</strong> {{self.hotel}}</p>
         <p><strong>Dates:</strong> {{self.start_date}} - {{self.end_date}}</p>
-        <p><strong style="font-size:Large; color: Red">Not Included:</strong> {{self.no_inclusions|richtext}}</p>
 
       <!-- Amenities -->
        {% if self.amenity %}
@@ -134,11 +133,11 @@
         <p>No amenities.</p>
         {% endif %} {% endif %}
        </div>
-       <!-- Optional Activities -->
-       <div class="tab-pane fade hidden" id="notes" role="tabpanel" aria-labelledby="notes-tab">
-        <h2>Additional Notes</h2>
-        <p>{{self.additional_notes|richtext}}</p>
-       </div>
+        <!-- Optional Activities -->
+        <div class="tab-pane fade hidden" id="notes" role="tabpanel" aria-labelledby="notes-tab">
+            <h2>Additional Notes</h2>
+            <p>{{self.additional_notes|richtext}}</p>
+        </div>
        </div>
 
       <!-- Itinerary -->
@@ -271,9 +270,9 @@
          </tbody>
         </table>
        </div>
-       <!-- CXL Policies -->
+       <!-- Cancellation Policies -->
        <div class="tab-pane fade hidden" id="cxl-policy" role="tabpanel" aria-labelledby="cxl-policy-tab">
-        <h2>CXL Policy</h2>
+        <h2>Cancellation Policy</h2>
         {% if self.cxl_policies %}
             {{ self.cxl_policies|richtext }}
         {% else %}

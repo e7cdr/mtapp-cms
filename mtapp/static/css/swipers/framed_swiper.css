@@ -1,10 +1,15 @@
+.framed-swiper-container {
+    width: 100%;
+    overflow: hidden;
+    
+}
 
-svg {
+.framed-swiper-container svg {
     width: 0;
     height: 0;
 }
 
-h1 {
+.framed-swiper-container h1 {
     font-family: "Cinzel", serif;
     color: rgb(161, 161, 161);
     font-weight: 600;
@@ -12,17 +17,12 @@ h1 {
     margin-bottom: 30px;
 }
 
-h2 {
+.framed-swiper-container h2 {
     color: white;
     font-variant: small-caps;
 }
 
-.framed-swiper-container {
-    width: 100%;
-    overflow: hidden;
-    
 
-}
 
 .swiper-slide {
     text-align: center;

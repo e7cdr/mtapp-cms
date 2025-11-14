@@ -463,6 +463,10 @@ class ToursIndexPage(RoutablePageMixin, Page):
     body_content = StreamField([
             ("text_band", blocks.TextBand_Block()),
             ("flex_images", blocks.Flex_Images_Block()),
+            ("swipers", blocks.Swipers()),
+            ("explore_block", blocks.ExploreBlock()),
+            ("video_text_content", blocks.Video_Text_Block()),
+
     ],  blank=True,
         null=True,
         use_json_field=True)
