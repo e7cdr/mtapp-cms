@@ -27,10 +27,10 @@ document.addEventListener('DOMContentLoaded', function(){
                     spaceBetween: 20,
                 }
             },
-            // autoplay: {
-            //     delay: 4000,
-            //     pauseOnMouseEnter: true,
-            // },
+            autoplay: {
+                delay: 4000,
+                pauseOnMouseEnter: true,
+            },
 
             speed: 2000,
 
