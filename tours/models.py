@@ -445,20 +445,14 @@ class AbstractTourPage(Page):
 
 
 class ToursIndexPage(RoutablePageMixin, Page):
-    intro = models.TextField(blank=True, help_text=_("Introduction for the tours index page"))
+    intro = RichTextField(blank=True, null=True, help_text="Text describing what the user can find on the Tours Index", verbose_name="Explanatory Text")
     max_count = 1
 
     template = "tours/tours_index_page.html"
 
     parent_page_types = ['home.HomePage']
     subpage_types = ['tours.LandTourPage']  # TODO: Add 'tours.DayTourPage', 'tours.FullTourPage'
-    # page_image = models.ForeignKey(
-    #     'wagtailimages.Image',
-    #     blank=True,
-    #     null=True,
-    #     on_delete=models.SET_NULL,
-    #     related_name="+"
-    # )
+
 #
     body_content = StreamField([
             ("text_band", blocks.TextBand_Block()),
@@ -466,6 +460,7 @@ class ToursIndexPage(RoutablePageMixin, Page):
             ("swipers", blocks.Swipers()),
             ("explore_block", blocks.ExploreBlock()),
             ("video_text_content", blocks.Video_Text_Block()),
+            ("cta_2B", blocks.CTA_Block_2B()),
 
     ],  blank=True,
         null=True,

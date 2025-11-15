@@ -47,6 +47,7 @@ class HomePage(Page):
             ("video_text_content", blocks.Video_Text_Block()),
             ("text_band", blocks.TextBand_Block()),
             ("swipers", blocks.Swipers()),
+            ("cta_2B", blocks.CTA_Block_2B()),
 
 
         ],
