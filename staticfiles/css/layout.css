@@ -89,7 +89,7 @@
 }
 
 .submit-button {
-    margin-top: 1.5rem;
+    margin-top: 0.5rem;
     flex: 0 0 auto;
     width: 100%;
     animation: scale-in 1s linear;
@@ -108,9 +108,34 @@
 
     .area-2 {
         place-self: center;
-        min-width: 23rem;
+        min-width: 27rem;
        
 
+    }
+
+    .filter-card{
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        text-align: center;
+        justify-content: center;
+    }
+    .filter-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+
+    }
+
+    #filterForm div:nth-child(1),
+    #filterForm div:nth-child(4),
+    #filterForm div:nth-child(5) {
+        flex-basis: 17%;
+    }
+    #filterForm div:nth-child(2),
+    #filterForm div:nth-child(3) {
+        flex-basis: 13%;
     }
 
 
