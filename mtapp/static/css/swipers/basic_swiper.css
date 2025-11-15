@@ -5,7 +5,19 @@
     width: 100%;
     overflow: hidden;
     min-width: 27rem;
+    position: relative;
 
+}
+
+.basic-swiper-container h1 {
+    position: absolute;
+    color: white;
+    z-index: 2;
+    font-family: Style Script, cursive;
+    text-shadow: 2px 1px 3px rgba(0, 0, 0, 0.9);
+    font-size: 5.5rem;
+    animation: blur-fadein ease-in 2s;
+    place-self: anchor-center;
 }
 
 .swiper-slide {
@@ -40,4 +52,18 @@
     bottom: 36% !important;
 }
     
+}
+
+
+.caption {
+    position: absolute;
+    font-size: xx-large;
+    color: white;
+    text-shadow: 2px 1px 3px rgba(0, 0, 0, 0.9);
+    bottom: 0;
+    justify-self: center;
+    font-variant: small-caps;
+    animation: blur-fadein ease-in 1s;
+    
+
 }

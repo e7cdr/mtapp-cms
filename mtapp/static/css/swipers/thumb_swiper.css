@@ -1,7 +1,44 @@
 
-.swiper h2 {
+.swiper h1 {
+    position: absolute;
     color: white;
+    z-index: 2;
+    font-family: Style Script, cursive;
+    text-shadow: 2px 1px 3px rgba(0, 0, 0, 0.9);
+    font-size: 5.5rem;
+    animation: blur-fadein ease-in 2s;
+    place-self: anchor-center;
+}
+
+.caption {
+    position: absolute;
+    font-size: xx-large;
+    color: white;
+    text-shadow: 2px 1px 3px rgba(0, 0, 0, 0.9);
+    bottom: 0;
+    justify-self: center;
     font-variant: small-caps;
+    animation: blur-fadein ease-in 1s;
+    
+
+}
+
+@media (max-width:400px) {
+    .swiper h1 {
+    font-size: 3.5rem;
+}
+}
+
+@keyframes blur-fadein {
+    from {
+        opacity: 0;
+        filter: blur(20px);
+
+    }
+    to{
+        opacity: 1;
+        filter: blur(0);
+    }
 }
 
 .swiper {
@@ -37,6 +74,8 @@
     max-height: 10rem;
     object-fit: cover;
     border-radius: 1rem;
+    margin-bottom: 1rem;
+
 
 }
 
@@ -49,13 +88,14 @@
 .thumb-swiper2-container {
     height: 10%;
     margin-top: 0.3rem;
+    transition: 0.9s ease;
     
 }
 
 .thumb-swiper2-container .swiper-slide {
     width: 25%;
     height: 100%;
-    opacity: 0.3;
+    opacity: 0.6;
 }
 
 .thumb-swiper1-container {

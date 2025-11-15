@@ -15,9 +15,6 @@
 
 <section>
     <div class="layout">
-        <div class="area-1">
-    {% if self.intro %}<div class="intro">{{ self.intro|richtext }}</div>{% endif %}
-    </div>
     <div class="area-2">
     <!-- Filter Form  -->
     <div id="filterCollapse">
@@ -134,9 +131,9 @@
             <a href="{{tour.url}}">{{tour.name}}</a>
         </div>
         {% endif %}
-        <div class="card-description">
+        {% comment %} <div class="card-description">
         {{tour.description|richtext}}
-        </div>
+        </div> {% endcomment %}
         <p class="am">Amenities: <b><span class="tour-am-count"></span></b></p>  <!-- Generic class; use data-id in JS -->        <div class="card-amenities grid-7-c">
             {% if tour.amenity %}
                 {% for block in tour.amenity %}
@@ -174,6 +171,9 @@
         {% endfor %}
         </div>
   </div>
+  <div class="area-1">
+{% if self.intro %}<div class="intro">{{ self.intro|richtext }}</div>{% endif %}
+</div>
 
 {% if tours_pag.paginator.num_pages > 1 %}
         <nav aria-label="Tour pagination" class="pagination-nav" data-has-next="{% if tours_pag.has_next %}true{% else %}false{% endif %}">        <ul class="pagination justify-content-center">

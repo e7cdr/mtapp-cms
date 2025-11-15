@@ -22,9 +22,10 @@
                 {% endif %}
                 <img
                 src="{{ img.url }}"
-                alt="{{ item.caption|default:'Swiper images' }}"
+                alt="{{ self.caption|default:'Swiper images' }}"
                 id="slide-{{ forloop.counter }}"
                 />
+                <p class="caption">{{item.caption}}</p>
             </div>
             {% empty %}
                 <p>No images found. Please go to the admin panel to add them.</p>
@@ -58,7 +59,7 @@
 <link rel="stylesheet" href="{% static 'css/swipers/basic_swiper.css' %}"/>
 <section>
     <div class="basic-swiper-container swiper">
-            {% if self.swiper_title%}
+        {% if self.swiper_title%}
         <h1>{{self.swiper_title}}</h1>
         {% endif %}
     <div class="swiper-wrapper">
@@ -73,6 +74,7 @@
                 alt="{{ item.caption|default:'Swiper images' }}"
                 id="slide-{{ forloop.counter }}"
                 />
+                <p class="caption">{{item.caption}}</p>
             </div>
             {% empty %}
                 <p>No images found. Please go to the admin panel to add them.</p>
@@ -94,7 +96,7 @@
         <h1>{{self.swiper_title}}</h1>
         {% endif %}
         <div class="swiper-wrapper">
-                            {% for item in value.images %}
+            {% for item in value.images %}
             <div class="swiper-slide">
                 {% image item.image original as img %}
                    {% if item.link %}
@@ -105,6 +107,7 @@
                 alt="{{ item.caption|default:'Swiper images' }}"
                 id="slide-{{ forloop.counter }}"
                 />
+            <p class="caption">{{item.caption}}</p>
             </div>
             {% empty %}
                 <p>No images found. Please go to the admin panel to add them.</p>
