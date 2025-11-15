@@ -32,6 +32,7 @@ span{font-size:14px;}
   margin-bottom: 30px;
 }
 .row-grid img{margin-bottom:30px;max-width:100%}
+
 @media (max-width: 767.98px) {
  .filters-actions {
     position: fixed;

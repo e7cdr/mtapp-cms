@@ -4,7 +4,7 @@
 .basic-swiper-container {
     width: 100%;
     overflow: hidden;
-    
+    min-width: 27rem;
 
 }
 
@@ -22,8 +22,7 @@
     width: 95%;
     height: 100%;
     object-fit: cover;
-    max-height: 18rem;
-    
+    max-height: 27rem;
     
 }
 
@@ -31,3 +30,14 @@
     height: 30rem;
 }
 
+.swiper-pagination {
+    bottom: 43% !important;
+}
+
+@media (max-width:600px) {
+    .swiper-pagination {
+    min-width: 27rem;
+    bottom: 36% !important;
+}
+    
+}

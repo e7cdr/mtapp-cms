@@ -4,9 +4,8 @@
 {% block title %} {{self.title}}{% endblock %}
 
 {% block content %}
-<link rel="stylesheet" href='{% static "css/card_style.css" %}'/>
-<link rel="stylesheet" href='{% static "css/layout.css" %}'/>
-
+<link rel="stylesheet" href="{% static 'css/card_style.css' %}"/>
+<link rel="stylesheet" href="{% static 'css/layout.css' %}"/>
 
 {% block body_content %}
 {% for block in page.body_content %}
@@ -25,7 +24,7 @@
         <div class="filter-card card-body">
             <h2>{% trans "Filter Tours" %}</h2>
         <form id="filterForm" method="get" action="{% pageurl self %}">
-            <div>
+            <div class="filter-options">
                 <!-- Tour Type -->
                 <div>
                     <label for="tour_type" class="form-label">{% trans "Tour Type" %}</label>

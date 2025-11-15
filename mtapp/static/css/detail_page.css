@@ -382,27 +382,11 @@ margin-left: 0.25rem;
 }
 /* Responsive: Stack on mobile */
 @media (max-width: 768px) {
-.pricing-table {
-font-size: 0.9rem;
-}
-.pricing-table th,
-.pricing-table td {
-padding: 0.75rem 0.5rem;
-display: block;
-width: 100%;
-text-align: right;
-border-bottom: 1px solid #f0f0f0;
-}
-.pricing-table th::before {
-content: attr(data-label) ": ";
-float: left;
-font-weight: 600;
-color: #333;
-}
-.pricing-table tbody tr:hover {
-transform: none;
-}
+    .cover-text h1 {
+        font-size: 2rem ;
+    }
 
+}  
 
 .hidden {
     display: none;
