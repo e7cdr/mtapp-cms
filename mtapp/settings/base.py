@@ -331,6 +331,7 @@ LOGGING = {
 WAGTAILIMAGES_FORMAT_CONVERSIONS = {
     'gif': 'gif',
     'webp': 'webp',
+    'ico': 'ico',
 }
 
 WAGTAILADMIN_RICH_TEXT_EDITORS = {
