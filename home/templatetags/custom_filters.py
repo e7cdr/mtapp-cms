@@ -1,8 +1,10 @@
-from django.utils.html import escape
 import json
 import datetime
 from django import template
+from wagtail.models import Page
+from django.utils.html import escape
 from django.utils.formats import number_format
+from django.utils.translation import get_language
 
 register = template.Library()
 
@@ -117,3 +119,19 @@ def range_filter(value, start=None):
 @register.filter
 def range(value):
     return range(value)
+
+
+
+register = template.Library()
+
+@register.simple_tag
+def locale_slugurl(slug):
+    """Get URL by slug in current locale."""
+    language = get_language()  # e.g., 'en'
+    try:
+        page = Page.objects.filter(slug=slug, locale__language_code=language).live().public().first()
+        if page:
+            return page.url  # Relative URL, like '/en/sitemap-page/'
+        return '#'  # Fallback if not found
+    except:
+        return '#'

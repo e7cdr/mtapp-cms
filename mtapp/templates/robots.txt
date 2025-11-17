@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+
+# Block sensitive areas
+Disallow: /admin/
+Disallow: /search/
+Disallow: /cms/  # Or any private Wagtail paths
+
+# Allow search engines but block AI scrapers if needed
+User-agent: GPTBot
+Disallow: /
+
+Sitemap: {{ sitemap_url }}
+
+
+# Customize: Use User-agent: Googlebot for Google-specific rules.

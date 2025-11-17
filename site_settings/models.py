@@ -44,11 +44,13 @@ class BrandSettings(BaseGenericSetting):
     )
     address = RichTextField(blank=True, null=True, default="Honorato Vasquez")
     telephone = models.CharField(max_length=20, blank=False, null=False, default='+593')
+    search_suggestion = RichTextField(blank=True, null=True, default="Don't know what to look for? Try >>")
     panels = [
         FieldPanel('company_name'),
         FieldPanel('logo'),
         FieldPanel('address'),
         FieldPanel('telephone'),
+        FieldPanel('search_suggestion'),
     ]
 
     class Meta:
@@ -56,3 +58,4 @@ class BrandSettings(BaseGenericSetting):
 
     def __str__(self):
         return self.company_name
+    

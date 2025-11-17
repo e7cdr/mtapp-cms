@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
+
     "wagtail_localize",
     "wagtail_localize.locales",
     "wagtail.contrib.forms",
@@ -43,6 +44,8 @@ INSTALLED_APPS = [
     "wagtail.images",
     "wagtail.search",
     "wagtail.admin",
+    "wagtailseo",
+    "wagtail.contrib.sitemaps",
     "wagtail",
 
     "modelcluster",

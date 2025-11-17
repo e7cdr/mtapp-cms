@@ -1,17 +1,14 @@
 {% load static wagtailcore_tags %} 
-
-{% comment %} {% block body_class %}template-searchresults{% endblock %}  {% endcomment %}
-{% comment %} {% block title %}Search{% endblock %}  {% endcomment %}
-
 {% block content %}
-{% comment %} <h1>Search</h1> {% endcomment %}
 
 <link rel="stylesheet" href="{% static 'css/search_bar.css' %}">
 
 <form action="{% url 'search' %}" method="get" class="search-bar">
  <input type="text" placeholder="i.e: Cuenca" name="query" {% if search_query %} value="{{ search_query }}" {% endif %} />
- <input type="submit" value="Search" class="button" />
+ <input type="submit" value="Search" class="button" /> 
 </form>
+{% comment %} <p style="color:white">Don't know what to look for? Go to >> <a style="text-shadow: 0px 0px 1px white" href="tours/land-tours">Land Tours</a></p> {% endcomment %}
+<p style="color:white">{{settings.site_settings.BrandSettings.search_suggestion|richtext}}</p>
 
 {% if search_results %}
 <ul>

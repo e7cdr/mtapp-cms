@@ -1,12 +1,13 @@
+from streams import blocks
 from django.db import models
 
-from wagtail.models import Page
-from wagtail.admin.panels import FieldPanel, PageChooserPanel
+from wagtailseo.models import SeoMixin
+from wagtail.models import Page, Locale, Site
+from django.utils.translation import get_language  # For current language code from request
 from wagtail.fields import RichTextField, StreamField
-from streams import blocks
+from wagtail.admin.panels import FieldPanel, PageChooserPanel
 
-
-class HomePage(Page):
+class HomePage(SeoMixin, Page):
     """Home page model."""
     templates = "home/home_page.html"
 
@@ -64,6 +65,8 @@ class HomePage(Page):
         FieldPanel('content'),
     ]
 
+    promote_panels = SeoMixin.seo_panels
+
     class Meta:
         verbose_name = "Home Page"
         verbose_name_plural = "Home Pages"
@@ -74,3 +77,34 @@ class HomePage(Page):
         context['carousel'] = self.carousel # Access the StreamField directly. First 'For' loop in template will be {% for block in carousel %}
 
         return context
+    
+
+
+class SitemapPage(Page):
+    content_panels = Page.content_panels
+
+    def get_context(self, request):
+        context = super().get_context(request)
+        
+        # Get site and its localized root (English Home for /en/)
+        site = Site.find_for_request(request)
+        root = site.root_page.specific.localized  # Key: .localized gets current locale version
+        
+        # Simplified query: Children of localized root (already English-scoped)
+        context['pages'] = (
+            root.get_children()
+            .live()
+            .public()
+            # .in_menu()  # Comment out first to test all pages; uncomment for nav-only
+        )
+        
+        # Debug: Console on load (remove after)
+        language_code = get_language()
+        print(f"Sitemap debug - Lang: {language_code}, Root title: {root.title}, Pages count: {context['pages'].count()}")
+        if context['pages'].count() == 0:
+            print("Debug tip: Check if root has published children in this locale.")
+        
+        return context
+
+    class Meta:
+        verbose_name = "Sitemap"

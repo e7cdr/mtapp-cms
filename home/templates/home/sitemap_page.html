@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags wagtailsettings_tags %}
+
+{% block body_class %}sitemap{% endblock %}
+
+{% block content %}
+    <main class="sitemap-container">
+        <h1>Site Map</h1>
+        <p>Navigate our site's structure below. Updated: {{ self.last_published_at|date:"F d, Y" }}.</p>
+        
+        <div class="sitemap-tree">
+            {% if pages %}
+                {% for page in pages %}
+                    {% include "home/includes/sitemap_item.html" with page=page level=1 %}
+                {% endfor %}
+            {% else %}
+                <p>No pages found. Check your page publications and locales in the admin.</p>
+            {% endif %}
+        </div>
+    </main>
+{% endblock %}
+
+{% block extra_css %}
+    <!-- Same CSS as before -->
+    <style>
+        .sitemap-tree { max-width: 800px; margin: 0 auto; }
+        .sitemap-item { margin: 0.5em 0; }
+        .sitemap-item ul { list-style: none; padding-left: 1.5em; border-left: 2px solid #ddd; margin: 0.5em 0; }
+        .sitemap-item a { text-decoration: none; color: #333; font-weight: bold; }
+        .sitemap-item a:hover { text-decoration: underline; color: #007cba; }
+        .sitemap-item--level-1 { font-size: 1.1em; }
+    </style>
+{% endblock %}

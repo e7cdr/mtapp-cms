@@ -1,64 +1,69 @@
-{% load static i18n dict_tags navbar_tags wagtailcore_tags %}
+{% load static i18n dict_tags navbar_tags wagtailcore_tags custom_filters %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/footer.css' %}" />
 {% endblock %}
 <footer>
- <div class="footer-container">
-    {% if settings.site_settings.BrandSettings %}
-    <div class="contact-info-block">
-        <div class="address">
-            {{settings.site_settings.BrandSettings.address|richtext}}
-            <p>{{settings.site_settings.BrandSettings.telephone}}</p>
-        </div>
-    </div>
-    {%else%}
+    <div class="footer-container">
+        {% if settings.site_settings.BrandSettings %}
         <div class="contact-info-block">
-        <div class="address">
-            Configure contact information in Site Settings/Brand Settings
+            <div class="address">
+                {{settings.site_settings.BrandSettings.address|richtext}}
+                <p>{{settings.site_settings.BrandSettings.telephone}}</p>
+            </div>
+        </div>
+        {%else%}
+        <div class="contact-info-block">
+            <div class="address">
+                Configure contact information in Site Settings/Brand Settings
+            </div>
+        </div>
+        {%endif%}
+
+
+        <div class="brand-wrap">
+            <a href="/">
+            <img src="{% static 'default_media/logo.png' %}" alt="Milano Travel Logo" />
+            </a>
+        </div>
+        <div class="sitemap">
+            <a href="{% slugurl 'sitemap-page' %}">Site Map</a>  <!-- Add this line if missing -->
+        </div>
+        <div class="social-media-wrap">
+            {% if settings.site_settings.FooterLinks.facebook %}
+            <button type="button">
+            <a href="{{settings.site_settings.FooterLinks.facebook}}" class="fab fa-facebook-square"></a>
+            </button>
+            {% endif %}
+            {% if settings.site_settings.FooterLinks.instagram %}
+            <button type="button">
+            <a href="{{settings.site_settings.FooterLinks.instagram}}" class="fab fa-instagram"></a>
+            </button>
+            {% endif %}
+            {% if settings.site_settings.FooterLinks.tik_tok %}
+            <button type="button">
+            <a href="{{settings.site_settings.FooterLinks.tik_tok}}" class="fab fa-tiktok"></a>
+            </button>
+            {% endif %}
+            {% if settings.site_settings.FooterLinks.youtube %}
+            <button type="button">
+            <a href="{{settings.site_settings.FooterLinks.youtube}}" class="fab fa-youtube" style="color: red"></a>
+            </button>
+            {% endif %}
+            {% if settings.site_settings.FooterLinks.whatsapp%}
+            <button type="button">
+            <a href="{{settings.site_settings.FooterLinks.whatsapp}}" class="fab fa-whatsapp" style="color: green"></a>
+            </button>
+            {% endif %}
+            {% if settings.site_settings.FooterLinks.x_tw %}
+            <button type="button">
+            <a href="{{settings.site_settings.FooterLinks.x_tw}}" class="fab fa-x-twitter" style="color: black"></a>
+            </button>
+            {% endif %}
+        </div>
+        <hr />
+        <div class="footer-copyright">
+            <p>© Copyright 2025. All Rights Reserved.</p>
         </div>
     </div>
-    {%endif%}
-  <div class="brand-wrap">
-   <a href="/">
-    <img src="{% static 'default_media/logo.png' %}" alt="Milano Travel Logo" />
-   </a>
-  </div>
-     <div class="social-media-wrap">
-    {% if settings.site_settings.FooterLinks.facebook %}
-    <button type="button">
-     <a href="{{settings.site_settings.FooterLinks.facebook}}" class="fab fa-facebook-square"></a>
-    </button>
-    {% endif %}
-    {% if settings.site_settings.FooterLinks.instagram %}
-    <button type="button">
-     <a href="{{settings.site_settings.FooterLinks.instagram}}" class="fab fa-instagram"></a>
-    </button>
-    {% endif %}
-    {% if settings.site_settings.FooterLinks.tik_tok %}
-    <button type="button">
-     <a href="{{settings.site_settings.FooterLinks.tik_tok}}" class="fab fa-tiktok"></a>
-    </button>
-    {% endif %}
-    {% if settings.site_settings.FooterLinks.youtube %}
-    <button type="button">
-     <a href="{{settings.site_settings.FooterLinks.youtube}}" class="fab fa-youtube" style="color: red"></a>
-    </button>
-    {% endif %}
-    {% if settings.site_settings.FooterLinks.whatsapp%}
-    <button type="button">
-     <a href="{{settings.site_settings.FooterLinks.whatsapp}}" class="fab fa-whatsapp" style="color: green"></a>
-    </button>
-    {% endif %}
-    {% if settings.site_settings.FooterLinks.x_tw %}
-    <button type="button">
-     <a href="{{settings.site_settings.FooterLinks.x_tw}}" class="fab fa-x-twitter" style="color: black"></a>
-    </button>
-    {% endif %}
-   </div>
-  <hr />
-  <div class="footer-copyright">
-   <p>© Copyright 2025. All Rights Reserved.</p>
-  </div>
- </div>
 </footer>
