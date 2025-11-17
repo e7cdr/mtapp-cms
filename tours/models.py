@@ -121,15 +121,15 @@ class AbstractTourPage(Page):
         max_length=50,
         blank=True,
         default='',
-        help_text="Comma-separated days (0=Sunday, 1=Monday..., 6=Saturday), e.g., '0,1,2,3'"
+        help_text="Comma-separated days (0=Sunday, 1=Monday, 2=Tuesday..., 6=Saturday), e.g., '0,1,2,3'"
     )
     blackout_entries = StreamField([
-        ('single_date', DateBlock(label="Single Blackout Date", help_text="One specific date to disable.")),
+        ('single_date', DateBlock(label="Single Blackout Date", help_text="One specific date to disable. You can add as many single dates")),
         ('date_range', StructBlock([
             ('start_date', DateBlock(label="Start Date", required=True)),
             ('end_date', DateBlock(label="End Date", required=True, help_text="Inclusive end date.")),
         ], label="Blackout Date Range", icon='date')),
-    ], blank=True, use_json_field=True, help_text=_("Add single blackout dates or ranges (e.g., holidays)."))
+    ], blank=True, use_json_field=True, help_text=_("Add single blackout dates or ranges (e.g., holidays, strikes)."))
 
     # Supplier & Pricing (common)
     supplier_email = models.EmailField(blank=True, help_text=_("Supplier contact email. If This is a in House/company tour, check the next box and skip this email field."))
