@@ -83,7 +83,7 @@ class BookingStartView(FormView):
         context['tour_type'] = 'land'
         context['tour_duration'] = self.tour.duration_days if self.tour else 0
         context['booking_data'] = {'tourName': self.tour.name}
-
+        context['blackout_dates_json'] = json.dumps(self.tour.blackout_dates_list)  # Flattened list
         # Safe form access for initial_children
         form = kwargs.get('form', self.get_form())
         is_bound = form.is_bound

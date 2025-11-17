@@ -1,0 +1,139 @@
+h2 {
+    color: white;
+    font-variant: small-caps;
+}
+
+.collage-grid-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    grid-auto-rows: 40rem;
+    box-shadow: 0 0 2rem black;
+    width: auto;
+}
+
+.collage-swiper1-container {
+    height: auto;
+    width: 100%;
+    color: white;
+}
+
+
+
+.collage-swiper2-container {
+    height: 100%;
+    color: white;
+    padding-inline: 0.5rem !important;
+}
+
+
+/* Images fill cells without distortion */
+.collage-swiper1-container .swiper-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;  /* Crops to fit square; use 'contain' if you prefer letterboxing */
+    border-radius: 1rem;  /* Optional: Rounded corners for collage vibe */
+}
+
+.collage-swiper2-container .swiper-wrapper {
+    display: grid !important;  /* Reinforce grid on wrapper */
+    grid-template-columns: repeat(4, 1fr);  /* 3 equal cols */
+    grid-auto-rows: 7rem;  /* Fixed row height = your square size */
+    gap: 0.5rem;  /* Matches spaceBetween */
+}
+
+@media (max-width:1000px) {
+    .collage-swiper2-container .swiper-wrapper {
+        grid-template-columns: repeat(2, 1fr);  /* 3 equal cols */
+}
+    
+}
+
+@media (max-width:700px) {
+    .collage-swiper2-container .swiper-wrapper {
+        grid-template-columns: repeat(1, 1fr);  /* 3 equal cols */
+        grid-auto-rows: 5rem;  /* Fixed row height = your square size */
+
+}
+    
+}
+
+@media (max-width:400px) {
+    .collage-swiper2-container .swiper-wrapper {
+    grid-template-columns: repeat(3, 1fr);  /* 3 equal cols */
+
+}
+
+.collage-grid-container {
+    grid-template-columns: 1fr ;
+}
+    
+}
+
+.collage-swiper2-container .swiper-slide {
+    opacity: 0.3;
+    transition: all 0.4s ease;
+    
+}
+
+/* Images fill cells without distortion */
+.collage-swiper2-container .swiper-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;  /* Crops to fit square; use 'contain' if you prefer letterboxing */
+    border-radius: 1rem;
+}
+
+/* Optional: Active thumb highlight */
+.collage-swiper2-container .swiper-slide-thumb-active {
+    opacity: 1;
+    
+}
+
+.collage-swiper2-container .swiper-slide-thumb-active::after {
+    content: '';
+    
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    top: 50%;
+    left: 50%;
+    translate: -50% -50%;
+    z-index: -1;
+    padding: 0rem;
+    border-radius: 1rem;
+    filter: blur(0.5rem);
+    background-image: conic-gradient(from var(--angle), rgba(68, 0, 255, 0.452), rgb(255, 0, 0), rgb(255, 251, 0), rgb(17, 0, 255));
+    animation: 5s spin linear infinite;
+}
+
+.collage-title {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    z-index: 10;
+    margin: 0;
+}
+
+@keyframes spin {
+    from {
+        --angle: 0deg;
+    }
+    to {
+        --angle: 360deg;
+    }
+}
+
+@property --angle {
+    syntax: '<angle>';
+    inherits: false;
+    initial-value: 0deg;
+}
+
+
+
+
+
+
+
+
+

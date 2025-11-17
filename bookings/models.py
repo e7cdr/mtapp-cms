@@ -192,6 +192,7 @@ class Proposal(models.Model):
         indexes = [
             models.Index(fields=['content_type', 'object_id', 'travel_date', 'status'])
         ]
+
 @register_snippet
 class Booking(models.Model):
     book_id = models.CharField(max_length=9, unique=True, editable=False, null=True, help_text=_("Booking code so the user can track status."))  # Allow null for migration

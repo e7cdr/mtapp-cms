@@ -6,6 +6,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const availableDaysStr = bookingData.available_days;  // e.g., "0,1,2,3"
     const availableDays = availableDaysStr ? availableDaysStr.split(',').map(d => parseInt(d.trim())) : [];  // [0,1,2,3]
 
+    // NEW: Blackout dates (array of 'YYYY-MM-DD' strings from model)
+    const blackoutDates = bookingData.blackout_dates || [];
+    const blackoutDateObjects = blackoutDates.map(dateStr => {
+        const [year, month, day] = dateStr.split('-').map(Number);
+        return new Date(year, month - 1, day);  // Date object for flatpickr
+    });
     // Flatpickr
     const travelDateInput = document.getElementById('id_travel_date');
     if (travelDateInput && typeof flatpickr !== 'undefined') {
@@ -16,20 +22,19 @@ document.addEventListener('DOMContentLoaded', function () {
             locale: 'en',
             disable: [
                 function(date) {
-                    // FIXED: Disable non-available days (return true to disable date)
                     const dayOfWeek = date.getDay();  // 0=Sun, 6=Sat (adjust if tour uses Sun=0)
                     if (availableDays.length > 0 && !availableDays.includes(dayOfWeek)) {
                         return true;  // Disable
                     }
                     return false;  // Enable
-                }
+                },
+                ...blackoutDateObjects
             ],
             onChange: function (selectedDates, dateStr) {
                 const tourDuration = parseInt(document.getElementById('booking-form-container').dataset.duration || 0);
                 const endDateInput = document.getElementById('end_date');
                 updateEndDate(dateStr, tourDuration, endDateInput);
                 loadPricing();
-                // FIXED: Capacity fetch
                 const tourType = document.querySelector('#id_tour_type').value;
                 const tourId = document.querySelector('#id_tour_id').value;
                 if (tourId && dateStr) {

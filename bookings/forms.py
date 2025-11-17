@@ -189,4 +189,11 @@ class ProposalForm(forms.ModelForm):  # Changed to ModelForm
         if model:
             return ContentType.objects.get_for_model(model)
         return None
+    
+    def clean_travel_date(self):
+        travel_date = self.cleaned_data.get('travel_date')
+        tour = self.get_tour()  # Helper to get tour from tour_id
+        if tour and travel_date in tour.blackout_dates:
+            raise forms.ValidationError(_("This date is blacked out and unavailable."))
+        return travel_date
 

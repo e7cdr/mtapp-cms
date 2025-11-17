@@ -1,3 +1,4 @@
+from datetime import timedelta
 from decimal import Decimal
 import fitz  # PyMuPDF
 import os
@@ -20,7 +21,7 @@ from wagtail.fields import StreamField, RichTextField
 from wagtail.images.models import Image
 from wagtail.documents.models import Document
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel
-from wagtail.blocks import CharBlock, StructBlock, RichTextBlock, ListBlock, ChoiceBlock, IntegerBlock
+from wagtail.blocks import CharBlock, StructBlock, RichTextBlock, ListBlock, ChoiceBlock, IntegerBlock, DateBlock
 from wagtail.contrib.routable_page.models import RoutablePageMixin, path
 
 from streams import blocks
@@ -122,6 +123,13 @@ class AbstractTourPage(Page):
         default='',
         help_text="Comma-separated days (0=Sunday, 1=Monday..., 6=Saturday), e.g., '0,1,2,3'"
     )
+    blackout_entries = StreamField([
+        ('single_date', DateBlock(label="Single Blackout Date", help_text="One specific date to disable.")),
+        ('date_range', StructBlock([
+            ('start_date', DateBlock(label="Start Date", required=True)),
+            ('end_date', DateBlock(label="End Date", required=True, help_text="Inclusive end date.")),
+        ], label="Blackout Date Range", icon='date')),
+    ], blank=True, use_json_field=True, help_text=_("Add single blackout dates or ranges (e.g., holidays)."))
 
     # Supplier & Pricing (common)
     supplier_email = models.EmailField(blank=True, help_text=_("Supplier contact email. If This is a in House/company tour, check the next box and skip this email field."))
@@ -230,6 +238,7 @@ class AbstractTourPage(Page):
             FieldPanel('start_date'),
             FieldPanel('end_date'),
             FieldPanel('available_days'),
+            FieldPanel('blackout_entries'),
             FieldPanel('child_age_min'),
             FieldPanel('child_age_max'),
         ], heading="Tour Configuration"),
@@ -293,6 +302,24 @@ class AbstractTourPage(Page):
                 'max_children_per_room': self.max_children_per_room,
             }
         return {}
+    
+    @property
+    def blackout_dates_list(self):
+        """Flatten blackout_entries to list of 'YYYY-MM-DD' strings (expands ranges)."""
+        if not self.blackout_entries:
+            return []
+        dates = []
+        for block in self.blackout_entries:
+            if block.block_type == 'single_date':
+                dates.append(block.value.strftime('%Y-%m-%d'))
+            elif block.block_type == 'date_range':
+                start = block.value['start_date']
+                end = block.value['end_date']
+                current = start
+                while current <= end:
+                    dates.append(current.strftime('%Y-%m-%d'))
+                    current += timedelta(days=1)
+        return dates  # JSON-safe list
 
     def get_itinerary_days(self):
         return self.itinerary
@@ -314,6 +341,7 @@ class AbstractTourPage(Page):
         amenity_labels = [choice_dict.get(value, value) for value in selected_values]  # Fallback to value if no match
 
         context['amenity_labels'] = amenity_labels  # Or ', '.join(amenity_labels) for a single string
+        context['blackout_dates_list'] = self.blackout_dates_list  # For JS
         return context
 
     def clean(self):
@@ -490,17 +518,14 @@ class ToursIndexPage(RoutablePageMixin, Page):
         return 0
 
     def get_context(self, request: HttpRequest):
-        print("*** get_context TOP: Called with GET", dict(request.GET))  # TEMP
         context = super().get_context(request)
 
         # Base queryset
         tours_qs = LandTourPage.objects.live().public().filter(locale=self.locale).specific()
-        print("*** Base QS count:", tours_qs.count())  # TEMP
 
         # Dynamic unique destinations
         filtered_qs = tours_qs.exclude(destination__exact='')  # Filter blanks first
         unique_destinations = list(filtered_qs.values_list('destination', flat=True).distinct().order_by('destination'))
-        print("*** Unique destinations:", unique_destinations, "(len:", len(unique_destinations), ")")  # TEMP
 
         # Apply filters
         tour_type = request.GET.get('tour_type')
@@ -509,8 +534,6 @@ class ToursIndexPage(RoutablePageMixin, Page):
         max_price = request.GET.get('max_price')
         destination = request.GET.get('destination')
         pricing_type = request.GET.get('pricing_type', '').strip()
-
-        print("*** Raw pricing_type:", pricing_type)  # TEMP
 
         if tour_type == 'land':
             pass
@@ -531,7 +554,6 @@ class ToursIndexPage(RoutablePageMixin, Page):
 
         # Pricing type filter (fixed—no .title())
         pricing_type = request.GET.get('pricing_type', '').strip()
-        print("*** Raw pricing_type:", pricing_type)  # TEMP
 
         if pricing_type and pricing_type != '':
             valid_types = ['Per_room', 'Per_person']
@@ -551,7 +573,6 @@ class ToursIndexPage(RoutablePageMixin, Page):
                 Q(price_adult__gte=min_price_dec) | Q(price_chd__gte=min_price_dec) | Q(price_inf__gte=min_price_dec)
             )
             tours_qs = tours_qs.filter(price_min_q)
-            print("*** Applied min_price", min_price, "- count:", tours_qs.count())  # TEMP
 
         if max_price:
             max_price_dec = Decimal(max_price)
@@ -560,7 +581,6 @@ class ToursIndexPage(RoutablePageMixin, Page):
                 Q(price_adult__lte=max_price_dec) | Q(price_chd__lte=max_price_dec) | Q(price_inf__lte=max_price_dec)
             )
             tours_qs = tours_qs.filter(price_max_q)
-            print("*** Applied max_price", max_price, "- count:", tours_qs.count())  # TEMP
 
         # Order & Paginate
         tours_qs = tours_qs.order_by('-start_date')
@@ -580,9 +600,6 @@ class ToursIndexPage(RoutablePageMixin, Page):
         context['GLOBAL_ICON_CHOICES'] = blocks.GLOBAL_ICON_CHOICES
         context['unique_destinations'] = unique_destinations
 
-        print("*** Context unique_destinations len:", len(context.get('unique_destinations', [])))  # TEMP
-        print("*** Final QS count:", tours_qs.count(), "- paginated len:", len(tours_pag))  # TEMP: Fixed .count() → len()
-        print("*** get_context END")  # TEMP
 
         return context
 

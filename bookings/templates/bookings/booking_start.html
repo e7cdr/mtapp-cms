@@ -263,7 +263,8 @@
     "cancellationPolicy": "{{ tour.general_info|escapejs|truncatewords:20 }}",
     "tour_start_date": "{{ tour_start_date|escapejs }}",
     "tour_end_date": "{{ tour_end_date|escapejs }}",
-    "available_days": "{{ available_days|escapejs }}"
+    "available_days": "{{ available_days|escapejs }}",
+    "blackout_dates": {{ blackout_dates_json|safe }}
 }
 </script>
 

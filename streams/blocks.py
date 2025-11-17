@@ -347,8 +347,9 @@ class CTA_Block_2B(blocks.StructBlock):
 
 swipers = [
     ('basic', 'Basic Swiper'),
+    ('collage', 'Collage Navigation'),
     ('framed', 'Framed Pictures'),
-    ('thumbnail', 'With Thumbnail Navigation'),
+    ('thumbnail', 'Thumbnail Navigation'),
 
 ]
 
