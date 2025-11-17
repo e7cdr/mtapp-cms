@@ -122,6 +122,7 @@
 
       <!-- Amenities -->
        {% if self.amenity %}
+       <h2>Amenities</h2>
        <div aria-labelledby="amenities">
         {% if amenity_labels %}
         <ul>
@@ -136,7 +137,6 @@
     </div>
         <!-- Optional Activities -->
         <div class="tab-pane fade hidden" id="notes" role="tabpanel" aria-labelledby="notes-tab">
-        <h2>Additional Notes</h2>
         <p>{{self.additional_notes|richtext}}</p>
         </div>
 
@@ -172,7 +172,7 @@
                   <p>{{ block.value.description }}</p>
                   <h4>Highlights</h4>
                   <ul>
-                      <li>{{ block.value.highlight|richtext }}</li>
+                      {{ block.value.highlight|richtext }}
                   </ul>
               </div>
               {% endfor %}
