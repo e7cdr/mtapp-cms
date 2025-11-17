@@ -121,9 +121,6 @@ def range(value):
     return range(value)
 
 
-
-register = template.Library()
-
 @register.simple_tag
 def locale_slugurl(slug):
     """Get URL by slug in current locale."""
