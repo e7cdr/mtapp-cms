@@ -40,7 +40,7 @@
 .video-container iframe {
     overflow: hidden;
     border-radius: 0.75rem;
-    height: 20rem;
+    height: 35rem;
     margin-top: 1rem;
     width: 100%;
     animation: 800ms linear scale-in;

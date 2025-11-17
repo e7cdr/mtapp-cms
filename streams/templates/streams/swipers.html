@@ -1,31 +1,33 @@
 {% load static wagtailimages_tags custom_filters wagtailcore_tags %}
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.css" />
-{% endblock %}
+{% endblock extra_css %}
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.js"></script>
-{% endblock %}
+{% endblock extra_js %}
 
 {% if self.variations == 'thumbnail' %}
 <link rel="stylesheet" href="{% static 'css/swipers/thumb_swiper.css' %}"/>
 <section>
-    <div style="--swiper-navigation-color: #fff; --swiper-pagination-color: #fff" class="swiper thumb-swiper1-container">
-        {% if self.swiper_title%}
-        <h1>{{self.swiper_title}}</h1>
+    <div class="swiper thumb-swiper1-container">
+        {% if self.swiper_title %}
+        <h1> {{ self.swiper_title }} </h1>
         {% endif %}
         <div class="swiper-wrapper">
             {% for item in value.images %}
             <div class="swiper-slide">
                 {% image item.image original as img %}
                    {% if item.link %}
-                    <a href="{{ item.link.url }}">
+                    <a href="{{ item.link.url }}"></a>
                 {% endif %}
                 <img
+                height=""
+                width=""
                 src="{{ img.url }}"
                 alt="{{ self.caption|default:'Swiper images' }}"
                 id="slide-{{ forloop.counter }}"
                 />
-                <p class="caption">{{item.caption}}</p>
+                <p class="caption">{{ item.caption }}</p>
             </div>
             {% empty %}
                 <p>No images found. Please go to the admin panel to add them.</p>
@@ -40,9 +42,11 @@
             <div class="swiper-slide">
                 {% image item.image original as img %}
                    {% if item.link %}
-                    <a href="{{ item.link.url }}">
+                    <a href="{{ item.link.url }}"></a>
                 {% endif %}
                 <img
+                height=""
+                width=""
                 src="{{ img.url }}"
                 alt="{{ item.caption|default:'Swiper images' }}"
                 id="slide-{{ forloop.counter }}"
@@ -59,55 +63,57 @@
 <link rel="stylesheet" href="{% static 'css/swipers/basic_swiper.css' %}"/>
 <section>
     <div class="basic-swiper-container swiper">
-        {% if self.swiper_title%}
-        <h1>{{self.swiper_title}}</h1>
-        {% endif %}
-    <div class="swiper-wrapper">
-            {% for item in value.images %}
-            <div class="swiper-slide">
-                {% image item.image original as img %}
-                   {% if item.link %}
-                    <a href="{{ item.link.url }}">
-                {% endif %}
-                <img
-                src="{{ img.url }}"
-                alt="{{ item.caption|default:'Swiper images' }}"
-                id="slide-{{ forloop.counter }}"
-                />
-                <p class="caption">{{item.caption}}</p>
-            </div>
-            {% empty %}
-                <p>No images found. Please go to the admin panel to add them.</p>
-            {% endfor %}
-        </div>
-    </div>
-        <div class="swiper-pagination"></div>
-        <div class="swiper-button-next"></div>
-        <div class="swiper-button-prev"></div>
-    </div>
-<script src="{% static 'js/swipers/basic_swiper.js' %}"></script>
-</section>
-{% elif self.variations == 'framed'%}
-<link rel="stylesheet" href="{% static 'css/swipers/framed_swiper.css' %}"/>
-<!-- Framed swiper -->
- <section>
-    <div class="framed-swiper-container">
-        {% if self.swiper_title%}
-        <h1>{{self.swiper_title}}</h1>
+        {% if self.swiper_title %}
+        <h1>{{ self.swiper_title }}</h1>
         {% endif %}
         <div class="swiper-wrapper">
             {% for item in value.images %}
             <div class="swiper-slide">
                 {% image item.image original as img %}
                    {% if item.link %}
-                    <a href="{{ item.link.url }}">
+                    <a href="{{ item.link.url }}"></a>
                 {% endif %}
                 <img
+                height=""
+                width=""
                 src="{{ img.url }}"
                 alt="{{ item.caption|default:'Swiper images' }}"
                 id="slide-{{ forloop.counter }}"
                 />
-            <p class="caption">{{item.caption}}</p>
+                <p class="caption">{{ item.caption }}</p>
+            </div>
+            {% empty %}
+                <p>No images found. Please go to the admin panel to add them.</p>
+            {% endfor %}
+        </div>
+        <div class="swiper-pagination"></div>
+        <div class="swiper-button-next"></div>
+        <div class="swiper-button-prev"></div>
+    </div>
+<script src="{% static 'js/swipers/basic_swiper.js' %}"></script>
+</section>
+{% elif self.variations == 'framed' %}
+<link rel="stylesheet" href="{% static 'css/swipers/framed_swiper.css' %}"/>
+ <section>
+    <div class="framed-swiper-container">
+        {% if self.swiper_title %}
+        <h1>{{ self.swiper_title }}</h1>
+        {% endif %}
+        <div class="swiper-wrapper">
+            {% for item in value.images %}
+            <div class="swiper-slide">
+                {% image item.image original as img %}
+                   {% if item.link %}
+                    <a href="{{ item.link.url }}"></a>
+                {% endif %}
+                <img
+                height=""
+                width=""
+                src="{{ img.url }}"
+                alt="{{ item.caption|default:'Swiper images' }}"
+                id="slide-{{ forloop.counter }}"
+                />
+            <p class="caption">{{ item.caption }}</p>
             </div>
             {% empty %}
                 <p>No images found. Please go to the admin panel to add them.</p>
@@ -129,27 +135,30 @@
 <link rel="stylesheet" href="{% static 'css/swipers/collage_swiper.css' %}">
 <!--Collage Swiper-->
 <section class="collage-grid-container">
-    <div style="--swiper-navigation-color: #fff; --swiper-pagination-color: #fff" class="swiper collage-swiper1-container">
-        {% if self.swiper_title%}
-        <h2 class="collage-title">{{self.swiper_title}}</h2>
+    <div class="swiper collage-swiper1-container">
+        {% if self.swiper_title %}
+        <h1 class="collage-title">{{ self.swiper_title }}</h1>
         {% endif %}
         <div class="swiper-wrapper">
             {% for item in value.images %}
             <div class="swiper-slide">
                 {% image item.image original as img %}
                    {% if item.link %}
-                    <a href="{{ item.link.url }}">
+                    <a href="{{ item.link.url }}"></a>
                 {% endif %}
                 <img
+                height=""
+                width=""
                 src="{{ img.url }}"
                 alt="{{ item.caption|default:'Swiper images' }}"
                 id="slide-{{ forloop.counter }}"
                 />
-            <p class="caption">{{item.caption}}</p>
-        </div>
-        {% empty %}
+            </div>
+            <p class="caption">{{ item.caption }}</p>
+            {% empty %}
             <p>No images found. Please go to the admin panel to add them.</p>
-        {% endfor %}
+            {% endfor %}
+        </div>
         <div class="swiper-nav">
             <div class="swiper-button-next"></div>
             <div class="swiper-button-prev"></div>     
@@ -161,9 +170,11 @@
             <div class="swiper-slide">
                 {% image item.image original as img %}
                    {% if item.link %}
-                    <a href="{{ item.link.url }}">
+                    <a href="{{ item.link.url }}"></a>
                 {% endif %}
                 <img
+                height=""
+                width=""
                 src="{{ img.url }}"
                 alt="{{ item.caption|default:'Swiper images' }}"
                 id="slide-{{ forloop.counter }}"
