@@ -517,15 +517,14 @@ def compute_pricing(tour_type, tour_id, form_data, session):
                         triples * price_tpl
                     )
                 elif pricing_type == 'Combined':
-                    # ───── NEW: TIERED COMBINED PRICING ─────
                     tier = get_pricing_tier(tour, number_of_adults)
                     
                     base_price = number_of_adults * tier['price_adult']
                     
                     supplement = (
                         singles * tier['sgl_supplement'] +
-                        doubles * tier['dbl_discount'] * -1 +   # discount = negative
-                        triples * tier['tpl_discount'] * -1
+                        (doubles * 2) * (-tier['dbl_discount']) +   # ← FIXED: 2 people per double
+                        (triples * 3) * (-tier['tpl_discount'])    # ← FIXED: 3 people per triple
                     )
                     base_price += supplement
                 else:
