@@ -369,3 +369,16 @@ class Swipers(blocks.StructBlock):
         template = "streams/swipers.html"
         icon = "image"
         label = "Swiper"
+
+class PricingTierBlock(blocks.StructBlock):
+    min_pax = blocks.IntegerBlock(required=True, help_text="Minimum number of adults (inclusive)")
+    max_pax = blocks.IntegerBlock(required=False, help_text="Maximum number of adults (inclusive)")
+    
+    price_adult = blocks.DecimalBlock(required=True, decimal_places=2, help_text="Base price per adult")
+    price_sgl_supplement = blocks.DecimalBlock(default=0, decimal_places=2, help_text="Extra charge for single room (on top of adult price)")
+    price_dbl_discount = blocks.DecimalBlock(default=0, decimal_places=2, help_text="Discount per person when sharing double (e.g. 200 = –$200)")
+    price_tpl_discount = blocks.DecimalBlock(default=0, decimal_places=2, help_text="Discount per person when sharing triple")
+
+    class Meta:
+        icon = 'currency'
+        label = "Pricing Tier"

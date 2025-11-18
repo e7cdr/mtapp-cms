@@ -21,7 +21,16 @@ from wagtail.fields import StreamField, RichTextField
 from wagtail.images.models import Image
 from wagtail.documents.models import Document
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel
-from wagtail.blocks import CharBlock, StructBlock, RichTextBlock, ListBlock, ChoiceBlock, IntegerBlock, DateBlock
+from wagtail.blocks import ( 
+    CharBlock, 
+    StructBlock, 
+    RichTextBlock,
+    ListBlock, 
+    ChoiceBlock, 
+    IntegerBlock, 
+    DateBlock,
+    DecimalBlock
+)
 from wagtail.contrib.routable_page.models import RoutablePageMixin, path
 
 from streams import blocks
@@ -139,9 +148,25 @@ class AbstractTourPage(Page):
     )
     pricing_type = models.CharField(
         max_length=20,
-        choices=[('Per_room', 'Per Room'), ('Per_person', 'Per Person')],
-        default='Per_person',
-        help_text=""
+        choices=[
+                ('Per_room', 'Per Room (classic hotel-style)'),
+                ('Per_person', 'Per Person (flat rate, no room logic)'),
+                ('Combined', 'Combined (Tiered)'),
+            ],
+        default='Combined',  
+        help_text="Combined = adult pays base price, gets discount when sharing room. Best for private tours."
+        )
+    # Replace old flat pricing fields with this:
+    combined_pricing_tiers = StreamField(
+        [
+            ('tier', blocks.PricingTierBlock()),
+        ],
+        use_json_field=True,
+        verbose_name="Combined Pricing Tiers (by Group Size)",
+        blank=True,
+        null=True,  # Important for migrations
+        help_text="Tiered pricing for Combined mode. Ordered from smallest to largest group.",
+        
     )
     max_children_per_room = models.PositiveIntegerField(default=1, null=True, blank=True)
     child_age_min = models.PositiveIntegerField(default=7, verbose_name="Child Minimum Age")
@@ -249,22 +274,21 @@ class AbstractTourPage(Page):
             FieldPanel('is_sold_out'),
         ], heading="Tour Current State"),
             MultiFieldPanel([
-                FieldPanel('pricing_type', classname='pricing-type-selector'),  # JS target
+            FieldPanel('pricing_type', classname='pricing-type-selector'),
+            MultiFieldPanel([
+                FieldPanel('price_sgl'),
+                FieldPanel('price_dbl'),
+                FieldPanel('price_tpl'),
+            ], heading="Room Pricing (SGL/DBL/TPL)", classname="per-room-panel collapsible collapsed"),
+            MultiFieldPanel([
+                FieldPanel('combined_pricing_tiers'),
+            ], classname="combined-pricing-panel collapsible collapsed"),
+
+            MultiFieldPanel([
+                FieldPanel('price_adult'),
                 FieldPanel('price_chd'),
                 FieldPanel('price_inf'),
-
-                # Per Room Panel (hidden by default; JS shows it)
-                MultiFieldPanel([
-                    FieldPanel('price_sgl'),
-                    FieldPanel('price_dbl'),
-                    FieldPanel('price_tpl'),
-                ], heading="Prices Per Room", classname='per-room-panel'),  # JS target
-
-                # Per Person Panel (hidden by default; JS shows it)
-                MultiFieldPanel([
-                    FieldPanel('price_adult'),
-                ], heading="Prices Per Person", classname='per-person-panel'),  # JS target
-
+            ], heading="Per-Person Pricing (Adult/Child/hild/Infant)", classname="per-person-panel collapsible collapsed"),
                 MultiFieldPanel([
                     FieldPanel('max_children_per_room'),
                     FieldPanel('price_subtext'),
@@ -272,7 +296,7 @@ class AbstractTourPage(Page):
                     FieldPanel('demand_factor'),
                     FieldPanel('rep_comm'),
                 ], heading="Commissions and Factors"),
-            ], heading="Price & Comm"),
+            ], heading="Pricing Configuration", classname="collapsible"),
         FieldPanel('ref_code'),
         FieldPanel('code_id', read_only=True),
     ]
@@ -287,21 +311,23 @@ class AbstractTourPage(Page):
 
     @property
     def active_prices(self):
-        """Returns dict of prices based on pricing_type. Use in templates/serializers."""
-        if self.pricing_type == 'Per_room':
-            return {
+        """Returns dict of prices based on pricing_type."""
+        base = {}
+        if self.pricing_type in ['Per_room', 'Combined']:
+            base.update({
                 'sgl': self.price_sgl,
                 'dbl': self.price_dbl,
                 'tpl': self.price_tpl,
-            }
-        elif self.pricing_type == 'Per_person':
-            return {
+            })
+        if self.pricing_type in ['Per_person', 'Combined']:
+            base.update({
                 'adult': self.price_adult,
                 'chd': self.price_chd,
                 'inf': self.price_inf,
-                'max_children_per_room': self.max_children_per_room,
-            }
-        return {}
+            })
+        if self.pricing_type == 'Per_person':
+            base['max_children_per_room'] = self.max_children_per_room
+        return base
     
     @property
     def blackout_dates_list(self):
@@ -416,15 +442,15 @@ class AbstractTourPage(Page):
                 image_paths = convert_pdf_to_images(pdf_path, output_dir, self.id)
                 if image_paths != self.pdf_images:
                     self.pdf_images = image_paths
-                    super().save(update_fields=['pdf_images'])
+                    # super().save(update_fields=['pdf_images'])
                 logger.info(f"Generated {len(self.pdf_images)} images for tour {self.id}")
             except Exception as e:
                 logger.error(f"Failed to convert PDF for tour {self.id}: {str(e)}")
                 self.pdf_images = []
-                super().save(update_fields=['pdf_images'])
+                # super().save(update_fields=['pdf_images'])
         else:
             self.pdf_images = []
-            super().save(update_fields=['pdf_images'])
+            # super().save(update_fields=['pdf_images'])
 
     # Translation/Alias logic (move your existing methods here, adapting for abstract)
     def copy_for_translation(self, locale, copy_parents=True, alias=False):

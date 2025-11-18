@@ -1,15 +1,22 @@
 {% load i18n static booking_tags custom_filters %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/pricing_options.css'%}">
+<link rel="stylesheet" href="{% static 'css/pricing_options.css' %}">
 {% endblock %}
 
 <div class="pricing-table" data-configurations="{{ configurations|json_escape }}" data-pricing-type="{{ tour.pricing_type }}" data-current-page="1">
     <div class="title">{% trans "Pricing Options" %}</div>
-    <div class="subtitle">
+    {% if tour.pricing_type == 'Combined' %}
+        <div class="subtitle text-sm text-gray-600 mt-2 mb-4">
+            <p>
+                <strong>{% trans "How Combined Pricing Works" %}:</strong><br>
+                {% trans "All adults pay a base price. You save money by sharing rooms (Double/Triple)." %}
+            </p>
+        </div>
+    {% endif %}
         <p>{% trans "Number of Adults" %}: {{ number_of_adults|default:"1" }}</p>
         <p>{% trans "Number of Infants" %}: {{ number_of_infants|default:"0" }}</p>
-        {% if tour.pricing_type == 'Per_room' %}
+        {% if tour.pricing_type == 'Per_room' or tour.pricing_type == 'Combined' %}
             <p>{% trans "Maximum Children per Room" %}: {{ max_children_per_room|default_if_none:"1" }}</p>
         {% endif %}
         {% if child_ages %}
@@ -20,7 +27,7 @@
     <div class="filter-options">
         <div class="title">{% trans "Filter Options" %}</div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {% if tour.pricing_type == 'Per_room' %}
+            {% if tour.pricing_type == 'Per_room' or tour.pricing_type == 'Combined' %}
                 <!-- Room Type Filters -->
                 <div id="room-filters">
                     <label class="block font-lora text-sm font-medium text-gray-900 mb-2">{% trans "Room Types" %}</label>
@@ -87,7 +94,7 @@
                                     {% if config.children %}, {% endif %}
                                     {% trans "Infants" %}: {{ config.infants }}
                                 {% endif %}
-                                {% if tour.pricing_type == 'Per_room' %}
+                                {% if tour.pricing_type == 'Per_room' or tour.pricing_type == 'Combined' %}
                                     {% if config.children or config.infants %}, {% endif %}
                                     {% if config.singles %}
                                         {% trans "Single Room" %}: {{ config.singles }}
@@ -123,7 +130,7 @@
         {% endif %}
     </div>
     <!-- Pagination (unchanged) -->
-    {% if tour.pricing_type == 'Per_room' and configurations|length > 1 %}
+    {% if tour.pricing_type == 'Per_room' or tour.pricing_type == 'Combined' and configurations|length > 1 %}
         <div class="text-sm text-gray-700 dark:text-gray-300">
             <span id="page-info">{% trans "Page 1 of 1" %}</span>
             <span id="total-results">{% if configurations|length == 1 %}{% trans "1 result" %}{% else %}{{ configurations|length }} {% trans "results" %}{% endif %}</span>

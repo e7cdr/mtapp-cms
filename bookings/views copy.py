@@ -224,50 +224,7 @@ paypal.configure({
     "client_secret": config('PAYPAL_CLIENT_SECRET'),
 })
 
-def get_pricing_tier(tour, number_of_adults):
-    """
-    Return the correct pricing tier for Combined pricing based on number of adults.
-    Falls back gracefully to old flat pricing if StreamField is empty.
-    """
-    from decimal import Decimal
 
-    # If no tiers defined → fall back to old flat fields (backward compatible!)
-    if not hasattr(tour, 'combined_pricing_tiers') or not tour.combined_pricing_tiers:
-        logger.debug("No combined_pricing_tiers found → using legacy flat pricing")
-        adult_price = Decimal(str(getattr(tour, 'price_adult', '0') or '0'))
-        sgl_supp = Decimal(str(getattr(tour, 'price_sgl', '0') or '0')) - adult_price
-        dbl_disc = adult_price - Decimal(str(getattr(tour, 'price_dbl', '0') or '0'))
-        tpl_disc = adult_price - Decimal(str(getattr(tour, 'price_tpl', '0') or '0'))
-        
-        return {
-            'price_adult': adult_price,
-            'sgl_supplement': sgl_supp,
-            'dbl_discount': dbl_disc,
-            'tpl_discount': tpl_disc,
-        }
-
-    # Use StreamField tiers
-    for block in tour.combined_pricing_tiers:
-        tier = block.value
-        min_pax = tier.get('min_pax', 1)
-        max_pax = tier.get('max_pax') or 99999
-        
-        if min_pax <= number_of_adults <= max_pax:
-            return {
-                'price_adult': Decimal(str(tier['price_adult'])),
-                'sgl_supplement': Decimal(str(tier['price_sgl_supplement'] or '0')),
-                'dbl_discount': Decimal(str(tier['price_dbl_discount'] or '0')),
-                'tpl_discount': Decimal(str(tier['price_tpl_discount'] or '0')),
-            }
-
-    # Fallback: use last tier if no match
-    last = tour.combined_pricing_tiers[-1].value
-    return {
-        'price_adult': Decimal(str(last['price_adult'])),
-        'sgl_supplement': Decimal(str(last.get('price_sgl_supplement') or '0')),
-        'dbl_discount': Decimal(str(last.get('price_dbl_discount') or '0')),
-        'tpl_discount': Decimal(str(last.get('price_tpl_discount') or '0')),
-    }
 
 logger = logging.getLogger(__name__)  # Assuming defined; add if needed
 
@@ -460,107 +417,113 @@ def compute_pricing(tour_type, tour_id, form_data, session):
 
     configurations = []
     children_exceed_room_limit = False
-
-    if number_of_adults == 0 and (children + infants > 0):
-        logger.warning("No adults with children/infants")
+    if number_of_adults == 0 and (children > 0 or infants > 0):
+        logger.warning("No adult provided with children or infants")
         return []
 
-    pricing_type = getattr(tour, 'pricing_type', 'Per_person')
+    if tour_type.lower() in ['land', 'full'] and tour.pricing_type == 'Per_room':
+        # Full enumeration: Nested loops for all combos (capped for performance)
+        max_rooms = number_of_adults  # Max singles = n
+        for singles in range(0, number_of_adults + 1):
+            remaining_after_singles = number_of_adults - singles
+            max_doubles = remaining_after_singles // 2
+            for doubles in range(0, max_doubles + 1):
+                remaining_after_doubles = remaining_after_singles - doubles * 2
+                max_triples = remaining_after_doubles // 3
+                for triples in range(0, max_triples + 1):
+                    remaining_after_triples = remaining_after_doubles - triples * 3
+                    if remaining_after_triples == 0:  # Exact match
+                        total_rooms = singles + doubles + triples
+                        if total_rooms == 0:
+                            continue
+                        total_children = children + infants
+                        if total_children > total_rooms * max_children_per_room:
+                            children_exceed_room_limit = True
+                            continue
 
-    # ──────────────────────────────────────────────────────
-    # 1. PER PERSON (Day tours + Land/Full with Per_person)
-    # ──────────────────────────────────────────────────────
-    if tour_type.lower() == 'day' or pricing_type == 'Per_person':
-        total_price = number_of_adults * price_adult + children * price_chd + infants * price_inf
+                        total_price = (
+                            (singles * price_sgl) +
+                            (doubles * price_dbl) +
+                            (triples * price_tpl) +
+                            (children * price_chd) +
+                            (infants * price_inf)
+                        )
+                        total_price *= seasonal_factor * price_adjustment * exchange_rate
+                        rounded_price = total_price.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+                        config = {
+                            'singles': singles,
+                            'doubles': doubles,
+                            'triples': triples,
+                            'children': children,
+                            'infants': infants,
+                            'child_ages': child_ages,
+                            'total_price': float(rounded_price),
+                            'currency': currency,
+                            'total_rooms': total_rooms
+                        }
+                        configurations.append(config)
+                        logger.debug(f"Generated config: {config}")
+
+        # Dedupe and sort
+        unique_configs = []
+        seen = set()
+        for config in configurations:
+            key = (config['singles'], config['doubles'], config['triples'], config['children'], config['infants'])
+            if key not in seen:
+                seen.add(key)
+                unique_configs.append(config)
+        configurations = sorted(unique_configs, key=lambda x: x['total_price'])
+        if configurations:
+            configurations[0]['cheapest'] = True
+        logger.debug(f"Final configurations: {configurations}")
+
+    elif tour_type.lower() in ['land', 'full'] and tour.pricing_type == 'per_person':
+        total_price = (
+            (number_of_adults * price_adult) +
+            (children * price_chd) +
+            (infants * price_inf)
+        )
         total_price *= seasonal_factor * price_adjustment * exchange_rate
         rounded_price = total_price.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
         configurations = [{
-            'singles': 0, 'doubles': 0, 'triples': 0,
-            'total_rooms': 0,
+            'singles': 0,
+            'doubles': 0,
+            'triples': 0,
             'children': children,
             'infants': infants,
             'child_ages': child_ages,
             'total_price': float(rounded_price),
             'currency': currency,
-            'cheapest': True,
-            'pricing_type': 'Per Person'
+            'total_rooms': 0,
+            'cheapest': True
         }]
-        return configurations
+        logger.debug(f"Per-person config for {tour_type}: {configurations[0]}")
 
-    # ──────────────────────────────────────────────────────
-    # 2. PER ROOM & COMBINED — same room loop, different math
-    # ──────────────────────────────────────────────────────
-    seen = set()
+    else:
+        total_price = (
+            (number_of_adults * price_adult) +
+            (children * price_chd) +
+            (infants * price_inf)
+        )
+        total_price *= seasonal_factor * price_adjustment * exchange_rate
+        rounded_price = total_price.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
-    for singles in range(number_of_adults + 1):
-        rem = number_of_adults - singles
-        for doubles in range((rem // 2) + 1):
-            rem2 = rem - doubles * 2
-            for triples in range((rem2 // 3) + 1):
-                if rem2 - triples * 3 != 0:
-                    continue
+        configurations = [{
+            'singles': 0,
+            'doubles': 0,
+            'triples': 0,
+            'children': children,
+            'infants': infants,
+            'child_ages': child_ages,
+            'total_price': float(rounded_price),
+            'currency': currency,
+            'total_rooms': 0,
+            'cheapest': True
+        }]
+        logger.debug(f"DayTour config: {configurations[0]}")
 
-                total_rooms = singles + doubles + triples
-                if total_rooms == 0:
-                    continue
-
-                if (children + infants) > total_rooms * max_children_per_room:
-                    children_exceed_room_limit = True
-                    continue
-
-                # ───── PRICE CALCULATION ─────
-                if pricing_type == 'Per_room':
-                    base_price = (
-                        singles * price_sgl +
-                        doubles * price_dbl +
-                        triples * price_tpl
-                    )
-                elif pricing_type == 'Combined':
-                    # ───── NEW: TIERED COMBINED PRICING ─────
-                    tier = get_pricing_tier(tour, number_of_adults)
-                    
-                    base_price = number_of_adults * tier['price_adult']
-                    
-                    supplement = (
-                        singles * tier['sgl_supplement'] +
-                        doubles * tier['dbl_discount'] * -1 +   # discount = negative
-                        triples * tier['tpl_discount'] * -1
-                    )
-                    base_price += supplement
-                else:
-                    continue  # safety
-
-                total_price = base_price + children * price_chd + infants * price_inf
-                total_price *= seasonal_factor * price_adjustment * exchange_rate
-                rounded = total_price.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-
-                key = (singles, doubles, triples)
-                if key in seen:
-                    continue
-                seen.add(key)
-
-                configurations.append({
-                    'singles': singles,
-                    'doubles': doubles,
-                    'triples': triples,
-                    'total_rooms': total_rooms,
-                    'children': children,
-                    'infants': infants,
-                    'child_ages': child_ages,
-                    'total_price': float(rounded),
-                    'currency': currency,
-                    'cheapest': False,
-                    'pricing_type': pricing_type.replace('_', ' ').title()
-                })
-
-    configurations.sort(key=lambda x: x['total_price'])
-    if configurations:
-        configurations[0]['cheapest'] = True
-
-    if not configurations and children_exceed_room_limit:
-        configurations = [{'error': 'Too many children for available rooms', 'total_price': 0}]
-
+    logger.info(f"Generated configurations for {tour_type}/{tour_id}: {len(configurations)} items")
     return configurations
 
 class PaymentView(TemplateView):
@@ -802,10 +765,7 @@ def render_pricing(request, tour_type, tour_id):
         'number_of_infants': infants,
         'child_ages': child_ages,
         'number_of_children': number_of_children
-        
     }
-    context['room_based_pricing'] = tour.pricing_type in ['Per_room', 'Combined']
-    context['is_room_based'] = tour.pricing_type in ('Per_room', 'Combined')
     response_content = render_to_string('bookings/partials/pricing_options.html', context, request=request)
     logger.debug(f"Rendered pricing_options.html with context: {context}")
     return HttpResponse(response_content, content_type='text/html')

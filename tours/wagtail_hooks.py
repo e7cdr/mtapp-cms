@@ -12,71 +12,60 @@ from wagtail import hooks
 # def register_test_url():
 #     return ('test-hook', 'tours.views.test_hook', 'test-hook')
 
-# The star: JS injection
+
 @hooks.register('insert_editor_js')
-def editor_js():
-    return format_html("""
-        <script>
-            console.log('{{ }}🎉 Wagtail Editor JS INJECTED');
-            $(document).ready(function() {{
-                console.log('{{ }}📋 jQuery Ready - Hunting panels...');
-                
-                setTimeout(function() {{
-                    const selectWrapper = $('.pricing-type-selector');
-                    const selectEl = selectWrapper.find('select')[0];
-                    const roomPanel = $('.per-room-panel')[0];
-                    const personPanel = $('.per-person-panel')[0];
-                    
-                    console.log('{{ }}🔍 Pricing wrapper:', !!selectWrapper.length);
-                    console.log('{{ }}🔍 Select:', !!selectEl);
-                    console.log('{{ }}🔍 Per Room panel:', !!roomPanel);
-                    console.log('{{ }}🔍 Per Person panel:', !!personPanel);
-                    
-                    if (selectEl && roomPanel && personPanel) {{
-                        console.log('{{ }}✅ Locked & loaded - Toggle time!');
-                        
-                        function togglePanels(isInitial) {{
-                            const val = selectEl.value;
-                            console.log('{{ }}🔄 Toggle: Value = "{{ }}' + val + '{{ }}" (initial: ' + isInitial + ')');
-                            
-                            if (val === 'Per_room') {{
-                                // Clear/hide Per Person (inactive)
-                                $(personPanel).find('input, select, textarea').val('').end().hide().find('input, select, textarea, .field').prop('disabled', true);
-                                console.log('{{ }}👥 Per Person: CLEAR & HIDE (inactive)');
-                                
-                                // Show/enable Per Room (active - no clear!)
-                                $(roomPanel).show().find('input, select, textarea, .field').prop('disabled', false);
-                                console.log('{{ }}🛏️ Per Room: SHOW & ENABLE (active)');
-                            }} else if (val === 'Per_person') {{
-                                // Clear/hide Per Room (inactive)
-                                $(roomPanel).find('input, select, textarea').val('').end().hide().find('input, select, textarea, .field').prop('disabled', true);
-                                console.log('{{ }}🛏️ Per Room: CLEAR & HIDE (inactive)');
-                                
-                                // Show/enable Per Person (active - no clear!)
-                                $(personPanel).show().find('input, select, textarea, .field').prop('disabled', false);
-                                console.log('{{ }}👥 Per Person: SHOW & ENABLE (active)');
-                            }} else {{
-                                console.log('{{ }}⚠️ Unknown: Both hidden');
-                                $(roomPanel).hide().find('input, select, textarea, .field').prop('disabled', true);
-                                $(personPanel).hide().find('input, select, textarea, .field').prop('disabled', true);
-                            }}
-                            
-                            if (!isInitial) {{
-                                console.log('{{ }}💾 Values cleared on change - Save to persist');
-                            }}
-                        }}
-                        
-                        // Initial: No clear (preserve existing values)
-                        togglePanels(true);
-                        
-                        // On change: Clear inactive
-                        $(selectEl).on('change', function() {{ togglePanels(false); }});
-                        
-                        console.log('{{ }}🎯 Toggle bound! Enter prices, toggle, save to test.');
-                    }} else {{
-                        console.error('{{ }}❌ Missing elements - Verify classnames');
-                    }}
-                }}, 1500);
-            }});
-        </script>
-    """)
+def pricing_type_panel_controller():
+    js = """<script>
+        document.addEventListener('DOMContentLoaded', function () {
+            function init() {
+                const select = document.querySelector('.pricing-type-selector select');
+                const roomPanel = document.querySelector('.per-room-panel');
+                const personPanel = document.querySelector('.per-person-panel');
+                const combinedPanel = document.querySelector('.combined-pricing-panel');  // ← NEW
+
+                if (!select) {
+                    setTimeout(init, 100);
+                    return;
+                }
+
+                function toggle() {
+                    const val = select.value;
+
+                    // Reset all
+                    [roomPanel, personPanel, combinedPanel].forEach(p => {
+                        if (p) {
+                            p.style.display = 'none';
+                            p.querySelectorAll('input, select, textarea, button').forEach(el => {
+                                el.disabled = true;
+                            });
+                        }
+                    });
+
+                    if (val === 'Per_room' && roomPanel) {
+                        roomPanel.style.display = 'block';
+                        roomPanel.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = false);
+
+                    } else if (val === 'Per_person' && personPanel) {
+                        personPanel.style.display = 'block';
+                        personPanel.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = false);
+
+                    } else if (val === 'Combined' && combinedPanel) {
+                        combinedPanel.style.display = 'block';
+                        combinedPanel.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = false);
+                    }
+                }
+
+                toggle();
+                select.addEventListener('change', toggle);
+            }
+
+            init();
+
+            // Re-init when Wagtail dynamically adds panels
+            document.addEventListener('wagtail:panel-init', init);
+        });
+    </script>"""
+
+    # Escape { and } for format_html
+    safe_js = js.replace('{', '{{').replace('}', '}}')
+    return format_html(safe_js)
