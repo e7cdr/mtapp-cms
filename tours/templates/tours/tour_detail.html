@@ -1,6 +1,6 @@
-{% extends 'base.html' %} {% load static i18n tour_filters custom_filters wagtailcore_tags wagtailimages_tags%}
+{% extends "base.html" %} {% load static i18n tour_filters custom_filters wagtailcore_tags wagtailimages_tags %}
 {% block title %}{{ self.title }}
-{% endblock %}
+{% endblock title %}
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/detail_page.css' %}" />
 <body>
@@ -8,16 +8,16 @@
   <div class="cover-image-container">
    <div class="cover-image">
     {% image self.cover_image original as img %}
-    <img src="{{img.url}}" alt="Tour cover image" loading="lazy" />
+    <img src="{{ img.url }}" alt="Tour cover image" loading="lazy" height="" width="" />
    </div>
    <div class="cover-text">
-    <h1>{{self.name}}</h1>
+    <h1>{{ self.name }}</h1>
     <h2 class="cover-text-duration">
-     {% if self.duration_days > 1 %}{{self.duration_days}} days,{% else %}{{self.duration_days}} day {% endif %}
-     {% if not self.duration_days == 1 %}{{self.nights}} nights
+     {% if self.duration_days > 1 %}{{ self.duration_days }} days,{% else %}{{ self.duration_days }} day {% endif %}
+     {% if not self.duration_days == 1 %}{{ self.nights }} nights
      {% endif %}
     </h2>
-    <a href="{{self.yt_vid}}" class="book-button conic-gradient-animation">Tour Video</a>
+    <a href="{{ self.yt_vid }}" class="book-button conic-gradient-animation">Tour Video</a>
     {% comment %}
     <div class="tour-itinerary">View PDF Itinerary</div>
     {% endcomment %}
@@ -80,7 +80,7 @@
           >Additional Notes</a
          >
         </li>
-
+        {% if not self.pricing_table == False %}
         <li class="nav-item" role="presentation">
          <a
           class="nav-link"
@@ -93,6 +93,7 @@
           >Pricing &amp; Details</a
          >
         </li>
+        {% endif %}
         <li class="nav-item" role="presentation">
          <a
           class="nav-link"
@@ -114,11 +115,11 @@
         {% for block in page.description_content %}
         {% include_block block %}
         {% endfor %}
-        <p id="tour-id">{{self.description|richtext}}</p>
-        <p><strong>Destination:</strong> {{self.destination}}</p>
-        <p><strong>Hotel:</strong> {{self.hotel}}</p>
-        <p><strong>Dates:</strong> {{self.start_date}} - {{self.end_date}}</p>
-        <p>{{self.no_inclusions|richtext}}</p>
+        <p id="tour-id">{{ self.description|richtext }}</p>
+        <p><strong>Destination:</strong> {{ self.destination }}</p>
+        <p><strong>Hotel:</strong> {{ self.hotel }}</p>
+        <p><strong>Dates:</strong> {{ self.start_date }} - {{ self.end_date }}</p>
+        <p>{{ self.no_inclusions|richtext }}</p>
 
       <!-- Amenities -->
        {% if self.amenity %}
@@ -137,7 +138,7 @@
     </div>
         <!-- Optional Activities -->
         <div class="tab-pane fade hidden" id="notes" role="tabpanel" aria-labelledby="notes-tab">
-        <p>{{self.additional_notes|richtext}}</p>
+        <p>{{ self.additional_notes|richtext }}</p>
         </div>
 
       <!-- Itinerary -->
@@ -180,11 +181,9 @@
       </div>
 
        <!-- Flight Details -->
-
+        {% if not self.pricing_table == False %}
         <!-- Pricing & Details -->
             <div class="tab-pane fade hidden" id="pricing" role="tabpanel" aria-labelledby="pricing-tab">
-                <h2 class="text-3xl font-bold text-gray-800 mb-6">Pricing & Details</h2>
-
             {% if self.show_prices_in_table %}
                     <!-- Custom RichText Message -->
                     <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-8 text-center shadow-lg">
@@ -354,6 +353,7 @@
             </div>
         {% endif %}
     </div>
+    {% endif %}
        <!-- Cancellation Policies -->
        <div class="tab-pane fade hidden" id="cxl-policy" role="tabpanel" aria-labelledby="cxl-policy-tab">
         {% if self.cxl_policies %}
@@ -372,4 +372,4 @@
 </body>
 
 <script src="{% static 'js/tour_detail.js' %}"></script>
-{% endblock %}
+{% endblock content %}

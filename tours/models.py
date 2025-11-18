@@ -170,6 +170,7 @@ class AbstractTourPage(Page):
     max_children_per_room = models.PositiveIntegerField(default=1, null=True, blank=True)
     child_age_min = models.PositiveIntegerField(default=7, verbose_name="Child Minimum Age")
     child_age_max = models.PositiveIntegerField(default=12, verbose_name="Child Maximum Age")
+    pricing_table = models.BooleanField(verbose_name="Enable Pricing Table in Tour Details", default=False)
     show_prices_in_table = RichTextField(
         blank=True,
         null=True,
@@ -267,8 +268,6 @@ class AbstractTourPage(Page):
             FieldPanel('end_date'),
             FieldPanel('available_days'),
             FieldPanel('blackout_entries'),
-            FieldPanel('child_age_min'),
-            FieldPanel('child_age_max'),
         ], heading="Tour Configuration", classname="collapsible collapsed"),
 
         # ─── CURRENT STATE ───
@@ -281,6 +280,7 @@ class AbstractTourPage(Page):
 
         # ─── PRICING CONFIGURATION (THE BIG ONE) ───
         MultiFieldPanel([
+            FieldPanel('pricing_table'),
             FieldPanel('show_prices_in_table'),
             FieldPanel('button_text'),
             FieldPanel('button_link'),
@@ -309,6 +309,8 @@ class AbstractTourPage(Page):
 
             # Shared Settings
             MultiFieldPanel([
+                FieldPanel('child_age_min'),
+                FieldPanel('child_age_max'),
                 FieldPanel('max_children_per_room'),
                 FieldPanel('price_subtext'),
                 FieldPanel('seasonal_factor'),
