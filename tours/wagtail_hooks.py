@@ -14,44 +14,41 @@ from wagtail import hooks
 
 
 @hooks.register('insert_editor_js')
-def pricing_type_panel_controller():
-    js = """<script>
+def pricing_and_infant_controller():
+    js = """
+    <script>
         document.addEventListener('DOMContentLoaded', function () {
-            function init() {
-                const select = document.querySelector('.pricing-type-selector select');
+            console.log('FINAL VERSION LOADED');
+
+            // 1. PRICING TYPE TOGGLER — already working
+            function initPricingToggle() {
+                const select = document.querySelector('select[name="pricing_type"]');
+                if (!select) return;
+
                 const roomPanel = document.querySelector('.per-room-panel');
                 const personPanel = document.querySelector('.per-person-panel');
-                const combinedPanel = document.querySelector('.combined-pricing-panel');  // ← NEW
-
-                if (!select) {
-                    setTimeout(init, 100);
-                    return;
-                }
+                const combinedPanel = document.querySelector('.combined-pricing-panel');
 
                 function toggle() {
                     const val = select.value;
-
-                    // Reset all
                     [roomPanel, personPanel, combinedPanel].forEach(p => {
                         if (p) {
                             p.style.display = 'none';
-                            p.querySelectorAll('input, select, textarea, button').forEach(el => {
-                                el.disabled = true;
-                            });
+                            p.querySelectorAll('input, select, textarea').forEach(el => el.disabled = true);
                         }
                     });
 
                     if (val === 'Per_room' && roomPanel) {
                         roomPanel.style.display = 'block';
-                        roomPanel.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = false);
-
-                    } else if (val === 'Per_person' && personPanel) {
+                        roomPanel.querySelectorAll('input, select, textarea').forEach(el => el.disabled = false);
+                    }
+                    if (val === 'Per_person' && personPanel) {
                         personPanel.style.display = 'block';
-                        personPanel.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = false);
-
-                    } else if (val === 'Combined' && combinedPanel) {
+                        personPanel.querySelectorAll('input, select, textarea').forEach(el => el.disabled = false);
+                    }
+                    if (val === 'Combined' && combinedPanel) {
                         combinedPanel.style.display = 'block';
-                        combinedPanel.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = false);
+                        combinedPanel.querySelectorAll('input, select, textarea').forEach(el => el.disabled = false);
                     }
                 }
 
@@ -59,13 +56,57 @@ def pricing_type_panel_controller():
                 select.addEventListener('change', toggle);
             }
 
-            init();
+            // 2. INFANT FIELDS — THIS WORKS IN WAGTAIL 6+
+            function updateInfantFields(block) {
+                const typeSelect = block.querySelector('select[id*="infant_price_type"]');
+                if (!typeSelect) return;
 
-            // Re-init when Wagtail dynamically adds panels
-            document.addEventListener('wagtail:panel-init', init);
+                // WAGTAIL 6+ USES data-field-name
+                const percentField = block.querySelector('[data-field-name="infant_percent_of_adult"]')?.closest('.w-field');
+                const fixedField   = block.querySelector('[data-field-name="infant_fixed_amount"]')?.closest('.w-field');
+
+                function toggle() {
+                    const val = typeSelect.value;
+
+                    if (percentField) percentField.style.display = 'none';
+                    if (fixedField) fixedField.style.display = 'none';
+
+                    if (val === 'percent' && percentField) percentField.style.display = 'block';
+                    if (val === 'fixed' && fixedField) fixedField.style.display = 'block';
+                }
+
+                toggle();
+                typeSelect.addEventListener('change', toggle);
+            }
+
+            function scanBlocks() {
+                document.querySelectorAll('.struct-block').forEach(block => {
+                    if (block.querySelector('select[id*="infant_price_type"]')) {
+                        updateInfantFields(block);
+                    }
+                });
+            }
+
+            // Run everything
+            initPricingToggle();
+            scanBlocks();
+
+            // Watch for new blocks
+            const observer = new MutationObserver(() => {
+                setTimeout(scanBlocks, 50);
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
         });
-    </script>"""
+    </script>
+    """
+    return format_html(js.replace('{', '{{').replace('}', '}}'))
 
-    # Escape { and } for format_html
-    safe_js = js.replace('{', '{{').replace('}', '}}')
-    return format_html(safe_js)
+@hooks.register('insert_editor_css')
+def pricing_admin_css():
+    return format_html(
+        '<style>'
+        '.per-room-panel, .per-person-panel, .combined-pricing-panel { transition: opacity 0.3s; }'
+        '.per-room-panel[style*="none"], .per-person-panel[style*="none"], .combined-pricing-panel[style*="none"] { opacity: 0.6; }'
+        '</style>'
+    )
+

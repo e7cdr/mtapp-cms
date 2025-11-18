@@ -168,8 +168,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 const price = config.total_price;
                 let roomMatch = true;
-                if (roomTypes.length > 0 && pricingType === 'Per_room') {
-                    roomMatch = roomTypes.some(type =>
+                if (roomTypes.length > 0 && (pricingType === 'Per_room' || pricingType === 'Combined')) {                    roomMatch = roomTypes.some(type =>
                         (type === 'singles' && config.singles > 0) ||
                         (type === 'doubles' && config.doubles > 0) ||
                         (type === 'triples' && config.triples > 0)

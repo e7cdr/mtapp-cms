@@ -29,7 +29,6 @@ from wagtail.blocks import (
     ChoiceBlock, 
     IntegerBlock, 
     DateBlock,
-    DecimalBlock
 )
 from wagtail.contrib.routable_page.models import RoutablePageMixin, path
 
@@ -225,17 +224,17 @@ class AbstractTourPage(Page):
         """,
     )
 
-    # Shared panels (extend in children)
-    content_panels = Page.content_panels + [
-
+        # Shared panels (extend in children)
+    content_panels = list(Page.content_panels) + [
+        # ─── BASIC INFO ───
         MultiFieldPanel([
-            MultiFieldPanel([
-                FieldPanel('name'),
-                FieldPanel('description'),
-                FieldPanel('description_content'),
-                FieldPanel('destination'),
-                FieldPanel('location'),
-            ], heading="Basic Info"),
+            FieldPanel('code_id', read_only=True),
+            FieldPanel('ref_code'),
+            FieldPanel('name'),
+            FieldPanel('description'),
+            FieldPanel('description_content'),
+            FieldPanel('destination'),
+            FieldPanel('location'),
             FieldPanel('hotel'),
             FieldPanel('courtesies'),
             FieldPanel('amenity'),
@@ -244,18 +243,15 @@ class AbstractTourPage(Page):
             FieldPanel('cxl_policies'),
             FieldPanel('supplier_email'),
             FieldPanel('is_company_tour'),
-            # FieldPanel('cover_page_content'),
-            # FieldPanel('general_info'),
-            # FieldPanel('final_message'),
-        ], heading="Content Fields"),
+        ], heading="Content & Basic Info", classname="collapsible collapsed"),
+
+        # ─── MEDIA ───
         MultiFieldPanel([
-            # FieldPanel('image'),
             FieldPanel('cover_image'),
-            # FieldPanel('logo_image'),
-            # FieldPanel('pdf_file'),
-            # FieldPanel('pdf_images'),
             FieldPanel('yt_vid'),
-        ], heading="Media"),
+        ], heading="Media", classname="collapsible collapsed"),
+
+        # ─── TOUR CONFIG ───
         MultiFieldPanel([
             FieldPanel('max_capacity'),
             FieldPanel('available_slots'),
@@ -266,40 +262,53 @@ class AbstractTourPage(Page):
             FieldPanel('blackout_entries'),
             FieldPanel('child_age_min'),
             FieldPanel('child_age_max'),
-        ], heading="Tour Configuration"),
+        ], heading="Tour Configuration", classname="collapsible collapsed"),
+
+        # ─── CURRENT STATE ───
         MultiFieldPanel([
             FieldPanel('is_on_discount'),
             FieldPanel('is_special_offer'),
             FieldPanel('is_all_inclusive'),
             FieldPanel('is_sold_out'),
-        ], heading="Tour Current State"),
-            MultiFieldPanel([
+        ], heading="Tour Status", classname="collapsible collapsed"),
+
+        # ─── PRICING CONFIGURATION (THE BIG ONE) ───
+        MultiFieldPanel([
             FieldPanel('pricing_type', classname='pricing-type-selector'),
+
+            # Per-Room Pricing
             MultiFieldPanel([
                 FieldPanel('price_sgl'),
                 FieldPanel('price_dbl'),
                 FieldPanel('price_tpl'),
-            ], heading="Room Pricing (SGL/DBL/TPL)", classname="per-room-panel collapsible collapsed"),
-            MultiFieldPanel([
-                FieldPanel('combined_pricing_tiers'),
-            ], classname="combined-pricing-panel collapsible collapsed"),
+                FieldPanel('price_chd'),
+                FieldPanel('price_inf'),
+            ], heading="Per-Room Pricing", classname="per-room-panel collapsible collapsed"),
 
+            # Per-Person Pricing
             MultiFieldPanel([
                 FieldPanel('price_adult'),
                 FieldPanel('price_chd'),
                 FieldPanel('price_inf'),
-            ], heading="Per-Person Pricing (Adult/Child/hild/Infant)", classname="per-person-panel collapsible collapsed"),
-                MultiFieldPanel([
-                    FieldPanel('max_children_per_room'),
-                    FieldPanel('price_subtext'),
-                    FieldPanel('seasonal_factor'),
-                    FieldPanel('demand_factor'),
-                    FieldPanel('rep_comm'),
-                ], heading="Commissions and Factors"),
-            ], heading="Pricing Configuration", classname="collapsible"),
-        FieldPanel('ref_code'),
-        FieldPanel('code_id', read_only=True),
+            ], heading="Per-Person Pricing", classname="per-person-panel collapsible collapsed"),
+
+            # Combined Tiered Pricing
+            MultiFieldPanel([
+                FieldPanel('combined_pricing_tiers'),
+            ], heading="Read carefully.", classname="combined-pricing-panel collapsible collapsed"),
+
+            # Shared Settings
+            MultiFieldPanel([
+                FieldPanel('max_children_per_room'),
+                FieldPanel('price_subtext'),
+                FieldPanel('seasonal_factor'),
+                FieldPanel('demand_factor'),
+                FieldPanel('rep_comm'),
+            ], heading="Additional Pricing Settings", classname="collapsible collapsed"),
+
+        ], heading="Pricing Configuration", classname="collapsible"),
     ]
+    
 
 
     template = "tours/tour_detail.html"
@@ -662,7 +671,6 @@ class LandTourPage(AbstractTourPage): # Land Tour Details
     content_panels = AbstractTourPage.content_panels + [
         FieldPanel('duration_days'),
         FieldPanel('nights'),
-
     ]
 
 

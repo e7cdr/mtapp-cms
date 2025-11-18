@@ -2,7 +2,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/pricing_options.css' %}">
-{% endblock %}
+{% endblock extra_css %}
 
 <div class="pricing-table" data-configurations="{{ configurations|json_escape }}" data-pricing-type="{{ tour.pricing_type }}" data-current-page="1">
     <div class="title">{% trans "Pricing Options" %}</div>
@@ -53,9 +53,9 @@
                     {% trans "Price Range" %} ({{ currency|default:"USD" }})
                 </label>
                 <div class="flex items-center gap-2">
-                    <input type="number" id="filter-price-min" class="ranges" placeholder="{% trans 'Min' %}" min="0">
+                    <input type="number" id="filter-price-min" class="ranges" placeholder='{% trans "Min" %}' min="0">
                     <span class="text-gray-900">–</span>
-                    <input type="number" id="filter-price-max" class="ranges" placeholder="{% trans 'Max' %}" min="0">
+                    <input type="number" id="filter-price-max" class="ranges" placeholder='{% trans "Max" %}' min="0">
                 </div>
             </div>
         </div>
@@ -68,8 +68,7 @@
     <div id="configurations-container" class="space-y-3">
         {% if configurations %}
             {% for config in configurations %}
-                <label class="configuration-item block p-3 m-2 border rounded-lg bg-white dark:bg-gray-800 shadow-xs
-                                transition-all duration-200 hover:shadow-sm hover:scale-102
+                <label class="configuration-item block p-3 m-2 border rounded-lg bg-white dark:bg-gray-800 shadow-xs transition-all duration-200 hover:shadow-sm hover:scale-102
                                 {% if config.cheapest %}border-green-600 dark:border-green-500{% else %}border-gray-200 dark:border-gray-700{% endif %}
                                 has-[:checked]:bg-yellow-50 has-[:checked]:border-yellow-400 has-[:checked]:shadow-sm"
                         data-bs-toggle="tooltip" data-bs-placement="top"
@@ -78,8 +77,8 @@
                         data-triples="{{ config.triples|default:0 }}"
                         data-price="{{ config.total_price|floatformat:2 }}"
                         data-currency="{{ config.currency|default:currency|default:'USD' }}"
-                        aria-label="{% trans 'Select configuration with total price' %} {{ config.total_price|floatformat:2 }} {{ config.currency|default:currency|default:'USD' }}"
-                        data-bs-original-title="{% if config.singles %}{% trans 'Single Room' %}: {{ config.singles }}. {% endif %}{% if config.doubles %}{% trans 'Double Room' %}: {{ config.doubles }}. {% endif %}{% if config.triples %}{% trans 'Triple Room' %}: {{ config.triples }}. {% endif %}{% trans 'Total' %}: {{ config.total_price|floatformat:2 }} {{ config.currency|default:currency|default:'USD' }}">
+                        aria-label='{% trans "Select configuration with total price" %} {{ config.total_price|floatformat:2 }} {{ config.currency|default:currency|default:"USD" }}'
+                        data-bs-original-title='{% if config.singles %}{% trans "Single Room" %}: {{ config.singles }}. {% endif %}{% if config.doubles %}{% trans "Double Room" %}: {{ config.doubles }}. {% endif %}{% if config.triples %}{% trans "Triple Room" %}: {{ config.triples }}. {% endif %} {% trans "Total" %}: {{ config.total_price|floatformat:2 }} {{ config.currency|default:currency|default:"USD" }}'>
                     <div class="flex items-center gap-3">
                         <input type="radio" name="configuration" value="{{ forloop.counter0 }}" class="w-4 h-4 text-yellow-400 focus:ring-yellow-400" {% if config.cheapest %}checked{% endif %} onchange="window.updateSelectedConfiguration()">
                         <div class="flex-1">
@@ -109,16 +108,22 @@
                                     {% endif %}
                                 {% endif %}
                             </p>
-                            <div class="flex items-center gap-2 mt-1">
-                                <p class="text-sm font-medium text-black dark:text-gray-300">
-                                    {% trans "Total Price" %}: {{ config.total_price|floatformat:2 }} {{ config.currency|default:currency|default:"USD" }}
-                                </p>
-                                {% if config.cheapest %}
-                                    <span class="inline-flex items-center px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded-full">
-                                        {% trans "Cheapest" %}
-                                    </span>
-                                {% endif %}
-                            </div>
+                        <div class="flex items-center gap-2 mt-1">
+                        {% if config.error %}
+                            <p class="text-sm font-medium text-red-600">
+                                {{ config.error }}
+                            </p>
+                        {% else %}
+                            <p class="text-sm font-medium text-black">
+                                Total Price: {{ config.total_price|floatformat:2 }} {{ config.currency|default:"USD" }}
+                            </p>
+                            {% if config.cheapest %}
+                                <span class="inline-flex items-center px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded-full">
+                                    Cheapest
+                                </span>
+                            {% endif %}
+                        {% endif %}
+                    </div>
                         </div>
                     </div>
                 </label>
@@ -136,4 +141,3 @@
             <span id="total-results">{% if configurations|length == 1 %}{% trans "1 result" %}{% else %}{{ configurations|length }} {% trans "results" %}{% endif %}</span>
         </div>
     {% endif %}
-</div>

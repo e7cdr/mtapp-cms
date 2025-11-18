@@ -246,7 +246,6 @@ def get_pricing_tier(tour, number_of_adults):
             'tpl_discount': tpl_disc,
         }
 
-    # Use StreamField tiers
     for block in tour.combined_pricing_tiers:
         tier = block.value
         min_pax = tier.get('min_pax', 1)
@@ -258,18 +257,28 @@ def get_pricing_tier(tour, number_of_adults):
                 'sgl_supplement': Decimal(str(tier['price_sgl_supplement'] or '0')),
                 'dbl_discount': Decimal(str(tier['price_dbl_discount'] or '0')),
                 'tpl_discount': Decimal(str(tier['price_tpl_discount'] or '0')),
+                'child_percent': Decimal(str(tier['child_price_percent'] or '60')) / 100,
+
+                # INFANT LOGIC — FULLY FLEXIBLE
+                'infant_price_type': tier.get('infant_price_type', 'free'),
+                'infant_percent_of_adult': Decimal(str(tier.get('infant_percent_of_adult') or '10')) / 100,
+                'infant_fixed_amount': Decimal(str(tier.get('infant_fixed_amount') or '0')),
             }
 
     # Fallback: use last tier if no match
     last = tour.combined_pricing_tiers[-1].value
     return {
-        'price_adult': Decimal(str(last['price_adult'])),
-        'sgl_supplement': Decimal(str(last.get('price_sgl_supplement') or '0')),
-        'dbl_discount': Decimal(str(last.get('price_dbl_discount') or '0')),
-        'tpl_discount': Decimal(str(last.get('price_tpl_discount') or '0')),
-    }
+        'price_adult': Decimal(str(tier['price_adult'])),
+        'sgl_supplement': Decimal(str(tier['price_sgl_supplement'] or '0')),
+        'dbl_discount': Decimal(str(tier['price_dbl_discount'] or '0')),
+        'tpl_discount': Decimal(str(tier['price_tpl_discount'] or '0')),
+        'child_percent': Decimal(str(tier['child_price_percent'] or '60')) / 100,
 
-logger = logging.getLogger(__name__)  # Assuming defined; add if needed
+        # INFANT LOGIC — FULLY FLEXIBLE
+        'infant_price_type': tier.get('infant_price_type', 'free'),
+        'infant_percent_of_adult': Decimal(str(tier.get('infant_percent_of_adult') or '10')) / 100,
+        'infant_fixed_amount': Decimal(str(tier.get('infant_fixed_amount') or '0')),
+    }
 
 def compute_pricing(tour_type, tour_id, form_data, session):
     logger.debug(f"compute_pricing inputs: form_data={form_data}, tour_type={tour_type}, tour_id={tour_id}")
@@ -492,6 +501,8 @@ def compute_pricing(tour_type, tour_id, form_data, session):
     # 2. PER ROOM & COMBINED — same room loop, different math
     # ──────────────────────────────────────────────────────
     seen = set()
+    configurations = []
+    children_exceed_room_limit = False
 
     for singles in range(number_of_adults + 1):
         rem = number_of_adults - singles
@@ -505,6 +516,7 @@ def compute_pricing(tour_type, tour_id, form_data, session):
                 if total_rooms == 0:
                     continue
 
+                # Check max children per room rule
                 if (children + infants) > total_rooms * max_children_per_room:
                     children_exceed_room_limit = True
                     continue
@@ -516,24 +528,49 @@ def compute_pricing(tour_type, tour_id, form_data, session):
                         doubles * price_dbl +
                         triples * price_tpl
                     )
+                    total_price = base_price + children * price_chd + infants * price_inf
+
                 elif pricing_type == 'Combined':
+                    # Get the correct tier for this number of adults
                     tier = get_pricing_tier(tour, number_of_adults)
-                    
-                    base_price = number_of_adults * tier['price_adult']
-                    
+
+                    # Adult base price
+                    adult_base = number_of_adults * tier['price_adult']
+
+                    # Room sharing supplements/discounts (per person!)
                     supplement = (
                         singles * tier['sgl_supplement'] +
-                        (doubles * 2) * (-tier['dbl_discount']) +   # ← FIXED: 2 people per double
-                        (triples * 3) * (-tier['tpl_discount'])    # ← FIXED: 3 people per triple
+                        (doubles * 2) * (-tier['dbl_discount']) +   # 2 people in double
+                        (triples * 3) * (-tier['tpl_discount'])    # 3 people in triple
                     )
-                    base_price += supplement
+
+                    adults_total = adult_base + supplement
+
+                    # CHILD PRICE — % of adult base
+                    child_price = tier['price_adult'] * tier['child_percent']
+
+                    # INFANT PRICE — FULLY FLEXIBLE
+                    infant_price_type = tier['infant_price_type']
+                    if infant_price_type == 'free':
+                        infant_price = Decimal('0')
+                    elif infant_price_type == 'percent':
+                        infant_price = tier['price_adult'] * tier['infant_percent_of_adult']
+                    elif infant_price_type == 'fixed':
+                        infant_price = tier['infant_fixed_amount']
+                    else:
+                        infant_price = Decimal('0')  # safety
+
+                    # FINAL PRICE BEFORE ADJUSTMENTS
+                    total_price = adults_total + (children * child_price) + (infants * infant_price)
+
                 else:
-                    continue  # safety
+                    continue  # unknown pricing type
 
-                total_price = base_price + children * price_chd + infants * price_inf
+                # Apply seasonal, demand, and currency factors
                 total_price *= seasonal_factor * price_adjustment * exchange_rate
-                rounded = total_price.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+                rounded_price = total_price.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
+                # Avoid duplicate room combos
                 key = (singles, doubles, triples)
                 if key in seen:
                     continue
@@ -547,18 +584,29 @@ def compute_pricing(tour_type, tour_id, form_data, session):
                     'children': children,
                     'infants': infants,
                     'child_ages': child_ages,
-                    'total_price': float(rounded),
+                    'total_price': float(rounded_price),
                     'currency': currency,
                     'cheapest': False,
-                    'pricing_type': pricing_type.replace('_', ' ').title()
+                    'pricing_type': 'Combined',
                 })
 
-    configurations.sort(key=lambda x: x['total_price'])
+    # Sort and mark cheapest
     if configurations:
+        configurations.sort(key=lambda x: x['total_price'])
         configurations[0]['cheapest'] = True
-
-    if not configurations and children_exceed_room_limit:
-        configurations = [{'error': 'Too many children for available rooms', 'total_price': 0}]
+    else:
+        # ONLY if children exceed room limit → show clear message
+        if children_exceed_room_limit:
+            configurations = [{
+                'error': f'Too many children/infants. Maximum {max_children_per_room} per room allowed. You might need to add more adults',
+                'total_price': None,  # ← None = frontend shows message, not $0.00
+                'blocked': True
+            }]
+        else:
+            configurations = [{
+                'error': 'No pricing options available for the selected criteria.',
+                'total_price': None
+            }]
 
     return configurations
 

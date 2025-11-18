@@ -371,14 +371,41 @@ class Swipers(blocks.StructBlock):
         label = "Swiper"
 
 class PricingTierBlock(blocks.StructBlock):
-    min_pax = blocks.IntegerBlock(required=True, help_text="Minimum number of adults (inclusive)")
-    max_pax = blocks.IntegerBlock(required=False, help_text="Maximum number of adults (inclusive)")
-    
-    price_adult = blocks.DecimalBlock(required=True, decimal_places=2, help_text="Base price per adult")
-    price_sgl_supplement = blocks.DecimalBlock(default=0, decimal_places=2, help_text="Extra charge for single room (on top of adult price)")
-    price_dbl_discount = blocks.DecimalBlock(default=0, decimal_places=2, help_text="Discount per person when sharing double (e.g. 200 = –$200)")
-    price_tpl_discount = blocks.DecimalBlock(default=0, decimal_places=2, help_text="Discount per person when sharing triple")
+    min_pax = blocks.IntegerBlock(required=True)
+    max_pax = blocks.IntegerBlock(required=True, help_text="Do not leave it empty")
+
+    price_adult = blocks.DecimalBlock(required=True, decimal_places=2)
+    price_sgl_supplement = blocks.DecimalBlock(default=0, decimal_places=2)
+    price_dbl_discount = blocks.DecimalBlock(default=0, decimal_places=2)
+    price_tpl_discount = blocks.DecimalBlock(default=0, decimal_places=2)
+
+    child_price_percent = blocks.FloatBlock(default=60.0, min_value=0, max_value=100)
+
+    # INFANT FLEXIBILITY
+    infant_price_type = blocks.ChoiceBlock(
+        choices=[
+            ('free', 'Free'),
+            ('percent', 'Percentage of adult price'),
+            ('fixed', 'Fixed amount per infant'),
+        ],
+        default='free',
+    )
+    infant_percent_of_adult = blocks.FloatBlock(
+        default=10.0,
+        min_value=0,
+        max_value=100,
+        required=False,
+    )
+    infant_fixed_amount = blocks.DecimalBlock(
+        default=0,
+        decimal_places=2,
+        required=False,
+    )
 
     class Meta:
         icon = 'currency'
         label = "Pricing Tier"
+        # This makes the JS work on add/remove
+        form_classname = 'pricing-tier-block'
+
+
