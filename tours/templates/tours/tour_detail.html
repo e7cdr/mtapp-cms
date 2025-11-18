@@ -181,95 +181,179 @@
 
        <!-- Flight Details -->
 
-       <!-- Pricing & Details -->
-       <div class="tab-pane fade hidden" id="pricing" role="tabpanel" aria-labelledby="pricing-tab">
-        <h2>Pricing &amp; Details</h2>
-        <table class="pricing-table" aria-describedby="pricing-details">
-         <thead>
-          <tr>
-           <th scope="col">Category</th>
-           <th scope="col">Details</th>
-           <th scope="col">Notes</th>
-          </tr>
-         </thead>
-         <tbody>
-          <tr>
-           <th scope="row">Duration</th>
-           <td> {% if self.duration_days > 1 %}{{self.duration_days}} days,{% else %}{{self.duration_days}} day {% endif %}
-                 {% if not self.duration_days == 1 %}{{self.nights}} nights
-                 {% endif %}</td>
-           <td></td>
-          </tr>
+        <!-- Pricing & Details -->
+            <div class="tab-pane fade hidden" id="pricing" role="tabpanel" aria-labelledby="pricing-tab">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">Pricing & Details</h2>
 
-          <tr>
-           <th scope="row">Status</th>
-           <td> {% if self.is_sold_out %}
-               SOLD OUT
-                {% endif %} {% if self.is_special_offer %}
-                Special Offer
-                {% endif %}
-                </td>
-           <td></td>
-          </tr>
-          {% if self.pricing_type == 'Per_person' %}
-          <tr>
-           <th scope="row">Price per person</th>
-           <td>
-            <span class="price">
-             ${{self.price_adult}} USD
-             <span class="currency-symbol"></span>
-            </span>
-           </td>
-           <td>{{self.price_subtext}}</td>
-          </tr>
+            {% if self.show_prices_in_table %}
+                    <!-- Custom RichText Message -->
+                    <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-8 text-center shadow-lg">
+                        <div class="prose prose-lg max-w-none text-amber-900 leading-relaxed text-center">
+                            {{ self.show_prices_in_table|richtext }}
+                        </div>
+                        <div class="mt-8">
+                            <a href="{{ self.button_link }}"
+                            class="inline-flex items-center px-8 py-4 bg-amber-600 hover:bg-amber-700 text-white font-bold text-lg rounded-full shadow-xl transition transform hover:scale-105">
+                                {{ self.button_text }}
+                            </a>
+                        </div>
+                    </div>
+                {% else %}
+            <!-- DYNAMIC PRICING TABLE -->
+            <div class="overflow-hidden rounded-2xl shadow-xl border border-gray-100">
+                <table class="pricing-table w-full">
+                    <thead>
+                        <tr class="bg-gradient-to-r from-indigo-600 to-purple-700">
+                            <th scope="col" class="text-left text-white uppercase tracking-wider">Category</th>
+                            <th scope="col" class="text-left text-white uppercase tracking-wider">Price</th>
+                            <th scope="col" class="text-left text-white uppercase tracking-wider">Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-100">
 
-          {% endif %}
+                        <!-- Duration -->
+                        <tr class="hover:bg-indigo-50/50 transition-all duration-300">
+                            <th class="font-semibold text-gray-800">Duration</th>
+                            <td colspan="2">
+                                {{ self.duration_days }} day{% if self.duration_days > 1 %}s{% endif %}
+                                {% if self.nights > 0 %}, {{ self.nights }} night{% if self.nights > 1 %}s{% endif %}{% endif %}
+                            </td>
+                        </tr>
 
-          {%if not self.price_adult > 0 %}
-          {%if self.price_sgl %}
-          <tr>
-           <th scope="row">Single</th>
-           <td>${{self.price_sgl}} USD <span class="currency-symbol"></span></td>
-           <td></td>
-          </tr>
-          {%endif%}
-            {%if self.price_dbl %}
-            <tr>
-           <th scope="row">Double</th>
-           <td>${{self.price_dbl}} USD <span class="currency-symbol"></span></td>
-           <td></td>
-          </tr>
-          {% endif %}
-          {%if self.price_tpl %}
-          <tr>
-           <th scope="row">Triple</th>
-           <td>${{self.price_tpl}} USD <span class="currency-symbol"></span></td>
-           <td></td>
-          </tr>
-          {% endif %}
-          {% endif %}
-            {% if not self.price_chd is None or 0 %}
-          <tr>
-           <th scope="row">Child</th>
-           <td>${{self.price_chd}} USD <span class="currency-symbol"></span></td>
-           <td></td>
-          </tr>
-          {% endif %}
-            {% if not self.price_inf is None or 0 %}
-            <tr>
-           <th scope="row">Infant</th>
-           <td>${{self.price_inf}} USD <span class="currency-symbol"></span></td>
-           <td></td>
-          </tr>
+                        <!-- Status Badges -->
+                        <tr class="hover:bg-rose-50/50 transition-all duration-300">
+                            <th class="font-semibold text-gray-800">Status</th>
+                            <td colspan="2">
+                                {% if self.is_sold_out %}
+                                    <span class="inline-block px-4 py-2 bg-red-600 text-white rounded-full text-sm font-bold animate-pulse">SOLD OUT</span>
+                                {% endif %}
+                                {% if self.is_special_offer and not self.is_sold_out %}
+                                    <span class="inline-block px-4 py-2 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-full text-sm font-bold shadow-md">
+                                        Special Offer
+                                    </span>
+                                {% endif %}
+                                {% if self.is_on_discount %}
+                                    <span class="inline-block px-4 py-2 bg-emerald-600 text-white rounded-full text-sm font-bold">
+                                        On Sale
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+
+                        <!-- COMBINED PRICING TIERS — THE STAR -->
+                        {% if self.pricing_type == "Combined" and self.combined_pricing_tiers %}
+                            {% for block in self.combined_pricing_tiers %}
+                                {% with tier=block.value %}
+                                <tr class="hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 transition-all duration-500 group">
+                                    <th class="font-bold text-purple-700 group-hover:text-purple-900">
+                                        {% if forloop.first %}
+                                            Price per Adult
+                                        {% else %}
+                                            {{ tier.min_pax }}{% if tier.max_pax %}–{{ tier.max_pax }}{% else %}+{% endif %} Adults
+                                        {% endif %}
+                                    </th>
+                                    <td class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
+                                        ${{ tier.price_adult }} USD
+                                        {% if not forloop.first and tier.price_dbl_discount > 0 %}
+                                            <span class="block text-sm font-normal text-green-600 mt-1">
+                                                Save ${{ tier.price_dbl_discount|floatformat:0 }} in double!
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-sm text-gray-600 italic">
+                                        Child: {{ tier.child_price_percent }}% • 
+                                        Infant: 
+                                        {% if tier.infant_price_type == 'free' %}Free
+                                        {% elif tier.infant_price_type == 'percent' %}{{ tier.infant_percent_of_adult }}% of adult
+                                        {% else %}${{ tier.infant_fixed_amount }}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endwith %}
+                            {% endfor %}
+
+                        <!-- PER PERSON PRICING -->
+                        {% elif self.pricing_type == "Per_person" and self.price_adult > 0 %}
+                            <tr class="hover:bg-emerald-50 transition-all duration-300">
+                                <th class="font-bold text-emerald-700">Price per Person</th>
+                                <td class="text-2xl font-extrabold text-emerald-600">
+                                    ${{ self.price_adult }} USD
+                                </td>
+                                <td class="text-gray-600">{{ self.price_subtext|default:"" }}</td>
+                            </tr>
+
+                        <!-- PER ROOM PRICING -->
+                        {% else %}
+                            {% if self.price_sgl > 0 %}
+                            <tr class="hover:bg-indigo-50 transition-all duration-300">
+                                <th class="font-semibold text-indigo-700">Single Room</th>
+                                <td class="text-xl font-bold text-indigo-600">${{ self.price_sgl }} USD</td>
+                                <td></td>
+                            </tr>
+                            {% endif %}
+                            {% if self.price_dbl > 0 %}
+                            <tr class="hover:bg-purple-50 transition-all duration-300">
+                                <th class="font-semibold text-purple-700">Double Room</th>
+                                <td class="text-xl font-bold text-purple-600">${{ self.price_dbl }} USD</td>
+                                <td class="text-green-600 font-medium">Best value</td>
+                            </tr>
+                            {% endif %}
+                            {% if self.price_tpl > 0 %}
+                            <tr class="hover:bg-rose-50 transition-all duration-300">
+                                <th class="font-semibold text-rose-700">Triple Room</th>
+                                <td class="text-xl font-bold text-rose-600">${{ self.price_tpl }} USD</td>
+                                <td></td>
+                            </tr>
+                            {% endif %}
+                        {% endif %}
+
+                        <!-- Child & Infant (Only if relevant) -->
+                        {% if self.price_chd > 0 or self.pricing_type == "Combined" %}
+                            <tr class="hover:bg-yellow-50/50 transition-all duration-300">
+                                <th class="font-semibold text-amber-700">Child Rate</th>
+                                <td>
+                                    {% if self.pricing_type == "Combined" %}
+                                        <span class="text-amber-700 font-bold">See tier above</span>
+                                    {% else %}
+                                        ${{ self.price_chd }} USD
+                                    {% endif %}
+                                </td>
+                                <td>Ages {{ self.child_age_min }}–{{ self.child_age_max }}</td>
+                            </tr>
+                        {% endif %}
+
+                        {% if self.price_inf > 0 or self.pricing_type == "Combined" %}
+                            <tr class="hover:bg-sky-50/50 transition-all duration-300">
+                                <th class="font-semibold text-sky-700">Infant</th>
+                                <td>
+                                    {% if self.pricing_type == "Combined" %}
+                                        <span class="text-sky-700 font-bold">See tier above</span>
+                                    {% else %}
+                                        ${{ self.price_inf|default:"Free" }} USD
+                                    {% endif %}
+                                </td>
+                                <td>Under {{ self.child_age_min }} years</td>
+                            </tr>
+                        {% endif %}
+
+                        <!-- Currency -->
+                        <tr class="bg-gray-50">
+                            <th class="font-semibold text-gray-700">Currency</th>
+                            <td colspan="2" class="font-bold text-gray-800">United States Dollar (USD)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pro Tip -->
+            <div class="mt-8 text-center">
+                <p class="text-sm text-gray-600 italic">
+                    Prices are per person • Final quote includes all taxes & fees • 
+                    <span class="font-semibold text-indigo-600">Book now for best availability</span>
+                </p>
+            </div>
         {% endif %}
-          <tr>
-           <th scope="row">Currency</th>
-           <td>USD</td>
-           <td></td>
-          </tr>
-         </tbody>
-        </table>
-       </div>
+    </div>
        <!-- Cancellation Policies -->
        <div class="tab-pane fade hidden" id="cxl-policy" role="tabpanel" aria-labelledby="cxl-policy-tab">
         {% if self.cxl_policies %}

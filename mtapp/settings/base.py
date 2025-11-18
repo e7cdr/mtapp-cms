@@ -342,7 +342,7 @@ WAGTAILADMIN_RICH_TEXT_EDITORS = {
         'WIDGET': 'wagtail.admin.rich_text.DraftailRichTextArea',
         # since sub, super, and a couple more are not included by default, we need to add them in this config
         'OPTIONS': {'features': ['bold', 'italic', 'superscript', 'subscript', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ol', 'ul',
-                        'hr', 'blockquote', 'link', 'embed', 'document-link', 'image']}
+                        'hr', 'blockquote', 'link', 'embed', 'document-link', 'image', 'code']}
     },
     'minimal': {
         'OPTIONS': {

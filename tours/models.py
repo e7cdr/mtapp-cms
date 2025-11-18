@@ -170,6 +170,13 @@ class AbstractTourPage(Page):
     max_children_per_room = models.PositiveIntegerField(default=1, null=True, blank=True)
     child_age_min = models.PositiveIntegerField(default=7, verbose_name="Child Minimum Age")
     child_age_max = models.PositiveIntegerField(default=12, verbose_name="Child Maximum Age")
+    show_prices_in_table = RichTextField(
+        blank=True,
+        null=True,
+        help_text="If filled, replaces the entire pricing table with this message in the Tours Detail page."
+    )
+    button_text = models.CharField(blank=True, null=True, help_text="Text to be shown on the button", max_length=22, default="", verbose_name="Button Text")
+    button_link = models.URLField(blank=True, null=True, help_text="Where do you want to send the user? Link the button.")
     price_sgl = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Single Room Price")
     price_dbl = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Double Room Price")
     price_tpl = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Triple Room Price")
@@ -274,6 +281,9 @@ class AbstractTourPage(Page):
 
         # ─── PRICING CONFIGURATION (THE BIG ONE) ───
         MultiFieldPanel([
+            FieldPanel('show_prices_in_table'),
+            FieldPanel('button_text'),
+            FieldPanel('button_link'),
             FieldPanel('pricing_type', classname='pricing-type-selector'),
 
             # Per-Room Pricing
