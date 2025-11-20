@@ -124,9 +124,10 @@ class ExploreBlock(blocks.StructBlock):
         required=True
     )
     image_alt_text = blocks.CharBlock(required=True, help="Alternative text. This won't appear to the user but it is used for better SEO.")
-
+    image_link = blocks.URLBlock(required=False, help_text="Link to redirect the user. The more internal links to other part of the page, the better for SEO.")
     body = blocks.ListBlock(
     blocks.StructBlock([
+        ('icon_alt_text', blocks.CharBlock(required=True, default="Icon")),
         ('icon_1', ImageChooserBlock(required=True, help_text="56px x 56px")),
         ('subtitle_1', blocks.CharBlock(required=True, max_length=60, help_text="Subtitle below the top left icon")),
         ('text_1', blocks.RichTextBlock(required=True, max_length=300)),

@@ -24,35 +24,35 @@
     {% for item in block.value.body %}
     <div class="explore-content-item">
      <span>
-      {% image item.icon_1 fill-100x100 format-gif class="w-8 h-8" loading="lazy" %}
+      {% image item.icon_1 fill-100x100 format-gif class="w-8 h-8" alt="{{ item.icon_alt_text }}" loading="lazy" %}
      </span>
      <h1> {{ item.subtitle_1 }}</h1>
      {{ item.text_1 }}
     </div>
     <div class="explore-content-item">
      <span>
-      {% image item.icon_2 fill-100x100 class="w-8 h-8" loading="lazy" %}
+      {% image item.icon_2 fill-100x100 class="w-8 h-8" alt="{{ item.icon_alt_text }}" loading="lazy" %}
      </span>
      <h1>{{ item.subtitle_2 }}</h1>
      {{ item.text_2 }}
     </div>
     <div class="explore-content-item">
      <span>
-      {% image item.icon_3 fill-100x100 class="w-8 h-8" loading="lazy" %}
+      {% image item.icon_3 fill-100x100 class="w-8 h-8" alt="{{ item.icon_alt_text }}" loading="lazy" %}
      </span>
      <h1>{{ item.subtitle_3 }}</h1>
      {{ item.text_3 }}
     </div>
     <div class="explore-content-item">
      <span>
-      {% image item.icon_4 fill-100x100 class="w-8 h-8" loading="lazy" %}
+      {% image item.icon_4 fill-100x100 class="w-8 h-8" alt="{{ item.icon_alt_text }}" loading="lazy" %}
      </span>
      <h1>{{ item.subtitle_4 }}</h1>
      {{ item.text_4 }}
     </div>
     {% endfor %}
     <div>
-     {% image self.image fill-1400x1400 loading="lazy" %}
+     {% image self.image fill-1400x1400 alt="{{ self.image_alt_text }}" loading="lazy" %}
     </div>
    </div>
   </div>
