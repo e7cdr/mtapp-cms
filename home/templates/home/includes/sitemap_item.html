@@ -1,4 +1,4 @@
-{% load wagtailcore_tags  %}
+{% load wagtailcore_tags %}
 <div class="sitemap-item sitemap-item--level-{{ level }}">
     <a href="{% pageurl page %}">{{ page.get_admin_display_title }}</a>  {# Or {{ page.title }} for simple titles #}
     {% if page.get_children.live.public %}

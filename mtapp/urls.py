@@ -28,6 +28,8 @@ urlpatterns = [
     path("django-admin/", admin.site.urls),
     path("admin/", include(wagtailadmin_urls)),
     # path('test-hook/', test_hook, name='test-hook'),
+    path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='sitemap'),
+    path('robots.txt', RobotsView.as_view(), name='robots'),
     path("documents/", include(wagtaildocs_urls)),
     path('api/available-dates/', AvailableDatesView.as_view(), name='available_dates_api'),
     path('bookings/', include('bookings.urls', namespace='bookings')),
@@ -35,8 +37,6 @@ urlpatterns = [
     path('captcha/', include('captcha.urls')),
     path('api/captcha-refresh/', captcha_refresh, name='captcha_refresh'),
 
-    path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='sitemap'),
-    path('robots.txt', RobotsView.as_view(), name='robots'),
 
     ]
 

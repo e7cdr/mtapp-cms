@@ -2,34 +2,38 @@
 {% load static wagtailimages_tags custom_filters wagtailcore_tags %}
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/callToActions.css' %}">
-{% endblock %}
+{% endblock extra_css %}
 
-<section class="cta-section" style="background-color: var({{self.background_color}});">
+<section class="cta-section" style="background-color: var({{ self.background_color }});">
     {% if self.image_position == "top" %}
         {% if self.image %}
         <div class="cta-image-container">
             {% image self.image original as img %}
-            <img src="{{img.url}}" alt="{{self.caption}}">
-            <p class="caption-zoom">{{self.caption}}</p>
+            <img src="{{ img.url }}" 
+            alt="{{ self.caption }}"
+            height=""
+            width=""
+            >
+            <p class="caption-zoom">{{ self.caption }}</p>
         </div>
         {% endif %}
     {% endif %}
     {% if self.include_cta == True %}
     <div class="basic-cta-container">
         <div class="top-text-side">
-            <h1>{{self.cta_title}}</h1>
-            <p>{{self.cta_description}}</p>
+            <h1>{{ self.cta_title }}</h1>
+            <p>{{ self.cta_description }}</p>
         </div>
-        <a href="{{self.button_link_1}}">
-            <div class="action-button">{{self.button_1_text}} <bold>&#8594</bold>
+        <a href="{{ self.button_link_1 }}">
+            <div class="action-button">{{ self.button_1_text }} <bold>&#8594</bold>
             </div>
         </a>
-        <a href="{{self.button_link_2}}">
-            <div class="action-button-2">{{self.button_2_text}}</div>
+        <a href="{{ self.button_link_2 }}">
+            <div class="action-button-2">{{ self.button_2_text }}</div>
             </a>
         <ul class="list-container">
         {% for item in block.value.list %}
-            <li>{{item.element}}</li>
+            <li>{{ item.element }}</li>
         {% endfor %}
         </ul>
     </div>
@@ -38,8 +42,12 @@
         {% if self.image %}
         <div class="cta-image-container">
             {% image self.image original as img %}
-            <img src="{{img.url}}" alt="{{self.caption}}">
-            <p class="caption-zoom">{{self.caption}}</p>
+            <img src="{{ img.url }}" 
+            alt="{{ self.caption }}"
+            height=""
+            width=""
+            >
+            <p class="caption-zoom">{{ self.caption }}</p>
         </div>
         {% endif %}
     {% endif %}

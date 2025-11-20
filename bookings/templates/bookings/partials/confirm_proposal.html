@@ -13,7 +13,11 @@
             <div class="col-md-6">
                 {% if tour.cover_image %}
                     {% image tour.cover_image fill-300x200 as tour_img %}
-                    <img src="{{ tour_img.url }}" class="img-fluid mb-3" alt="{{ tour.name }}">
+                    <img src="{{ tour_img.url }}" class="img-fluid mb-3" 
+                    loading="lazy"
+                    height=""
+                    width=""
+                    alt="{{ tour.name }}">
                 {% endif %}
                 <h6>{{ tour.name }}</h6>
             </div>

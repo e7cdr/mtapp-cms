@@ -1,13 +1,12 @@
 {% extends "base.html" %} 
-
-{% load static i18n dict_tags navbar_tags wagtailcore_tags wagtailimages_tags  %}
+{% load static i18n dict_tags navbar_tags wagtailcore_tags wagtailimages_tags %}
 {% block content %}
   {% block carousel %}
       {% for block in page.carousel %}
         {% include_block block %}
       {% endfor %}
-  {% endblock %}
+  {% endblock carousel %}
   {% block main_content %} 
   {% include "home/includes/main_content.html" %}
-  {% endblock %}
-{% endblock %}
+  {% endblock main_content %}
+{% endblock content %}

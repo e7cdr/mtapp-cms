@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static i18n wagtailcore_tags wagtailimages_tags wagtailroutablepage_tags tour_filters %}
 
-{% block title %} {{self.title}}{% endblock %}
+{% block title %} {{ self.title }} {% endblock title %}
 
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/card_style.css' %}"/>
@@ -11,7 +11,7 @@
 {% for block in page.body_content %}
 {% include_block block %}
 {% endfor %}
-{% endblock %}
+{% endblock body_content %}
 
 <section>
     <div class="layout">
@@ -116,19 +116,24 @@
             <div class="sticker special-offer-sticker">Sold Out!</div>
             {% endif %}
             <div class="image-zone">
-                <a href="{{tour.url}}">
+                <a href="{{ tour.url }}">
                 {% image tour.cover_image fill-315x200 as img %}
-                <img src="{{img.url}}" alt="Tours cover image">
-                <div class="card-country">{{tour.destination}}</div>
-                <div class="card-location">{{tour.location}}</div>
+                <img src="{{ img.url }}" 
+                height=""
+                width=""
+                alt="{{ tour.name }} card image"
+                loading="lazy"
+                >
+                <div class="card-country">{{ tour.destination }}</div>
+                <div class="card-location">{{ tour.location }}</div>
                 </a>
             </div>
         <!-- Bottom Card Side-->
         <div class="text-zone">
-            <div class="card-subtitle">{{tour.subtitle}}</div>
+            <div class="card-subtitle">{{ tour.subtitle }}</div>
         {% if tour.name %}
         <div class="card-title">
-            <a href="{{tour.url}}">{{tour.name}}</a>
+            <a href="{{ tour.url }}">{{ tour.name }}</a>
         </div>
         {% endif %}
         {% comment %} <div class="card-description">
@@ -158,11 +163,11 @@
             <div class="card-price">Ask for Price</div>
             {% if not tour.is_sold_out %}
             <button class="card-button conic-gradient-animation">
-                <a href="https://api.whatsapp.com/send/?phone=593967359549&text=Hello%2C+I+am+interested+in+{{tour.name}}+from+your+webpage&type=phone_number&app_absent=0">Book</a></button>
+                <a href="https://api.whatsapp.com/send/?phone=593967359549&text=Hello%2C+I+am+interested+in+{{ tour.name }}+from+your+webpage&type=phone_number&app_absent=0">Book</a></button>
             {% else %}
             <button class="card-button">Sold Out</button>
             {% endif %}
-                <p class="estimated-text">{{tour.pricing_type}} / {{tour.price_subtext}}</p>
+                <p class="estimated-text">{{ tour.pricing_type }} / {{ tour.price_subtext }}</p>
             </div>
         </div>
         </div>
@@ -217,7 +222,7 @@
 {% block extra_js %}
 
 <script src="{% static 'js/tours_index.js' %}"></script>
-{% endblock %}
+{% endblock extra_js %}
 
-{% endblock %}
+{% endblock content %}
 

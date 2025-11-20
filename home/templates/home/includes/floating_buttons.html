@@ -2,52 +2,11 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/floating_buttons.css' %}" />
-{% endblock %}
+{% endblock extra_css %}
 
     <!-- WhatsApp Button -->
-    <a href="https://api.whatsapp.com/send/?phone=593967359549&text=Hello%2C+Milano+Travel.&type=phone_number&app_absent=0"
-       class="whatsapp-button" target="_blank" aria-label="{% trans 'Contact us on WhatsApp' %}">
-        <i class="bi bi-whatsapp"></i>
-    </a>
-
-    {% comment %} <!-- Theme Toggle Button -->
-    <button id="themeToggle" aria-label="{% trans 'Toggle Dark Mode' %}">
-        <i class="bi bi-sun"></i>
-    </button> {% endcomment %}
-
-<!-- Language Toggle Form -->
-
-{% comment %} <form action="{% url 'set_language' %}" method="post" id="languageForm" class="lang-toggle">
-    {% csrf_token %}
-    <input type="hidden" name="language" id="languageInput">
-    <input type="hidden" name="next" value="{{ request.get_full_path }}">
-    <button type="button" id="languageToggle" aria-label="{% trans 'Toggle Language' %}">
-        <i class="bi bi-globe"></i>
-        <span id="currentLang">
-            {% get_language_info for LANGUAGE_CODE as lang %}
-            {{ lang.name_local }}
-        </span>
-    </button>
-</form> {% endcomment %}
-
-{% comment %} <!-- Currency Toggle Form -->
-<form id="currencyForm" class="currency-toggle">
-    {% csrf_token %}
-    <input type="hidden" name="currency" id="currencyInput" value="{{ currency|default:'USD' }}">
-    <div class="fixed bottom-[57px] left-5 z-[1002]">
-        <button type="button" id="currencyToggle" aria-label="{% trans 'Toggle Currency' %}">
-            <i class="bi bi-currency-exchange"></i>
-            <span class="currency">{{ currency|default:'USD' }}</span>
-        </button>
-        <div id="currencyDropdown" class="hidden absolute bottom-12 left-0 bg-primary/10 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg min-w-[100px] z-[1003]">
-            {% for rate in exchange_rates %}
-                <button type="button" class="currency-option block w-full text-left px-3 py-2 text-sm text-white dark:text-gray-100 hover:bg-primary/40 hover:text-white" data-currency="{{ rate.currency_code }}">
-                    {{ rate.currency_code }}
-                </button>
-                <hr>
-            {% endfor %}
-
-        </div>
-    </div>
-</form> {% endcomment %}
+<a href="https://api.whatsapp.com/send/?phone=593967359549&text=Hello%2C+Milano+Travel.&type=phone_number&app_absent=0"
+    class="whatsapp-button" target="_blank" aria-label="{% trans "Contact us on WhatsApp" %}">
+    <i class="bi bi-whatsapp" aria-label="whatsapp button"></i>
+</a>
 

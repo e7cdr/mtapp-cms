@@ -1,9 +1,11 @@
 {% load static i18n %}
 <!DOCTYPE html>
-<html>
+<html lang="{% get_current_language as LANGUAGE_CODE %}{{ LANGUAGE_CODE }}">
 <head>
     <title>{% trans "PayPal Checkout" %} - {{ proposal.tour.name }} - Milano Travel</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="keywords" content="paypal, payment methods">
+    <meta name="description" content="payment methods">
     <!-- FIXED: Disable cards to focus on PayPal popup; reduces errors/complexity -->
     <script src="https://www.paypal.com/sdk/js?client-id={{ client_id }}&currency={{ currency }}&components=buttons"></script>
     <style>

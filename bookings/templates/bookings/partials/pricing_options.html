@@ -76,9 +76,9 @@
                         data-doubles="{{ config.doubles|default:0 }}"
                         data-triples="{{ config.triples|default:0 }}"
                         data-price="{{ config.total_price|floatformat:2 }}"
-                        data-currency="{{ config.currency|default:currency|default:'USD' }}"
-                        aria-label='{% trans "Select configuration with total price" %} {{ config.total_price|floatformat:2 }} {{ config.currency|default:currency|default:"USD" }}'
-                        data-bs-original-title='{% if config.singles %}{% trans "Single Room" %}: {{ config.singles }}. {% endif %}{% if config.doubles %}{% trans "Double Room" %}: {{ config.doubles }}. {% endif %}{% if config.triples %}{% trans "Triple Room" %}: {{ config.triples }}. {% endif %} {% trans "Total" %}: {{ config.total_price|floatformat:2 }} {{ config.currency|default:currency|default:"USD" }}'>
+                        data-currency="{{ config.currency|default:currency|default:"USD" }}"
+                        aria-label="{% trans "Select configuration with total price" %} {{ config.total_price|floatformat:2 }} {{ config.currency|default:currency|default:"USD" }}"
+                        data-bs-original-title="{% if config.singles %}{% trans "Single Room" %}: {{ config.singles }}. {% endif %}{% if config.doubles %}{% trans "Double Room" %}: {{ config.doubles }}. {% endif %}{% if config.triples %}{% trans "Triple Room" %}: {{ config.triples }}. {% endif %} {% trans "Total" %}: {{ config.total_price|floatformat:2 }} {{ config.currency|default:currency|default:"USD" }}">
                     <div class="flex items-center gap-3">
                         <input type="radio" name="configuration" value="{{ forloop.counter0 }}" class="w-4 h-4 text-yellow-400 focus:ring-yellow-400" {% if config.cheapest %}checked{% endif %} onchange="window.updateSelectedConfiguration()">
                         <div class="flex-1">

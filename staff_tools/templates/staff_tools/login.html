@@ -1,7 +1,7 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% load static %}
 
-{% block title %}{% trans "Staff Login" %} - Milano Travel{% endblock %}
+{% block title %}{% trans "Staff Login" %} Login page {% endblock title %}
 
 {% block content %}
     <section class="my-5">
@@ -12,4 +12,4 @@
             <button type="submit" class="btn btn-primary">{% trans "Login" %}</button>
         </form>
     </section>
-{% endblock %}
+{% endblock content %}

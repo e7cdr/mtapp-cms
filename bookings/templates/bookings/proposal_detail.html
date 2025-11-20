@@ -1,14 +1,14 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% load i18n %}
 
-{% block title %}{% trans "Proposal Details" %} - {{ proposal.prop_id|default:proposal.id }} - Milano Travel{% endblock %}
+{% block title %}{% trans "Proposal Details" %} - {{ proposal.prop_id|default:proposal.id }} Review proposal {% endblock title %}
 
 {% block content %}
 <section class="py-5">
     <div class="container">
         <div class="row justify-content-between align-items-center mb-4">
             <h2>{% trans "Proposal Details" %} - {{ proposal.prop_id|default:proposal.id }}</h2>
-            <a href="{% url 'bookings:manage_proposals' %}" class="btn btn-secondary">{% trans "Back to Proposals" %}</a>
+            <a href="{% url "bookings:manage_proposals" %}" class="btn btn-secondary">{% trans "Back to Proposals" %}</a>
         </div>
         
         <div class="row">
@@ -114,4 +114,4 @@
         </div>
     </div>
 </section>
-{% endblock %}
+{% endblock content %}

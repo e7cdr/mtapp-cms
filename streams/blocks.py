@@ -123,6 +123,7 @@ class ExploreBlock(blocks.StructBlock):
     image = ImageChooserBlock(
         required=True
     )
+    image_alt_text = blocks.CharBlock(required=True, help="Alternative text. This won't appear to the user but it is used for better SEO.")
 
     body = blocks.ListBlock(
     blocks.StructBlock([

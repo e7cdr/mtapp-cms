@@ -79,6 +79,7 @@
                 src="{{ img.url }}"
                 alt="{{ item.caption|default:'Swiper images' }}"
                 id="slide-{{ forloop.counter }}"
+                loading="lazy"
                 />
                 <p class="caption">{{ item.caption }}</p>
             </div>
@@ -112,6 +113,7 @@
                 src="{{ img.url }}"
                 alt="{{ item.caption|default:'Swiper images' }}"
                 id="slide-{{ forloop.counter }}"
+                loading="lazy"
                 />
             <p class="caption">{{ item.caption }}</p>
             </div>
@@ -152,6 +154,7 @@
                 src="{{ img.url }}"
                 alt="{{ item.caption|default:'Swiper images' }}"
                 id="slide-{{ forloop.counter }}"
+                loading="lazy"
                 />
             </div>
             <p class="caption">{{ item.caption }}</p>
@@ -178,6 +181,7 @@
                 src="{{ img.url }}"
                 alt="{{ item.caption|default:'Swiper images' }}"
                 id="slide-{{ forloop.counter }}"
+                loading="lazy"
                 />
             </div>
             {% empty %}

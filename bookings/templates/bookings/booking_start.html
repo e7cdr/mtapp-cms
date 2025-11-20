@@ -1,10 +1,10 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% load static i18n wagtailimages_tags wagtailcore_tags custom_filters %}
 
-{% block title %}Booking Form{% endblock %}
+{% block title %}Booking Form{% endblock title %}
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/booking_form.css'%}">
-{% endblock %}
+<link rel="stylesheet" href="{% static 'css/booking_form.css' %}">
+{% endblock extra_css %}
 {% block content %}
 
 <section class="booking-section">
@@ -88,10 +88,18 @@
                                 <div class="tour-display">
                                     <div class="tour-image mb-3">
                                         {% if tour.cover_image %}
-                                            {% image tour.cover_image fill-300x200 as tour_img %}
-                                            <img src="{{ tour_img.url }}" class="tour-card-img" alt="{{ tour.name|default:'Tour Image' }}" loading="lazy">
+                                            {% image tour.cover_image fill-300x200 loading="lazy" as tour_img %}
+                                            <img src="{{ tour_img.url }}" 
+                                            class="tour-card-img" 
+                                            alt="{{ tour.name|default:'Tour Image' }}" 
+                                            height=""
+                                            width=""
+                                            loading="lazy">
                                         {% else %}
-                                            <img src="{% static 'images/default_tour.jpg' %}" class="tour-card-img" alt="{% trans 'Default Tour Image' %}" loading="lazy">
+                                            <img src="{% static 'images/default_tour.jpg' %}" 
+                                            height=""
+                                            width=""
+                                            class="tour-card-img" alt="{% trans "Default Tour Image" %}" loading="lazy">
                                         {% endif %}
                                     </div>
                                     <h6 class="tour-title" id="tourTitle">{{ tour.name|default:'Select a Tour' }}</h6>
@@ -113,7 +121,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="additional_notes" class="form-label">Additional Notes</label>
-                                    <p>{{tour.additional_notes|richtext}}</p>
+                                    <p>{{ tour.additional_notes|richtext }}</p>
                                 </div>
 
                             </div>
@@ -274,7 +282,4 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="{% static 'js/booking_form.js'%}"></script>
 
-
-
-
-{% endblock %}
+{% endblock content %}

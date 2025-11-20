@@ -7,17 +7,22 @@
 {% wagtail_site as current_site %}
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/navbar.css' %}" />
-{% endblock %}
+{% endblock extra_css %}
 
 <header>
   <nav class="navbar">
-    <a href="/">
-      <img src="{% static 'default_media/logo.png' %}" alt="navbar-logo" class="navbar-logo"/>
+    <a href="{% url 'wagtail_serve' '' %}">
+      <img src="{% static 'default_media/logo.png' %}" 
+      alt="navigation bar logo" 
+      class="navbar-logo"
+      loading="lazy"
+      height=""
+      width=""/>
       <form action="{% url 'set_language' %}" method="post" id="languageForm" class="lang-toggle">
           {% csrf_token %}
           <input type="hidden" name="language" id="languageInput">
           <input type="hidden" name="next" value="{{ request.get_full_path }}">
-          <button type="button" id="languageToggle" aria-label="{% trans 'Toggle Language' %}">
+          <button type="button" id="languageToggle" aria-label="{% trans "Toggle Language" %}">
               {% comment %} <i class="bi bi-globe"></i> {% endcomment %}
               <span id="currentLang">
                   {% load lang_filters %}  <!-- Load your custom filter; adjust app name if needed -->

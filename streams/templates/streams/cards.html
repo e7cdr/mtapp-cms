@@ -1,8 +1,8 @@
 {% extends "links.html" %}
-{% load static i18n dict_tags navbar_tags wagtailcore_tags wagtailimages_tags%}
-
+{% load static i18n dict_tags navbar_tags wagtailcore_tags wagtailimages_tags %}
+{% block extra_css %}
 <link rel="stylesheet" href='{% static "css/card_style.css" %}'/>
-  
+{% endblock extra_css %}
 <div
    id="cardContainer"
    class="card-container">
@@ -10,22 +10,26 @@
     <!-- Top Card Side-->
     <div class="image-zone">
       {% image self.image fill-315x200 as img %}
-      <img src="{{img.url}}" alt="">
-      {% for tag in self.tags  %}
-      <div class="new-sticker">{{tag.top_tag_1}}</div>
-      <div class="special-offer-sticker">{{tag.top_tag_2}}</div>
-      <div class="card-country">{{tag.center_right_tag_1}}</div>
-      <div class="card-location">{{tag.center_right_tag_2}}</div>
+      <img src="{{ img.url }}" alt="{{ self.title }} card image"
+      loading="lazy"
+      height=""
+      width="">
+      
+      {% for tag in self.tags %}
+      <div class="new-sticker">{{ tag.top_tag_1 }}</div>
+      <div class="special-offer-sticker">{{ tag.top_tag_2 }}</div>
+      <div class="card-country">{{ tag.center_right_tag_1 }}</div>
+      <div class="card-location">{{ tag.center_right_tag_2 }}</div>
        {% endfor %}
     </div>
       <!-- Bottom Card Side-->
       <div class="text-zone">
-         <div class="card-subtitle cell-1">{{self.sub_title}}</div>
+         <div class="card-subtitle cell-1">{{ self.sub_title }}</div>
       {% if self.title %}
-      <div class="card-title cell-2">{{self.title}}</div>
+      <div class="card-title cell-2">{{ self.title }}</div>
       {% endif %}
      <div class="card-description cell-3">
-      {{self.card_description}}
+      {{ self.card_description }}
      </div>
       <div class="card-amenities cell-4 grid-7-c">
       <!-- DEBUG: Total amenities: {{ self.amenities|length }} (remove after test) -->
@@ -37,12 +41,9 @@
       </div>
    </div>
      <div class="flex-box">
-      <div class="card-price cell-5">${{self.price}}</div>
-         <p class="estimated-text">{{self.price_subtext}}</p>
+      <div class="card-price cell-5">${{ self.price }}</div>
+         <p class="estimated-text">{{ self.price_subtext }}</p>
      </div>
      <button class="card-button conic-gradient-animation">Book</button>
     </div>
    </div>
-   </div>
-  </div>
-</div>

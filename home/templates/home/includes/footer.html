@@ -2,28 +2,31 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/footer.css' %}" />
-{% endblock %}
+{% endblock extra_css %}
 <footer>
     <div class="footer-container">
         {% if settings.site_settings.BrandSettings %}
         <div class="contact-info-block">
             <div class="address">
-                {{settings.site_settings.BrandSettings.address|richtext}}
-                <p>{{settings.site_settings.BrandSettings.telephone}}</p>
+                {{ settings.site_settings.BrandSettings.address|richtext }}
+                <p>{{ settings.site_settings.BrandSettings.telephone }}</p>
             </div>
         </div>
-        {%else%}
+        {% else %}
         <div class="contact-info-block">
             <div class="address">
                 Configure contact information in Site Settings/Brand Settings
             </div>
         </div>
-        {%endif%}
-
+        {% endif %}
 
         <div class="brand-wrap">
-            <a href="/">
-            <img src="{% static 'default_media/logo.png' %}" alt="Milano Travel Logo" />
+            <a href="{% url 'wagtail_serve' '' %}">
+            <img src="{% static 'default_media/logo.png' %}" alt="Milano Travel Logo" 
+            height=""
+            width=""
+            loading="lazy"
+            />
             </a>
         </div>
         <div class="sitemap">
@@ -31,39 +34,39 @@
         </div>
         <div class="social-media-wrap">
             {% if settings.site_settings.FooterLinks.facebook %}
-            <button type="button">
-            <a href="{{settings.site_settings.FooterLinks.facebook}}" class="fab fa-facebook-square"></a>
+            <button type="button" aria-label="social media">
+            <a href="{{ settings.site_settings.FooterLinks.facebook }}" class="fab fa-facebook-square" aria-label="facebook"></a>
             </button>
             {% endif %}
             {% if settings.site_settings.FooterLinks.instagram %}
-            <button type="button">
-            <a href="{{settings.site_settings.FooterLinks.instagram}}" class="fab fa-instagram"></a>
+            <button type="button" aria-label="social media">
+            <a href="{{ settings.site_settings.FooterLinks.instagram }}" class="fab fa-instagram" aria-label="instagram"></a>
             </button>
             {% endif %}
             {% if settings.site_settings.FooterLinks.tik_tok %}
-            <button type="button">
-            <a href="{{settings.site_settings.FooterLinks.tik_tok}}" class="fab fa-tiktok"></a>
+            <button type="button" aria-label="social media">
+            <a href="{{ settings.site_settings.FooterLinks.tik_tok }}" class="fab fa-tiktok" aria-label="tiktok"></a>
             </button>
             {% endif %}
             {% if settings.site_settings.FooterLinks.youtube %}
-            <button type="button">
-            <a href="{{settings.site_settings.FooterLinks.youtube}}" class="fab fa-youtube" style="color: red"></a>
+            <button type="button" aria-label="social media">
+            <a href="{{ settings.site_settings.FooterLinks.youtube }}" class="fab fa-youtube" aria-label="youtube"></a>
             </button>
             {% endif %}
-            {% if settings.site_settings.FooterLinks.whatsapp%}
-            <button type="button">
-            <a href="{{settings.site_settings.FooterLinks.whatsapp}}" class="fab fa-whatsapp" style="color: green"></a>
+            {% if settings.site_settings.FooterLinks.whatsapp %}
+            <button type="button" aria-label="social media">
+            <a href="{{ settings.site_settings.FooterLinks.whatsapp }}" class="fab fa-whatsapp" aria-label="whatsapp"></a>
             </button>
             {% endif %}
             {% if settings.site_settings.FooterLinks.x_tw %}
-            <button type="button">
-            <a href="{{settings.site_settings.FooterLinks.x_tw}}" class="fab fa-x-twitter" style="color: black"></a>
+            <button type="button"aria-label="social media">
+            <a href="{{ settings.site_settings.FooterLinks.x_tw }}" class="fab fa-x-twitter" aria-label="X"></a>
             </button>
             {% endif %}
         </div>
         <hr />
         <div class="footer-copyright">
-            <p>© Copyright 2025. All Rights Reserved.</p>
+            <p>MILANO TRVEL © Copyright 2025-2026. All Rights Reserved.</p>
         </div>
     </div>
 </footer>

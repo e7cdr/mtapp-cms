@@ -1,7 +1,7 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% load i18n %}
 
-{% block title %}{% trans "Confirmation Error" %} - Milano Travel{% endblock %}
+{% block title %}{% trans "Confirmation Error" %} Error in confirmation {% endblock title %}
 
 {% block content %}
 <section class="py-5">
@@ -15,8 +15,8 @@
             <a href="{{ site_url }}/bookings/manage-proposals/">{% trans "Manage Proposals" %}</a>
         </p>
         <p class="text-center">
-            {% trans "Contact support at" %} <a href="mailto:support@milano-travel.com">support@milano-travel.com</a> {% trans "if you need assistance." %}
+            {% trans "Contact support at" %} <a href="mailto:support@milano-travel.com">info@milanotravel.com.ec</a> {% trans "if you need assistance." %}
         </p>
     </div>
 </section>
-{% endblock %}
+{% endblock content %}

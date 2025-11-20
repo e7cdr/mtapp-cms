@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% load static i18n %}
 
 {% block extra_head %}
@@ -7,9 +7,9 @@
         position: relative !important;
     }
 </style>
-{% endblock %}
+{% endblock extra_head %}
 
-{% block title %}{% trans "Your Dashboard" %} - Milano Travel{% endblock %}
+{% block title %}{% trans "Your Dashboard" %} User Profile {% endblock title %}
 
 {% block content %}
 
@@ -72,4 +72,4 @@
         </ul>
     </div>
 </section>
-{% endblock %}
+{% endblock content %}

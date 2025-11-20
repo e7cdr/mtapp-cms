@@ -1,7 +1,7 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% load static i18n %}
 
-{% block title %}{% trans "Customer Portal" %} - Milano Travel{% endblock %}
+{% block title %}{% trans "Customer Portal" %} Customer Portal {% endblock title %}
 
 {% block content %}
 <section class="py-5">
@@ -34,7 +34,7 @@
             </div>
             
             <h3>{% trans "Proposals" %}</h3>
-            {% include 'bookings/partials/proposal_list_customer.html' %}  <!-- FIXED: Customer partial (no actions) -->
+            {% include "bookings/partials/proposal_list_customer.html" %}  <!-- FIXED: Customer partial (no actions) -->
             
             <h3>{% trans "Bookings" %}</h3>
             <table class="table table-striped">
@@ -72,4 +72,4 @@
         {% endif %}
     </div>
 </section>
-{% endblock %}
+{% endblock content %}

@@ -5,12 +5,12 @@
  <div class="slider-wrapper">
   <div class="carousel-title">
     {% if self.carousel_subtitle %}
-   <h2>{{self.carousel_subtitle}}</h2>
+   <h2>{{ self.carousel_subtitle }}</h2>
    {% endif %}
-   <h1>{{self.carousel_title}}</h1>
+   <h1>{{ self.carousel_title }}</h1>
    {% if self.search_bar == True %}
       <!--Search Bar -->
-    {% include 'search/search_bar.html' %}
+    {% include "search/search_bar.html" %}
     {% endif %}
   </div>
   <div class="slider">
@@ -20,17 +20,25 @@
    {% if item.link %}
     <a href="{{ item.link.url }}">
    {% endif %}
-    <img
-     src="{{ img.url }}"
-     alt="{{ item.caption|default:'Carousel image' }}"
-     id="slide-{{ forloop.counter }}"
-    />
+      <img
+      height=""
+      width=""
+      src="{{ img.url }}"
+      alt="{{ item.caption|default:'Carousel image' }}"
+      id="slide-{{ forloop.counter }}"
+      loading="lazy"
+      />
     {% if item.link %}</a>{% endif %}
    <div class="slide-overlay"></div>
   </div>
   {% empty %}
    <div class="slide-overlay-block">
-    <img src="{% static 'default_media/azuay.jpg' %}" alt="Default" id="slide-1">
+    <img src="{% static 'default_media/azuay.jpg' %}" alt="{{ item.caption|default:'Carousel image' }}"
+     id="slide-1"
+     loading="lazy"
+     height=""
+     width=""
+     >
     <div class="slide-overlay"></div>
    </div>
   {% endfor %}
@@ -38,9 +46,9 @@
 
 <div class="slider-nav nav-fade-in">
     {% for item in value.carousel %}
-    <a href="#slide-{{ forloop.counter }}"></a>
+    <a href="#slide-{{ forloop.counter }}" aria-label="swiper navigation"></a>
     {% empty %}
-    <a href="#slide-1"></a>
+    <a href="#slide-1" aria-label="swiper navigation"></a>
     {% endfor %}
    </div>
  </div>
