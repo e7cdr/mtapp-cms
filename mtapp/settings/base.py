@@ -19,37 +19,45 @@ GOOGLE_TRANSLATE_KEY = config('GOOGLE_TRANSLATE_KEY')
 # Application definition
 
 INSTALLED_APPS = [
-    "django_filters",
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
-    "django.contrib.staticfiles",
+    # Django core
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'django.contrib.sites',           # ← make sure this is here
 
+    # Third-party – put these early
+    'import_export',                  # ← regular django-import-export
 
-    "wagtail_localize",
-    "wagtail_localize.locales",
-    "wagtail.contrib.forms",
-    "wagtail.contrib.redirects",
-    "wagtail.contrib.settings",
-    "wagtail.contrib.routable_page",
-    "wagtail.api.v2", # API
-    "rest_framework", # API
-    "wagtail.embeds",
-    "wagtail.sites",
-    "wagtail.users",
-    "wagtail.snippets",
-    "wagtail.documents",
-    "wagtail.images",
-    "wagtail.search",
-    "wagtail.admin",
-    "wagtailseo",
-    "wagtail.contrib.sitemaps",
-    "wagtail",
+    # Wagtail core apps (order matters!)
+    'wagtail.contrib.forms',
+    'wagtail.contrib.redirects',
+    'wagtail.contrib.settings',
+    'wagtail.contrib.routable_page',
+    'wagtail.embeds',
+    'wagtail.sites',
+    'wagtail.users',
+    'wagtail.snippets',
+    'wagtail.documents',
+    'wagtail.images',
+    'wagtail.search',
+    'wagtail.admin',                  # ← wagtail_import_export must be above this
+    'wagtail',                        # or 'wagtail.core' in very old versions
 
-    "modelcluster",
-    "taggit",
+    # Rest of Wagtail ecosystem
+    'wagtail_localize',
+    'wagtail_localize.locales',
+    'wagtailseo',
+    'wagtail.contrib.sitemaps',
+
+    # Other third-party
+    'modelcluster',
+    'taggit',
+    'rest_framework',
+    "rest_framework.authtoken",
+    'wagtail.api.v2',
 
 
     'axes',  # For login attempt locking
@@ -337,6 +345,12 @@ WAGTAILIMAGES_FORMAT_CONVERSIONS = {
     'ico': 'ico',
 }
 
+WAGTAILIMAGES_EXTENSIONS = ['gif', 'ico', 'jpeg', 'png', 'svg']
+WAGTAILIMAGES_DEFAULT_LAZY_ATTRIBUTES = {
+    'loading': 'lazy',
+    'decoding': 'async',
+}
+
 WAGTAILADMIN_RICH_TEXT_EDITORS = {
     'default': {
         'WIDGET': 'wagtail.admin.rich_text.DraftailRichTextArea',
@@ -362,3 +376,24 @@ CACHES = {
         },
     }
 }
+
+
+# API
+
+REST_FRAMEWORK = {
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 11,
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    ],
+
+}
+
+WAGTAILAPI_LIMIT_TO_REGISTERED_USERS = True
+
+# Token for CSV export
+WAGTAIL_API_TOKEN = "e721f0ae2b34243f890464bb23978fe639bb78e4"

@@ -192,8 +192,14 @@ class ProposalForm(forms.ModelForm):  # Changed to ModelForm
     
     def clean_travel_date(self):
         travel_date = self.cleaned_data.get('travel_date')
-        tour = self.get_tour()  # Helper to get tour from tour_id
-        if tour and travel_date in tour.blackout_dates:
+        if not travel_date:
+            return travel_date
+
+        tour = getattr(self, 'tour', None)  # Safely get the tour instance passed in __init__
+        if tour and hasattr(tour, 'blackout_dates') and travel_date in tour.blackout_dates:
             raise forms.ValidationError(_("This date is blacked out and unavailable."))
+
         return travel_date
+    
+    
 

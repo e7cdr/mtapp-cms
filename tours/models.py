@@ -654,7 +654,7 @@ class ToursIndexPage(RoutablePageMixin, Page):
     def all_tours(self, request):
         # Reuse get_context logic, but ensure full list
         context = self.get_context(request)
-        context['tours'] = context['tours'].qs  # Get unpaginated for route if needed
+        context['tours'] = context['tours']  
         return self.render(request, context_overrides=context)
 
     @path('land-tours/', name='land_tours')
@@ -754,10 +754,7 @@ Block representation
     """
     #  APIField('field_name', serializer=FieldSerializer()),
 
-
-
-
-    api_fields = [
+    api_fields = [ #To show more details in the API
         APIField('duration_days'),
         APIField('nights'),
         APIField('itinerary'),

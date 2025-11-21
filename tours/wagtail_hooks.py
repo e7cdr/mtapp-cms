@@ -1,18 +1,6 @@
 from django.utils.html import format_html
 from wagtail import hooks
 
-# Comment out these for now - they're causing the sidebar crash
-# @hooks.register('register_admin_menu_item')
-# def register_menu_item():
-#     return [  # Or whatever - skip it
-#         {'location': 'after_explorer', 'label': 'Test Hook', ...}
-#     ]
-#
-# @hooks.register('register_admin_url')
-# def register_test_url():
-#     return ('test-hook', 'tours.views.test_hook', 'test-hook')
-
-
 @hooks.register('insert_editor_js')
 def pricing_and_infant_controller():
     js = """
@@ -109,4 +97,6 @@ def pricing_admin_css():
         '.per-room-panel[style*="none"], .per-person-panel[style*="none"], .combined-pricing-panel[style*="none"] { opacity: 0.6; }'
         '</style>'
     )
+
+
 

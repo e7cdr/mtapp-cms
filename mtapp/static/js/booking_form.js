@@ -303,7 +303,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (!$captchaImg || !$hiddenInput || !$textInput) return console.error('Elements missing');
 
-        const domain = 'https://www.milanotravel.com.ec';
+        const domain = '127.0.0.1:8000';
         const refreshUrl = `${domain}/api/captcha-refresh/`;
         console.log('Fetching:', refreshUrl);
         fetch(refreshUrl)

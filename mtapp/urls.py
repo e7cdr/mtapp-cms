@@ -10,13 +10,11 @@ from wagtail.documents import urls as wagtaildocs_urls
 
 from .views import RobotsView
 
-from .api import api_router
 from .sitemaps import ImageSitemap, PageSitemap
 from search import views as search_views
 from accounts.views import captcha_refresh
 from bookings.api_views import AvailableDatesView
-
-# from tours.views import test_hook
+from .api import api_router
 
 
 sitemaps = {
@@ -35,9 +33,8 @@ urlpatterns = [
     path('bookings/', include('bookings.urls', namespace='bookings')),
     path('p-methods/', include('p_methods.urls', namespace='p_methods')),
     path('captcha/', include('captcha.urls')),
+    path('api/v2/', api_router.urls),    
     path('api/captcha-refresh/', captcha_refresh, name='captcha_refresh'),
-
-
     ]
 
 
@@ -50,11 +47,11 @@ if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 urlpatterns = urlpatterns + i18n_patterns (
-    path("api/v2/", api_router.urls),
     path('i18n/', include('django.conf.urls.i18n')),
     path("search/", search_views.search, name="search"),
     path('profile/', include('profiles.urls')),
     path('accounts/', include('accounts.urls')),
+
 
 
 

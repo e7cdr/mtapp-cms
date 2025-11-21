@@ -39,6 +39,19 @@ SILENCED_SYSTEM_CHECKS = [
     'django_ratelimit.W001',
 ]
 
+# Google Cloud Storage (appears in your Google Drive if you want)
+DEFAULT_FILE_STORAGE = 'storages.backends.googlecloud.GoogleCloudStorage'
+STATICFILES_STORAGE = 'storages.backends.googlecloud.GoogleCloudStorage'
+GS_BUCKET_NAME = 'your-project-backups-and-media'
+GS_PROJECT_ID = 'your-gcp-project-id'
+
+# dbbackup → same bucket
+DBBACKUP_STORAGE = 'storages.backends.googlecloud.GoogleCloudStorage'
+DBBACKUP_STORAGE_OPTIONS = {
+    'bucket_name': GS_BUCKET_NAME,
+    'location': 'backups/',   # optional subfolder
+}
+
 try:
     from .local import *
 except ImportError:

@@ -80,7 +80,6 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.http import JsonResponse
 
 from django.db import connection
-from django.core.exceptions import ImproperlyConfigured
 from django.views.decorators.http import require_http_methods
 from django.db.utils import OperationalError
 

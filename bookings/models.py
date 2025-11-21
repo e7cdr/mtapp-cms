@@ -1,6 +1,5 @@
 import string
 import secrets
-import requests
 from decimal import Decimal
 
 from django.db import models
@@ -14,9 +13,13 @@ from django.contrib.auth.models import User  # or CustomUser if used
 
 from wagtail.snippets.models import register_snippet
 from wagtail.admin.panels import FieldPanel
+from rest_framework.fields import ReadOnlyField, Field
+from wagtail.api import APIField
 
+from bookings.serializer import TourFieldSerializer
 from mtapp.utils import generate_code_id
 from decimal import Decimal, ROUND_HALF_UP  
+
 
 @register_snippet
 class Proposal(models.Model):
@@ -89,6 +92,37 @@ class Proposal(models.Model):
         FieldPanel('room_config'),  # JSON editor
         FieldPanel('status'),
         FieldPanel('user'),
+    ]
+
+    api_fields = [
+        APIField('prop_id'),
+        APIField('customer_name'),
+        APIField('customer_email'),
+        APIField('customer_phone'),
+        APIField('nationality'),
+        APIField('customer_address'),
+        APIField('notes'),
+        APIField('number_of_adults'),
+        APIField('number_of_children'),
+        APIField('number_of_infants'),
+        APIField('children_ages'),  # JSONField → auto as list
+        APIField('room_config'),   # JSON → auto as dict
+        APIField('selected_config'),
+        APIField('travel_date'),
+        APIField('estimated_price'),
+        APIField('currency'),
+        APIField('status'),
+        APIField('supplier_email'),
+        APIField('payment_link'),
+        APIField('created_at'),
+        APIField('updated_at'),
+        APIField('user'),
+        # Custom GenericFK
+        APIField('tour.code_id', serializer=TourFieldSerializer()),
+        APIField('tour.name', serializer=TourFieldSerializer()),
+        APIField('tour.destination', serializer=TourFieldSerializer()),
+        # # Human-readable choice
+        APIField('status_display', serializer=ReadOnlyField(source='get_status_display')),
     ]
 
     def clean(self):
@@ -276,6 +310,35 @@ class Booking(models.Model):
     FieldPanel('status'),
     FieldPanel('user'),
         ]
+    
+    api_fields = [
+        APIField('book_id'),
+        APIField('customer_name'),
+        APIField('customer_email'),
+        APIField('customer_phone'),
+        APIField('nationality'),
+        APIField('customer_address'),
+        APIField('notes'),
+        APIField('number_of_adults'),
+        APIField('number_of_children'),
+        APIField('children_ages'),
+        APIField('travel_date'),
+        APIField('total_price'),
+        APIField('currency'),
+        APIField('status'),
+        APIField('payment_status'),
+        APIField('payment_method'),
+        APIField('configuration_details'),  # JSON → auto dict
+        APIField('booking_date'),
+        APIField('created_at'),
+        APIField('updated_at'),
+        APIField('user'),
+        APIField('proposal'),  # Exports as prop_id if you add __str__ or customize
+        # Custom
+        APIField('tour', serializer=TourFieldSerializer(source='tour', read_only=True)),
+        APIField('status_display', serializer=ReadOnlyField(source='get_status_display')),        
+        APIField('payment_status_display', serializer=ReadOnlyField(source='get_payment_status_display')),
+    ]
 
     def clean(self):
         if self.content_type_id and self.object_id:

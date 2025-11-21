@@ -88,7 +88,7 @@
                                 <div class="tour-display">
                                     <div class="tour-image mb-3">
                                         {% if tour.cover_image %}
-                                            {% image tour.cover_image fill-300x200 loading="lazy" as tour_img %}
+                                            {% image tour.cover_image fill-300x200 as tour_img %}
                                             <img src="{{ tour_img.url }}" 
                                             class="tour-card-img" 
                                             alt="{{ tour.name|default:'Tour Image' }}" 

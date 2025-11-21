@@ -1,9 +1,15 @@
 from datetime import date
+from wagtail.api.v2.views import BaseAPIViewSet
+
+
+from . import models
 from tours.models import LandTourPage
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from .utils import calculate_demand_factor, get_remaining_capacity  # From step 1
+from rest_framework.permissions import IsAuthenticated
+
+from .utils import calculate_demand_factor, get_remaining_capacity
 
 
 class AvailableDatesView(APIView):
@@ -43,5 +49,15 @@ class AvailableDatesView(APIView):
         # Full available dates (stubbed)
         available_dates = []
         return Response({'available_dates': available_dates})  
-    
+
+class ProposalsAPIView(BaseAPIViewSet):
+    model = models.Proposal
+    permission_classes = (IsAuthenticated,)
+
+
+class BookingsAPIView(BaseAPIViewSet):
+    model = models.Booking
+    permission_classes = (IsAuthenticated,)
+
+
     
