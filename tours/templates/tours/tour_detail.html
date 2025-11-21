@@ -30,9 +30,11 @@
       WhatsApp
      </a>
     </div>
+    {% if self.disclaimer %}
     <p class="disclaimer">
-      We'll contact you within 24 hours to confirm availability and next steps.</p>
-      All dates and prices will always be subject to availability.
+      {{ self.disclaimer|richtext }}
+    </p>
+      {% endif %}
       {% else %}
     <button class="book-button disabled">Sold Out</button>
     {% endif %}

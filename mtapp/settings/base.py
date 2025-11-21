@@ -26,7 +26,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.sites',           # ← make sure this is here
+    'django.contrib.sites',
+    'django.contrib.sitemaps',
 
     # Third-party – put these early
     'import_export',                  # ← regular django-import-export
@@ -50,7 +51,7 @@ INSTALLED_APPS = [
     'wagtail_localize',
     'wagtail_localize.locales',
     'wagtailseo',
-    'wagtail.contrib.sitemaps',
+    # 'wagtail.contrib.sitemaps',
 
     # Other third-party
     'modelcluster',
@@ -397,3 +398,5 @@ WAGTAILAPI_LIMIT_TO_REGISTERED_USERS = True
 
 # Token for CSV export
 WAGTAIL_API_TOKEN = "e721f0ae2b34243f890464bb23978fe639bb78e4"
+
+

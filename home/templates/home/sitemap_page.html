@@ -1,33 +1,102 @@
 {% extends "base.html" %}
-{% load wagtailcore_tags wagtailsettings_tags %}
+{% load wagtailcore_tags wagtailsettings_tags i18n %}
 
-{% block body_class %}sitemap{% endblock body_class %}
+{% block body_class %}{{ sitemap_page.title }}{% endblock body_class %}
 
 {% block content %}
-    <main class="sitemap-container">
-        <h1>Site Map</h1>
-        <p>Navigate our site's structure below. Updated: {{ self.last_published_at|date:"F d, Y" }}.</p>
-        
-        <div class="sitemap-tree">
+<main class="sitemap-page py-5">
+    <div class="container max-w-4xl mx-auto px-4">
+
+        <!-- Header -->
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                {% trans "Site Map" %}
+            </h1>
+            <p class="text-lg text-gray-600">
+                {% blocktrans with date=self.last_published_at|date:"F j, Y" %}
+                Explore all pages on our website. Last updated: <strong>{{ date }}</strong>
+                {% endblocktrans %}
+            </p>
+        </header>
+
+        <!-- Sitemap Tree -->
+        <div class="sitemap-tree bg-white rounded-2xl shadow-lg overflow-hidden">
             {% if pages %}
-                {% for page in pages %}
-                    {% include "home/includes/sitemap_item.html" with page=page level=1 %}
-                {% endfor %}
+                <ul class="divide-y divide-gray-100">
+                    {% for page in pages %}
+                        {% include "home/includes/sitemap_item_enhanced.html" with page=page level=1 only %}
+                    {% endfor %}
+                </ul>
             {% else %}
-                <p>No pages found. Check your page publications and locales in the admin.</p>
+                <div class="p-12 text-center text-gray-500">
+                    <p class="text-xl">{% trans "No pages found." %}</p>
+                    <p class="mt-2">{% trans "Check that pages are published and marked as 'Show in menus'." %}</p>
+                </div>
             {% endif %}
         </div>
-    </main>
+
+        <!-- Back to top & Full XML sitemap hint -->
+        <div class="mt-12 text-center text-sm text-gray-500 space-y-3">
+            <a href="#" class="inline-block text-blue-600 hover:underline">
+                {% trans "Back to top" %}
+            </a>
+            <br>
+            <small class="text-gray-400">
+                {% trans "Search engines use our" %}
+                <a href="/sitemap.xml" class="text-blue-600 hover:underline">XML sitemap</a>
+                {% trans "for better crawling." %}
+            </small>
+        </div>
+    </div>
+</main>
 {% endblock content %}
 
 {% block extra_css %}
-    <!-- Same CSS as before -->
-    <style>
-        .sitemap-tree { max-width: 800px; margin: 0 auto; }
-        .sitemap-item { margin: 0.5em 0; }
-        .sitemap-item ul { list-style: none; padding-left: 1.5em; border-left: 2px solid #ddd; margin: 0.5em 0; }
-        .sitemap-item a { text-decoration: none; color: #333; font-weight: bold; }
-        .sitemap-item a:hover { text-decoration: underline; color: #007cba; }
-        .sitemap-item--level-1 { font-size: 1.1em; }
-    </style>
+<style>
+    .sitemap-page {
+        background: linear-gradient(to bottom, #f8fafc 0%, #f1f5f9 100%);
+        min-height: 80vh;
+    }
+    .sitemap-tree ul ul {
+        border-left: 3px solid #e2e8f0;
+        margin-left: 1.5rem;
+        padding-left: 1rem;
+    }
+    .sitemap-item {
+        position: relative;
+        padding: 0.75rem 1rem;
+        transition: background 0.2s;
+    }
+    .sitemap-item:hover {
+        background: #f0f9ff;
+    }
+    .sitemap-item a {
+        color: #1e40af;
+        font-weight: 500;
+        text-decoration: none;
+        display: block;
+    }
+    .sitemap-item a:hover {
+        color: #1d4ed8;
+        text-decoration: underline;
+    }
+    .sitemap-item--level-1 > a {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
+    .sitemap-item--level-2 > a {
+        font-size: 1.1rem;
+    }
+    .sitemap-item--level-3 > a {
+        font-size: 1rem;
+        color: #475569;
+    }
+    .sitemap-item--has-children > a::after {
+        content: "▾";
+        float: right;
+        color: #94a3b8;
+        font-size: 0.8em;
+    }
+</style>
 {% endblock extra_css %}

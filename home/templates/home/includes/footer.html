@@ -1,10 +1,19 @@
-{% load static i18n dict_tags navbar_tags wagtailcore_tags custom_filters %}
+{% load static i18n dict_tags navbar_tags wagtailcore_tags wagtailimages_tags custom_filters %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/footer.css' %}" />
 {% endblock extra_css %}
 <footer>
     <div class="footer-container">
+        {% image settings.site_settings.BrandSettings.footer_background original as img %}
+            <img
+            height=""
+            width=""
+            src="{{ img.url }}"
+            alt="Footer Background"
+            class="footer-background"
+            loading="lazy"
+            />
         {% if settings.site_settings.BrandSettings %}
         <div class="contact-info-block">
             <div class="address">
@@ -29,9 +38,22 @@
             />
             </a>
         </div>
-        <div class="sitemap">
-            <a href="{% slugurl 'sitemap-page' %}">Site Map</a>  <!-- Add this line if missing -->
-        </div>
+            <div class="footer-links">
+                {% if sitemap_page %}
+                    <h4>{{ sitemap_page.title }}</h4>
+                {% else %}
+                <h4>{% trans "Sitemap" %}</h4>
+                    {% endif %}
+                <ul class="footer-menu">
+                    {% for link in settings.site_settings.BrandSettings.footer_menu_links.all %}
+                        <li>
+                            <a href="{{ link.url }}">{{ link.title }}</a>
+                        </li>
+                    {% empty %}
+                        <li><a href="{% url 'wagtail_serve' '' %}">Home</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
         <div class="social-media-wrap">
             {% if settings.site_settings.FooterLinks.facebook %}
             <button type="button" aria-label="social media">

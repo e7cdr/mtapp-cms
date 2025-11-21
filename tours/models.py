@@ -70,6 +70,7 @@ class AbstractTourPage(Page):
     final_message = RichTextField(blank=True, help_text=_("Final message from the travel company in the PDF Generator. "))
     courtesies = RichTextField(default="Guided city tour", help_text=_("Tour inclusions"), blank=True)
     cxl_policies = RichTextField(blank=True, null=True, default="", verbose_name="Cancellation Policies")
+    disclaimer = RichTextField(blank=True, null=True, default="", verbose_name="Disclaimer Message (Tours Details)", help_text="For example: All prices are subject to availability")
 
     amenity = StreamField([
         ('include', ListBlock(ChoiceBlock(choices=blocks.GLOBAL_ICON_CHOICES)))

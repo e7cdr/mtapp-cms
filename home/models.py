@@ -79,32 +79,29 @@ class HomePage(SeoMixin, Page):
         return context
     
 
-
 class SitemapPage(Page):
     content_panels = Page.content_panels
 
     def get_context(self, request):
-        context = super().get_context(request)
-        
-        # Get site and its localized root (English Home for /en/)
-        site = Site.find_for_request(request)
-        root = site.root_page.specific.localized  # Key: .localized gets current locale version
-        
-        # Simplified query: Children of localized root (already English-scoped)
-        context['pages'] = (
-            root.get_children()
-            .live()
-            .public()
-            # .in_menu()  # Comment out first to test all pages; uncomment for nav-only
-        )
-        
-        # Debug: Console on load (remove after)
-        language_code = get_language()
-        print(f"Sitemap debug - Lang: {language_code}, Root title: {root.title}, Pages count: {context['pages'].count()}")
-        if context['pages'].count() == 0:
-            print("Debug tip: Check if root has published children in this locale.")
-        
-        return context
+            context = super().get_context(request)
+            
+            # Get site and localized root
+            site = Site.find_for_request(request)
+            root = site.root_page.specific.localized
+            
+            # All top-level pages for the sitemap tree
+            context['pages'] = root.get_children().live().public()
+
+            # NEW: Make the Sitemap page itself available in context everywhere
+            # This finds the current locale's SitemapPage (or falls back gracefully)
+            try:
+                sitemap_page = SitemapPage.objects.live().public().first()
+                if sitemap_page:
+                    context['sitemap_page'] = sitemap_page.localized  # respects /en/, /es/, etc.
+            except:
+                context['sitemap_page'] = None
+
+            return context
 
     class Meta:
         verbose_name = "Sitemap"
