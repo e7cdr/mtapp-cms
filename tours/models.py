@@ -189,7 +189,7 @@ class AbstractTourPage(Page):
     seasonal_factor = models.DecimalField(max_digits=3, decimal_places=2, default=1.0, verbose_name="Seasonal Price Factor increase", help_text="1.0 = 0%. This will increase the price on certain seasons of the year like holidays")
     demand_factor = models.DecimalField(max_digits=3, decimal_places=2, default=0.0, verbose_name="Demand Factor", help_text="The Demand Factor will increase price based on the total occupancy calculated for the next 30 days (counting the selected travel date). 0 = 0%. If 20%, this means the first booking will have an increased value of 0, and the last one 20%")
     rep_comm = models.PositiveIntegerField(default=0, help_text=_('Sales representative commission'))
-    yt_vid = models.URLField(default='www.none.com', help_text=_("This video will be shown in the Tours Watch Video."), verbose_name="Youtube Video")
+    yt_vid = models.CharField(default='UHLdLtEiFGs', help_text=_("For example: https://www.youtube.com/watch?v=UHLdLtEiFGs >> ID = UHLdLtEiFGs. This video will be shown in the Tours Watch Video."), verbose_name="Youtube Video ID")
     max_capacity = models.PositiveIntegerField(default=20, help_text="Maximum Capacity is taken to calculate price increased based on the demand factor")
     available_slots = models.PositiveIntegerField(default=20)
 

@@ -1,9 +1,71 @@
 {% extends "base.html" %} {% load static i18n tour_filters custom_filters wagtailcore_tags wagtailimages_tags %}
 {% block title %}{{ self.title }}
 {% endblock title %}
-{% block content %}
+{% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/detail_page.css' %}" />
-<body>
+<style>
+/* Modal Styles */
+.video-modal {
+  display: none;
+  position: fixed;
+  z-index: 10000;
+  left: 0; top: 0;
+  width: 100%; height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.85);
+  animation: fadeIn 0.3s;
+}
+
+.video-modal-content {
+  position: relative;
+  margin: 5% auto;
+  padding: 20px;
+  width: 90%;
+  max-width: 900px;
+  background: #000;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+}
+
+.video-wrapper {
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  height: 0;
+  overflow: hidden;
+}
+
+.video-wrapper iframe {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  border-radius: 8px;
+}
+
+.video-modal-close {
+  position: absolute;
+  top: -10px;
+  right: 10px;
+  color: #fff;
+  font-size: 40px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 10001;
+  text-shadow: 0 0 10px rgba(0,0,0,0.8);
+}
+
+.video-modal-close:hover {
+  color: #ff5a5a;
+}
+
+/* Optional fade animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+</style>
+{% endblock extra_css %}
+{% block content %}
+
  <div class="detail-container">
   <div class="cover-image-container">
    <div class="cover-image">
@@ -17,7 +79,30 @@
      {% if not self.duration_days == 1 %}{{ self.nights }} nights
      {% endif %}
     </h2>
-    <a href="{{ self.yt_vid }}" class="book-button conic-gradient-animation">Tour Video</a>
+{% block video_modal %}
+{% if self.yt_vid %}
+<div id="videoModal" class="video-modal">
+    <div class="video-modal-content">
+        <span class="video-modal-close" onclick="closeVideoModal()">×</span>
+        <div class="video-wrapper">
+            <iframe
+                id="youtubeIframe"
+                src="" 
+                title="Tour Video"
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowfullscreen
+                referrerpolicy="strict-origin-when-cross-origin" 
+                loading="lazy">
+            </iframe>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock video_modal %}
+    <a href="javascript:void(0)" class="book-button conic-gradient-animation" onclick="openVideoModal()">
+    Tour Video
+    </a>
     {% comment %}
     <div class="tour-itinerary">View PDF Itinerary</div>
     {% endcomment %}
@@ -371,7 +456,39 @@
    </div>
   </div>
  </div>
-</body>
-
-<script src="{% static 'js/tour_detail.js' %}"></script>
 {% endblock content %}
+{% block extra_js %}
+<script src="{% static 'js/tour_detail.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const videoId = "{{ self.yt_vid|escapejs }}".trim();
+
+    window.openVideoModal = function() {
+        if (!videoId) return;
+
+        const iframe = document.getElementById('youtubeIframe');
+        const modal = document.getElementById('videoModal');
+
+        iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.closeVideoModal = function() {
+        document.getElementById('videoModal').style.display = 'none';
+        document.getElementById('youtubeIframe').src = '';
+        document.body.style.overflow = 'auto';
+    };
+
+    // Close on backdrop click
+    document.getElementById('videoModal')?.addEventListener('click', function(e) {
+        if (e.target === this) closeVideoModal();
+    });
+
+    // Close with Escape
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeVideoModal();
+    });
+});
+</script>
+{% endblock extra_js %}
