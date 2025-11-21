@@ -8,97 +8,80 @@ from wagtail import hooks
 def pricing_and_infant_controller():
     js = """
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            console.log('FINAL VERSION LOADED');
+    document.addEventListener('DOMContentLoaded', function () {
+        const pricingSelect = document.querySelector('select[name="pricing_type"]');
+        if (!pricingSelect) return;
 
-            // 1. PRICING TYPE TOGGLER — already working
-            function initPricingToggle() {
-                const select = document.querySelector('select[name="pricing_type"]');
-                if (!select) return;
+        // The actual StreamField containers (Wagtail wraps them in a div with this class)
+        const roomField     = document.querySelector('#id_per_room_pricing').closest('.w-field__wrapper');
+        const personField   = document.querySelector('#id_per_person_pricing').closest('.w-field__wrapper');
+        const combinedField = document.querySelector('#id_combined_pricing_tiers').closest('.w-field__wrapper');
 
-                const roomPanel = document.querySelector('.per-room-panel');
-                const personPanel = document.querySelector('.per-person-panel');
-                const combinedPanel = document.querySelector('.combined-pricing-panel');
+        // The visual panels (the MultiFieldPanel wrappers)
+        const roomPanel     = document.querySelector('.per-room-panel');
+        const personPanel   = document.querySelector('.per-person-panel');
+        const combinedPanel = document.querySelector('.combined-pricing-panel');
 
-                function toggle() {
-                    const val = select.value;
-                    [roomPanel, personPanel, combinedPanel].forEach(p => {
-                        if (p) {
-                            p.style.display = 'none';
-                            p.querySelectorAll('input, select, textarea').forEach(el => el.disabled = true);
-                        }
-                    });
+        function toggle() {
+            const value = pricingSelect.value;
 
-                    if (val === 'Per_room' && roomPanel) {
-                        roomPanel.style.display = 'block';
-                        roomPanel.querySelectorAll('input, select, textarea').forEach(el => el.disabled = false);
-                    }
-                    if (val === 'Per_person' && personPanel) {
-                        personPanel.style.display = 'block';
-                        personPanel.querySelectorAll('input, select, textarea').forEach(el => el.disabled = false);
-                    }
-                    if (val === 'Combined' && combinedPanel) {
-                        combinedPanel.style.display = 'block';
-                        combinedPanel.querySelectorAll('input, select, textarea').forEach(el => el.disabled = false);
-                    }
-                }
+            // 1. Hide/show the big collapsible panels (purely cosmetic)
+            [roomPanel, personPanel, combinedPanel].forEach(p => p?.classList.add('collapsed'));
 
-                toggle();
-                select.addEventListener('change', toggle);
+            if (value === 'Per_room') {
+                roomPanel?.classList.remove('collapsed');
+            } else if (value === 'Per_person') {
+                personPanel?.classList.remove('collapsed');
+            } else if (value === 'Combined') {
+                combinedPanel?.classList.remove('collapsed');
             }
 
-            // 2. INFANT FIELDS — THIS WORKS IN WAGTAIL 6+
-            function updateInfantFields(block) {
-                const typeSelect = block.querySelector('select[id*="infant_price_type"]');
-                if (!typeSelect) return;
+            // 2. CRITICAL: Never hide the actual StreamField wrapper with display:none
+            //     Instead we move the hidden ones off-screen but keep them rendered
+            const offscreen = { position: 'absolute', left: '-9999px', top: '-9999px', visibility: 'hidden' };
+            const visible   = { position: '', left: '', top: '', visibility: '' };
 
-                // WAGTAIL 6+ USES data-field-name
-                const percentField = block.querySelector('[data-field-name="infant_percent_of_adult"]')?.closest('.w-field');
-                const fixedField   = block.querySelector('[data-field-name="infant_fixed_amount"]')?.closest('.w-field');
-
-                function toggle() {
-                    const val = typeSelect.value;
-
-                    if (percentField) percentField.style.display = 'none';
-                    if (fixedField) fixedField.style.display = 'none';
-
-                    if (val === 'percent' && percentField) percentField.style.display = 'block';
-                    if (val === 'fixed' && fixedField) fixedField.style.display = 'block';
-                }
-
-                toggle();
-                typeSelect.addEventListener('change', toggle);
-            }
-
-            function scanBlocks() {
-                document.querySelectorAll('.struct-block').forEach(block => {
-                    if (block.querySelector('select[id*="infant_price_type"]')) {
-                        updateInfantFields(block);
-                    }
-                });
-            }
-
-            // Run everything
-            initPricingToggle();
-            scanBlocks();
-
-            // Watch for new blocks
-            const observer = new MutationObserver(() => {
-                setTimeout(scanBlocks, 50);
+            // Reset all
+            [roomField, personField, combinedField].forEach(f => {
+                if (f) Object.assign(f.style, offscreen);
             });
-            observer.observe(document.body, { childList: true, subtree: true });
-        });
+
+            // Show only the active one
+            if (value === 'Per_room' && roomField)     Object.assign(roomField.style, visible);
+            if (value === 'Per_person' && personField) Object.assign(personField.style, visible);
+            if (value === 'Combined' && combinedField) Object.assign(combinedField.style, visible);
+        }
+
+        // Run on load + on change
+        toggle();
+        pricingSelect.addEventListener('change', toggle);
+
+        // Re-run after Wagtail re-initializes fields (e.g. when adding a new block)
+        const observer = new MutationObserver(toggle);
+        observer.observe(document.body, { childList: true, subtree: true });
+    });
     </script>
     """
-    return format_html(js.replace('{', '{{').replace('}', '}}'))
+    return format_html(js)
 
 @hooks.register('insert_editor_css')
 def pricing_admin_css():
-    return format_html(
-        '<style>'
-        '.wagtail-panel--hidden { display: none !important; }'
-        '.per-room-panel, .per-person-panel, .combined-pricing-panel { transition: opacity 0.3s ease; }'
-        '</style>'
-    )
+    return format_html("""
+    <style>
+        /* Make collapsed panels look disabled but still take space or not */
+        .per-room-panel.collapsed > div > div,
+        .per-person-panel.collapsed > div > div,
+        .combined-pricing-panel.collapsed > div > div {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        /* Optional: completely hide the header text when collapsed */
+        .per-room-panel.collapsed h2,
+        .per-person-panel.collapsed h2,
+        .combined-pricing-panel.collapsed h2 {
+            color: #999;
+        }
+    </style>
+    """)
 
 
