@@ -45,7 +45,7 @@ footer {
 .brand-wrap {
     flex-shrink: 0;
     width: 100%;
-    flex-basis: 50%;
+    flex-basis: 49%;
     text-align: center;
 }
 
@@ -67,6 +67,10 @@ footer {
 
 .footer-container div a:hover {
     color: rgb(0, 145, 255)
+}
+
+.footer-links {
+    flex-basis: 25%;
 }
 
 .footer-links ul {
