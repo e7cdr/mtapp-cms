@@ -1,87 +1,87 @@
-from django.utils.html import format_html
+# tours/wagtail_hooks.py
 from wagtail import hooks
+from django.utils.html import format_html
 
-from django.utils.html import format_html
-from wagtail import hooks
 
 @hooks.register('insert_editor_js')
 def pricing_and_infant_controller():
     js = """
     <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const pricingSelect = document.querySelector('select[name="pricing_type"]');
-        if (!pricingSelect) return;
+    console.log("PRICING CONTROLLER LOADED – FINAL BULLETPROOF VERSION");
 
-        // The actual StreamField containers (Wagtail wraps them in a div with this class)
-        const roomField     = document.querySelector('#id_per_room_pricing').closest('.w-field__wrapper');
-        const personField   = document.querySelector('#id_per_person_pricing').closest('.w-field__wrapper');
-        const combinedField = document.querySelector('#id_combined_pricing_tiers').closest('.w-field__wrapper');
+    function initPricingSwitcher() {
+        const select = document.querySelector('select[name="pricing_type"]');
+        if (!select) {
+            console.warn("Pricing type select not found");
+            return;
+        }
+        console.log("Found pricing_type select:", select.value);
 
-        // The visual panels (the MultiFieldPanel wrappers)
-        const roomPanel     = document.querySelector('.per-room-panel');
-        const personPanel   = document.querySelector('.per-person-panel');
-        const combinedPanel = document.querySelector('.combined-pricing-panel');
+        // Find the three pricing panels by their exact classname
+        const panels = {
+            Per_room:   document.querySelector('.per-room-panel'),
+            Per_person: document.querySelector('.per-person-panel'),
+            Combined:   document.querySelector('.combined-pricing-panel')
+        };
 
-        function toggle() {
-            const value = pricingSelect.value;
+        // Find the hidden JSON inputs (these exist because use_json_field=True)
+        const inputs = {
+            Per_room:   document.querySelector('input[name="per_room_pricing"]'),
+            Per_person: document.querySelector('input[name="per_person_pricing"]'),
+            Combined:   document.querySelector('input[name="combined_pricing_tiers"]')
+        };
 
-            // 1. Hide/show the big collapsible panels (purely cosmetic)
-            [roomPanel, personPanel, combinedPanel].forEach(p => p?.classList.add('collapsed'));
+        console.log("Found panels:", panels);
+        console.log("Found inputs:", inputs);
 
-            if (value === 'Per_room') {
-                roomPanel?.classList.remove('collapsed');
-            } else if (value === 'Per_person') {
-                personPanel?.classList.remove('collapsed');
-            } else if (value === 'Combined') {
-                combinedPanel?.classList.remove('collapsed');
-            }
+        function update() {
+            const value = select.value;
+            console.log("Pricing type changed to:", value);
 
-            // 2. CRITICAL: Never hide the actual StreamField wrapper with display:none
-            //     Instead we move the hidden ones off-screen but keep them rendered
-            const offscreen = { position: 'absolute', left: '-9999px', top: '-9999px', visibility: 'hidden' };
-            const visible   = { position: '', left: '', top: '', visibility: '' };
-
-            // Reset all
-            [roomField, personField, combinedField].forEach(f => {
-                if (f) Object.assign(f.style, offscreen);
+            // 1. Hide ALL panels completely
+            Object.values(panels).forEach(p => {
+                if (p) p.style.display = 'none';
             });
 
-            // Show only the active one
-            if (value === 'Per_room' && roomField)     Object.assign(roomField.style, visible);
-            if (value === 'Per_person' && personField) Object.assign(personField.style, visible);
-            if (value === 'Combined' && combinedField) Object.assign(combinedField.style, visible);
+            // 2. Show only the active one
+            if (panels[value]) {
+                panels[value].style.display = 'block';
+                console.log("Showing panel:", value);
+            }
+
+            // 3. Clear unused StreamFields → no more -count errors
+            Object.keys(inputs).forEach(type => {
+                const input = inputs[type];
+                if (type !== value && input) {
+                    input.value = '[]';
+                    input.dispatchEvent(new Event('change'));
+                    console.log("Cleared field:", input.name);
+                }
+            });
         }
 
-        // Run on load + on change
-        toggle();
-        pricingSelect.addEventListener('change', toggle);
+        // Run now
+        update();
 
-        // Re-run after Wagtail re-initializes fields (e.g. when adding a new block)
-        const observer = new MutationObserver(toggle);
-        observer.observe(document.body, { childList: true, subtree: true });
-    });
+        // Run on every change
+        select.addEventListener('change', update);
+
+        // Run again if Wagtail rebuilds the form (e.g. after adding a block)
+        new MutationObserver(update).observe(document.body, { childList: true, subtree: true });
+    }
+
+    // Run after everything is loaded
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPricingSwitcher);
+    } else {
+        initPricingSwitcher();
+    }
     </script>
     """
-    return format_html(js)
+    return format_html(js.replace("{", "{{").replace("}", "}}"))
 
+
+# Optional: tiny CSS so collapsed panels don't look broken
 @hooks.register('insert_editor_css')
 def pricing_admin_css():
-    return format_html("""
-    <style>
-        /* Make collapsed panels look disabled but still take space or not */
-        .per-room-panel.collapsed > div > div,
-        .per-person-panel.collapsed > div > div,
-        .combined-pricing-panel.collapsed > div > div {
-            opacity: 0.5;
-            pointer-events: none;
-        }
-        /* Optional: completely hide the header text when collapsed */
-        .per-room-panel.collapsed h2,
-        .per-person-panel.collapsed h2,
-        .combined-pricing-panel.collapsed h2 {
-            color: #999;
-        }
-    </style>
-    """)
-
-
+    return format_html("<style>.per-room-panel, .per-person-panel, .combined-pricing-panel { transition: none; }</style>")

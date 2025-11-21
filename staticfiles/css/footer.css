@@ -144,3 +144,16 @@ footer {
 .sitemap a:hover {
     color: #38bdf8;
 }
+
+
+.fa-youtube {
+    color: red !important;
+}
+
+.fa-whatsapp {
+    color: green !important;
+}
+
+.fa-x-twitter {
+    color: black !important;
+}

@@ -21,13 +21,13 @@ from wagtail.fields import StreamField, RichTextField
 from wagtail.images.models import Image
 from wagtail.documents.models import Document
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel
-from wagtail.blocks import ( 
-    CharBlock, 
-    StructBlock, 
+from wagtail.blocks import (
+    CharBlock,
+    StructBlock,
     RichTextBlock,
-    ListBlock, 
-    ChoiceBlock, 
-    IntegerBlock, 
+    ListBlock,
+    ChoiceBlock,
+    IntegerBlock,
     DateBlock,
 )
 from wagtail.contrib.routable_page.models import RoutablePageMixin, path
@@ -152,7 +152,7 @@ class AbstractTourPage(Page):
                 ('Per_person', 'Per Person (flat rate, no room logic)'),
                 ('Combined', 'Combined (Tiered)'),
             ],
-        default='Combined',  
+        default='Combined',
         help_text="Combined = adult pays base price, gets discount when sharing room. Best for private tours."
         )
     # Replace old flat pricing fields with this:
@@ -165,7 +165,7 @@ class AbstractTourPage(Page):
         blank=True,
         null=True,  # Important for migrations
         help_text="Tiered pricing for Combined mode. Ordered from smallest to largest group.",
-        
+
     )
     max_children_per_room = models.PositiveIntegerField(default=1, null=True, blank=True)
     child_age_min = models.PositiveIntegerField(default=7, verbose_name="Child Minimum Age")
@@ -320,7 +320,7 @@ class AbstractTourPage(Page):
 
         ], heading="Pricing Configuration", classname="collapsible"),
     ]
-    
+
 
 
     template = "tours/tour_detail.html"
@@ -349,7 +349,7 @@ class AbstractTourPage(Page):
         if self.pricing_type == 'Per_person':
             base['max_children_per_room'] = self.max_children_per_room
         return base
-    
+
     @property
     def blackout_dates_list(self):
         """Flatten blackout_entries to list of 'YYYY-MM-DD' strings (expands ranges)."""
@@ -393,6 +393,22 @@ class AbstractTourPage(Page):
 
     def clean(self):
         super().clean()
+
+        if self.pricing_type == 'Per_room':
+            self.price_adult = self.price_chd = self.price_inf = None
+            self.combined_pricing_tiers = []
+            self.per_person_pricing = []
+
+        elif self.pricing_type == 'Per_person':
+            self.price_sgl = self.price_dbl = self.price_tpl = None
+            self.combined_pricing_tiers = []   # ← Add this
+            # self.per_room_pricing = []      # if exists
+
+        elif self.pricing_type == 'Combined':
+            self.price_sgl = self.price_dbl = self.price_tpl = None
+            self.price_adult = self.price_chd = self.price_inf = None
+
+
         # Generate code_id only if missing (e.g., new page in default locale)
         if not self.code_id:
             prefix = self.get_code_prefix()
@@ -654,7 +670,7 @@ class ToursIndexPage(RoutablePageMixin, Page):
     def all_tours(self, request):
         # Reuse get_context logic, but ensure full list
         context = self.get_context(request)
-        context['tours'] = context['tours']  
+        context['tours'] = context['tours']
         return self.render(request, context_overrides=context)
 
     @path('land-tours/', name='land_tours')
