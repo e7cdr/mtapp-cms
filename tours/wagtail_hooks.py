@@ -1,6 +1,9 @@
 from django.utils.html import format_html
 from wagtail import hooks
 
+from django.utils.html import format_html
+from wagtail import hooks
+
 @hooks.register('insert_editor_js')
 def pricing_and_infant_controller():
     js = """
@@ -93,10 +96,9 @@ def pricing_and_infant_controller():
 def pricing_admin_css():
     return format_html(
         '<style>'
-        '.per-room-panel, .per-person-panel, .combined-pricing-panel { transition: opacity 0.3s; }'
-        '.per-room-panel[style*="none"], .per-person-panel[style*="none"], .combined-pricing-panel[style*="none"] { opacity: 0.6; }'
+        '.wagtail-panel--hidden { display: none !important; }'
+        '.per-room-panel, .per-person-panel, .combined-pricing-panel { transition: opacity 0.3s ease; }'
         '</style>'
     )
-
 
 
