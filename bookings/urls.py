@@ -28,7 +28,7 @@ urlpatterns = [
     path('proposal/<str:token>/confirm-token/', views.confirm_proposal_by_token, name='confirm_proposal_by_token'),
     # Pricing (AJAX)
     path('calculate_pricing/<str:tour_type>/<int:tour_id>/', views.render_pricing, name='render_pricing'),
-
+    path('bookings/confirm/<int:tour_id>/', views.render_confirmation, name='bookings:render_confirmation'),
     # Legacy (comment out if not needed; remove later)
     # path('child_ages/', views.child_ages, name='child_ages'),
     # path('partners/', views.get_partners, name='get_partners'),

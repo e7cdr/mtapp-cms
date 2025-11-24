@@ -57,9 +57,9 @@ class BookingStartView(FormView):
     success_url = reverse_lazy('bookings:customer_portal')  # Fallback, not used
 
     # @method_decorator(ratelimit(key='ip', rate='5/h', method='POST', block=True)) Uncomment for more strict security for anom users
-    @method_decorator(ratelimit(key='user', rate='10/d', method='POST', block=True)) # Uncomment for per user
+    # @method_decorator(ratelimit(key='user', rate='10/d', method='POST', block=True)) # Uncomment for per user
     # @method_decorator(ratelimit(key='user:ip', rate='8/h', method='POST', block=True))
-    @method_decorator(never_cache)
+    # @method_decorator(never_cache)
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
 
@@ -68,13 +68,29 @@ class BookingStartView(FormView):
         tour_id = self.kwargs['tour_id']
         self.tour = get_object_or_404(LandTourPage, id=tour_id)
         kwargs['tour'] = self.tour
-        kwargs['initial'] = {
+
+        # DETERMINE MODE BASED ON collect_price
+        collect_price = getattr(self.tour, 'collect_price', True)
+
+        initial = {
             'tour_type': 'land',
             'tour_id': tour_id,
-            'form_submission': 'pricing',
             'currency': 'USD',
-            'travel_date': date.today(),  # FIXED: Hard today (overrides tour.start_date)
+            'travel_date': date.today(),
         }
+
+        if not collect_price:
+            # Force inquiry-only mode
+            initial.update({
+                'form_submission': 'inquiry',  # new mode
+                'customer_name': '',
+                'customer_email': '',
+                'customer_phone': '',
+            })
+        else:
+            initial['form_submission'] = 'pricing'
+
+        kwargs['initial'] = initial
         return kwargs
 
     def get_context_data(self, **kwargs):
@@ -107,43 +123,26 @@ class BookingStartView(FormView):
         form = self.get_form()
         if form.is_valid():
             cleaned_data = form.cleaned_data
-            # Force currency default if missing (e.g., field not rendered)
-            if 'currency' not in cleaned_data or not cleaned_data['currency']:
-                cleaned_data['currency'] = 'USD'
 
-            # Force travel_date from POST (ensure it's saved even if form quirky) - Enhanced
-            travel_date_str = request.POST.get('travel_date', '')
-            print(f"DEBUG Post: Raw travel_date from POST: '{travel_date_str}'")  # Key: Check if Flatpickr sets this
-            if travel_date_str:
-                try:
-                    from datetime import datetime
-                    parsed_date = datetime.strptime(travel_date_str, '%Y-%m-%d').date()
-                    cleaned_data['travel_date'] = parsed_date
-                    print(f"DEBUG Post: Parsed travel_date from POST '{travel_date_str}' to {parsed_date}")
-                except ValueError:
-                    print(f"DEBUG Post: Invalid travel_date '{travel_date_str}' - falling back")
-                    cleaned_data['travel_date'] = self.tour.start_date or date.today()  # Fallback to tour or today
-            else:
-                print("DEBUG Post: No travel_date in POST - falling back")
-                cleaned_data['travel_date'] = self.tour.start_date or date.today()
-
-            print("Form valid - storing for confirmation")
-            print(f"DEBUG Post: Final cleaned travel_date: {cleaned_data['travel_date']} (type: {type(cleaned_data['travel_date'])})")
-
-            # Compute configs for reference
+            # ────────────────────── RECOMPUTE PRICING (same as old working version) ──────────────────────
             configs = compute_pricing(
-                cleaned_data['tour_type'], self.tour.id,
-                request.POST, request.session
+                cleaned_data['tour_type'],
+                self.tour.id,
+                request.POST,
+                request.session
             )
 
-            # Parse selected
-            selected_config_str = cleaned_data.get('selected_configuration', '0')
-            selected_index = int(selected_config_str) if selected_config_str.isdigit() else 0
+            # Get selected configuration index from form
+            selected_config_index = cleaned_data.get('selected_configuration', '0')
+            try:
+                selected_index = int(selected_config_index)
+            except (ValueError, TypeError):
+                selected_index = 0
+
+            # Get the actual selected config
             selected_room_config = configs[selected_index] if selected_index < len(configs) else {}
 
-
-
-            # Store in session—no save yet
+            # ────────────────────── BUILD proposal_data ──────────────────────
             proposal_data = {
                 'tour_type': cleaned_data['tour_type'],
                 'tour_id': cleaned_data['tour_id'],
@@ -154,54 +153,175 @@ class BookingStartView(FormView):
                 'nationality': cleaned_data.get('nationality', ''),
                 'notes': cleaned_data.get('notes', ''),
                 'number_of_adults': cleaned_data['number_of_adults'],
-                'number_of_children': cleaned_data['number_of_children'],
+                'number_of_children': cleaned_data.get('number_of_children', 0),
                 'child_ages': cleaned_data.get('child_ages', []),
-                'travel_date': cleaned_data['travel_date'].isoformat() if hasattr(cleaned_data['travel_date'], 'isoformat') else str(cleaned_data['travel_date']),
-                'selected_configuration': selected_index,
-                'currency': cleaned_data['currency'],
-                'supplier_email': self.tour.supplier_email,
-                'estimated_price': str(selected_room_config.get('total_price', '0')),  # Str for JSON
+                'travel_date': cleaned_data['travel_date'].isoformat(),
+                'currency': cleaned_data.get('currency', 'USD'),
+                'supplier_email': self.tour.supplier_email or '',
+                'estimated_price': str(selected_room_config.get('total_price', '0')),
                 'room_config': {'options': configs},
                 'selected_room_config': selected_room_config,
-                'number_of_infants': sum(1 for age in cleaned_data.get('child_ages', []) if age < self.tour.child_age_min),
+                'number_of_infants': sum(
+                    1 for age in cleaned_data.get('child_ages', [])
+                    if age < getattr(self.tour, 'child_age_min', 7)
+                ),
             }
 
-            temp_proposal = Proposal(
-                number_of_adults=proposal_data['number_of_adults'],
-                number_of_children=proposal_data['number_of_children'],
-                number_of_infants=proposal_data['number_of_infants'],
-                selected_config=proposal_data['selected_room_config'],
-                content_type=ContentType.objects.get_for_model(self.tour),
-                object_id=self.tour.id,
-                travel_date=datetime.strptime(proposal_data['travel_date'], '%Y-%m-%d').date(),
-                currency=proposal_data['currency'],
-                tour=self.tour,  # For calc
-            )
-            proposal_data['estimated_price'] = str(selected_room_config.get('total_price', '0'))
+            # ────────────────────── INQUIRY-ONLY: FORCE PRICE = 0 ──────────────────────
+            if not getattr(self.tour, 'collect_price', True):
+                proposal_data.update({
+                    'estimated_price': '0',
+                    'room_config': {'options': [], 'note': 'Inquiry only'},
+                    'selected_room_config': {'note': 'Inquiry only - contact required'},
+                })
 
+            # ────────────────────── SAVE TO SESSION ──────────────────────
             request.session['proposal_data'] = proposal_data
-            print(f"DEBUG Post: Saved session travel_date: {proposal_data['travel_date']}")
 
-            print(f"Stored data for confirmation: {len(proposal_data)} keys")
-
-            # Handle AJAX vs non-AJAX
+            # ────────────────────── RETURN RESPONSE ──────────────────────
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({'success': True, 'message': 'Data saved for confirmation'})
+                return JsonResponse({'success': True})
             else:
-                # Non-AJAX: FIXED: Redirect to modal loader (your render_confirmation)
                 return redirect('bookings:render_confirmation', tour_id=self.tour.id)
-        else:
-            print(f"DEBUG Post: Form invalid - errors: {form.errors}")  # Add this for validation fails
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                # FIXED: Flatten errors to list of strings for JS
-                error_messages = []
-                for field, errors in form.errors.items():
-                    for error in errors:
-                        error_messages.append(f"{field.title() if field != '__all__' else 'Form'}: {error}")
-                return JsonResponse({'success': False, 'errors': error_messages}, status=400)
-            # Non-AJAX: re-render with errors
-            return self.form_invalid(form)
 
+        else:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'errors': form.errors
+                }, status=400)
+            # return self.form_invalid(form)
+
+def submit_proposal(request, tour_id):
+    print(f"\n=== submit_proposal called at {timezone.now()} ===")
+    print("Method:", request.method)
+    print("Is AJAX:", request.headers.get('X-Requested-With') == 'XMLHttpRequest')
+    print("CSRF cookie:", request.COOKIES.get('csrftoken'))
+    print("CSRF header:", request.headers.get('X-CSRFToken'))
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Invalid method'}, status=405)
+
+    session_data = request.session.get('proposal_data')
+    if not session_data:
+        return JsonResponse({'error': 'No data in session'}, status=400)
+    
+    if not request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        print("NOT AJAX → returning 400")
+        return JsonResponse({'error': 'AJAX required'}, status=400)
+
+    # Parse travel_date
+    travel_date_str = session_data['travel_date']
+    try:
+        travel_date = datetime.strptime(travel_date_str, '%Y-%m-%d').date()
+    except ValueError as ve:
+        logger.error(f"Invalid travel_date format '{travel_date_str}': {ve}")
+        return JsonResponse({'error': 'Invalid travel date format'}, status=400)
+
+    tour = get_object_or_404(LandTourPage, id=tour_id)
+    content_type = ContentType.objects.get_for_model(tour)
+
+    # ────────────────────── NEW: Handle collect_price=False ──────────────────────
+    collect_price = getattr(tour, 'collect_price', True)  # This is the key line
+    if not collect_price:
+        # Force safe defaults for inquiry-only tours
+        session_data['estimated_price'] = '0'
+        session_data['currency'] = session_data.get('currency', 'USD')
+        session_data['room_config'] = {'options': [], 'note': 'Inquiry only - no pricing'}
+        session_data['selected_room_config'] = {'note': 'Inquiry only - contact required'}
+    # ─────────────────────────────────────────────────────────────────────────────
+
+    # Existing line (unchanged)
+    is_company_tour = getattr(tour, 'is_company_tour', False)
+    logger.info(f"Proposal for tour {tour_id}: is_company_tour={is_company_tour}")
+
+    # Create proposal first, always
+    proposal = Proposal.objects.create(
+        customer_name=session_data['customer_name'],
+        customer_email=session_data['customer_email'],
+        customer_phone=session_data.get('customer_phone', ''),
+        customer_address=session_data.get('customer_address', ''),
+        nationality=session_data.get('nationality', ''),
+        notes=session_data.get('notes', ''),
+        content_type=content_type,
+        object_id=tour_id,
+        number_of_adults=session_data['number_of_adults'],
+        number_of_children=session_data['number_of_children'],
+        children_ages=session_data['child_ages'],
+        travel_date=travel_date,
+        supplier_email=session_data['supplier_email'],
+        currency=session_data.get('currency', 'USD'),
+        estimated_price=Decimal(session_data.get('estimated_price', '0')),
+        user=request.user if request.user.is_authenticated else None,
+        status='PENDING_SUPPLIER',
+        room_config=session_data.get('room_config', {'options': []}),
+        selected_config=session_data.get('selected_room_config', {}),
+        number_of_infants=session_data.get('number_of_infants', 0),
+    )
+
+    # Calculate end_date
+    duration = getattr(tour, 'duration_days', 0)
+    end_date = proposal.travel_date + timedelta(days=duration)
+
+    email_success = True  # Flag for email status
+
+    # 1. ALWAYS TRY to send initial client email
+    try:
+        send_proposal_submitted_email(proposal, tour, end_date)
+    except Exception as e:
+        logger.error(f"Failed to send proposal submitted email for {proposal.id}: {e}")
+        email_success = False
+
+    # 2. CONDITIONAL: Handle based on is_company_tour
+    if is_company_tour:
+        # Company tour: Internal flow
+        proposal.status = 'PENDING_INTERNAL'
+        proposal.save()
+        try:
+            send_internal_confirmation_email(proposal, tour, end_date)
+        except Exception as e:
+            logger.error(f"Failed to send internal confirmation email for {proposal.id}: {e}")
+            email_success = False
+    else:
+        # Normal supplier flow
+        if proposal.supplier_email:
+            token = ProposalConfirmationToken.objects.create(proposal=proposal)
+            try:
+                send_supplier_email(proposal, token, tour, end_date)
+            except Exception as e:
+                logger.error(f"Failed to send supplier email for {proposal.id}: {e}")
+                email_success = False
+        else:
+            logger.warning(f"No supplier email for proposal {proposal.id}")
+            # Optional: Send to admin email instead
+            try:
+                send_internal_confirmation_email(proposal, tour, end_date)  # Reuse internal email for admin notification
+            except Exception as e:
+                logger.error(f"Failed to send admin notification for {proposal.id}: {e}")
+                email_success = False
+
+    # Clear session
+    if 'proposal_data' in request.session:
+        del request.session['proposal_data']
+
+    message = 'Proposal submitted successfully!'
+    if not email_success:
+        message += ' (Some emails failed to send — admin has been notified)'
+
+    response_data = {
+        'success': True,
+        'proposal_id': proposal.id,
+        'prop_id': proposal.prop_id,
+        'message': message,
+        'redirect_url': f"/bookings/proposal-success/{proposal.id}/",
+        'is_company_tour': is_company_tour,  # CRITICAL — THIS WAS MISSING
+    }
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse(response_data)
+    else:
+        messages.success(request, message)
+        return redirect('bookings:proposal_success', proposal_id=proposal.id)
+    
 class ProposalSuccessView(TemplateView):
     template_name = 'bookings/proposal_success.html'
 
@@ -217,12 +337,6 @@ class ProposalSuccessView(TemplateView):
         context['is_company_tour'] = tour.is_company_tour
         context['status_note'] = ' (Internal review pending)' if tour.is_company_tour else ' (Awaiting supplier confirmation)'
         return context
-
-paypal.configure({
-    "mode": "sandbox",  # "live" for prod
-    "client_id": config('PAYPAL_CLIENT_ID'),
-    "client_secret": config('PAYPAL_CLIENT_SECRET'),
-})
 
 def get_pricing_tier(tour, number_of_adults):
     """
@@ -610,146 +724,6 @@ def compute_pricing(tour_type, tour_id, form_data, session):
 
     return configurations
 
-class PaymentView(TemplateView):
-    template_name = 'bookings/payment.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        proposal_id = self.kwargs['proposal_id']
-        proposal = get_object_or_404(Proposal, id=proposal_id, status='SUPPLIER_CONFIRMED')
-        context['proposal'] = proposal
-        context['amount'] = str(proposal.estimated_price)  # For JS
-        context['paypal_client_id'] = settings.PAYPAL_CLIENT_ID  # JS SDK
-        return context
-
-    def post(self, request, proposal_id):  # On approve/capture
-        proposal = get_object_or_404(Proposal, id=proposal_id)
-        payment_id = request.POST.get('paymentId')
-        if not payment_id:
-            return JsonResponse({'error': 'No payment ID'}, status=400)
-
-        # Server-side capture (secure)
-        payment = paypal.Payment.find(payment_id)
-        if payment.state == 'approved':
-            payment.execute({'payer_id': request.POST.get('PayerID')})
-            if payment.state == 'completed':
-                proposal.status = 'PAID'
-                proposal.save()
-
-                # Create Booking
-                booking = Booking.objects.create(
-                    customer_name=proposal.customer_name,
-                    customer_email=proposal.customer_email,
-                    # ... copy other fields: number_of_adults, travel_date, etc.
-                    content_type=proposal.content_type,
-                    object_id=proposal.object_id,
-                    total_price=proposal.estimated_price,
-                    payment_status='PAID',
-                    payment_method='PAYPAL',
-                    proposal=proposal,
-                    configuration_details=proposal.room_config,
-                    user=proposal.user,
-                )
-                booking.save()  # Triggers commission, etc.
-
-                # Send itinerary
-                pdf_data = generate_itinerary_pdf(booking)
-                send_itinerary_email(booking, pdf_data)
-
-                messages.success(request, "Payment successful! Itinerary sent.")
-                return redirect('customer_portal')
-        return JsonResponse({'error': 'Payment failed'}, status=400)
-
-@csrf_exempt
-def submit_proposal(request, tour_id):
-    if request.method != 'POST':
-        return JsonResponse({'error': 'Invalid method'}, status=405)
-
-    session_data = request.session.get('proposal_data')
-    if not session_data:
-        return JsonResponse({'error': 'No data in session'}, status=400)
-
-    # Parse travel_date
-    travel_date_str = session_data['travel_date']
-    try:
-        travel_date = datetime.strptime(travel_date_str, '%Y-%m-%d').date()
-    except ValueError as ve:
-        logger.error(f"Invalid travel_date format '{travel_date_str}': {ve}")
-        return JsonResponse({'error': 'Invalid travel date format'}, status=400)
-
-    tour = get_object_or_404(LandTourPage, id=tour_id)  # Adjust model as needed
-    content_type = ContentType.objects.get_for_model(tour)
-
-    # NEW: Read is_company_tour early from tour
-    is_company_tour = getattr(tour, 'is_company_tour', False)
-    logger.info(f"Proposal for tour {tour_id}: is_company_tour={is_company_tour}")  # Debug log
-
-    try:
-        proposal = Proposal.objects.create(
-            customer_name=session_data['customer_name'],
-            customer_email=session_data['customer_email'],
-            customer_phone=session_data.get('customer_phone', ''),
-            customer_address=session_data.get('customer_address', ''),
-            nationality=session_data.get('nationality', ''),
-            notes=session_data.get('notes', ''),
-            content_type=content_type,
-            object_id=tour_id,
-            number_of_adults=session_data['number_of_adults'],
-            number_of_children=session_data['number_of_children'],
-            children_ages=session_data['child_ages'],
-            travel_date=travel_date,
-            supplier_email=session_data['supplier_email'],
-            currency=session_data['currency'],
-            estimated_price=Decimal(session_data['estimated_price']),
-            user=request.user if request.user.is_authenticated else None,
-            status='PENDING_SUPPLIER',  # Default; override below
-            room_config=session_data.get('room_config', {}),
-            selected_config=session_data.get('selected_room_config', {}),
-            number_of_infants=session_data.get('number_of_infants', 0),
-        )
-
-        # Calculate end_date
-        duration = getattr(tour, 'duration_days', 0)
-        end_date = proposal.travel_date + timedelta(days=duration)
-
-        # 1. ALWAYS: Send initial client email
-        send_proposal_submitted_email(proposal, tour, end_date)
-
-        # 2. CONDITIONAL: Handle based on is_company_tour (from tour)
-        if is_company_tour:
-            # Company tour: Internal flow
-            proposal.status = 'PENDING_INTERNAL'  # Requires STATUS_CHOICES update
-            proposal.save()
-            send_internal_confirmation_email(proposal, tour, end_date)
-            logger.info(f"Internal proposal {proposal.id} created for company tour {tour_id}")
-        else:
-            # Normal supplier flow
-            # Status already 'PENDING_SUPPLIER' from create
-            if proposal.supplier_email:
-                token = ProposalConfirmationToken.objects.create(proposal=proposal)
-                send_supplier_email(proposal, token, tour, end_date)
-                logger.info(f"Supplier email sent for proposal {proposal.id}")
-            else:
-                logger.warning(f"No supplier email for proposal {proposal.id}")
-
-        # Clear session
-        if 'proposal_data' in request.session:
-            del request.session['proposal_data']
-
-        messages.success(request, f"Proposal {proposal.prop_id} submitted!")
-        return JsonResponse({
-            'success': True,
-            'proposal_id': proposal.id,
-            'prop_id': proposal.prop_id,
-            'message': 'Proposal submitted successfully! Redirecting to confirmation...',
-            'redirect_url': f"{settings.SITE_URL}/bookings/proposal-success/{proposal.id}/",
-            'is_company_tour': is_company_tour,  # Optional: For JS/client display
-        })
-
-    except Exception as e:
-        logger.error(f"Error creating proposal {tour_id}: {e}")
-        return JsonResponse({'error': str(e)}, status=500)
-
 def render_confirmation(request, tour_id):
     context = {
         'tour_id': tour_id,
@@ -1094,6 +1068,57 @@ def revert_to_booking_form(request, tour_type: str, tour_id: int) -> HttpRespons
 
     logger.debug(f"Rendering booking_form.html with context: {context}")
     return render(request, 'bookings/partials/booking_form.html', context)
+
+class PaymentView(TemplateView):
+    template_name = 'bookings/payment.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        proposal_id = self.kwargs['proposal_id']
+        proposal = get_object_or_404(Proposal, id=proposal_id, status='SUPPLIER_CONFIRMED')
+        context['proposal'] = proposal
+        context['amount'] = str(proposal.estimated_price)  # For JS
+        context['paypal_client_id'] = settings.PAYPAL_CLIENT_ID  # JS SDK
+        return context
+
+    def post(self, request, proposal_id):  # On approve/capture
+        proposal = get_object_or_404(Proposal, id=proposal_id)
+        payment_id = request.POST.get('paymentId')
+        if not payment_id:
+            return JsonResponse({'error': 'No payment ID'}, status=400)
+
+        # Server-side capture (secure)
+        payment = paypal.Payment.find(payment_id)
+        if payment.state == 'approved':
+            payment.execute({'payer_id': request.POST.get('PayerID')})
+            if payment.state == 'completed':
+                proposal.status = 'PAID'
+                proposal.save()
+
+                # Create Booking
+                booking = Booking.objects.create(
+                    customer_name=proposal.customer_name,
+                    customer_email=proposal.customer_email,
+                    # ... copy other fields: number_of_adults, travel_date, etc.
+                    content_type=proposal.content_type,
+                    object_id=proposal.object_id,
+                    total_price=proposal.estimated_price,
+                    payment_status='PAID',
+                    payment_method='PAYPAL',
+                    proposal=proposal,
+                    configuration_details=proposal.room_config,
+                    user=proposal.user,
+                )
+                booking.save()  # Triggers commission, etc.
+
+                # Send itinerary
+                pdf_data = generate_itinerary_pdf(booking)
+                send_itinerary_email(booking, pdf_data)
+
+                messages.success(request, "Payment successful! Itinerary sent.")
+                return redirect('customer_portal')
+        return JsonResponse({'error': 'Payment failed'}, status=400)
+
 
 def get_bookings(request) -> JsonResponse:
     bookings = [{'id': b.pk, 'name': f"{b.customer_name} ({b.pk})"} for b in Booking.objects.all()]

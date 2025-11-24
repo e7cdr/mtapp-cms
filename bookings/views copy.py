@@ -107,43 +107,23 @@ class BookingStartView(FormView):
         form = self.get_form()
         if form.is_valid():
             cleaned_data = form.cleaned_data
-            # Force currency default if missing (e.g., field not rendered)
-            if 'currency' not in cleaned_data or not cleaned_data['currency']:
-                cleaned_data['currency'] = 'USD'
 
-            # Force travel_date from POST (ensure it's saved even if form quirky) - Enhanced
-            travel_date_str = request.POST.get('travel_date', '')
-            print(f"DEBUG Post: Raw travel_date from POST: '{travel_date_str}'")  # Key: Check if Flatpickr sets this
-            if travel_date_str:
-                try:
-                    from datetime import datetime
-                    parsed_date = datetime.strptime(travel_date_str, '%Y-%m-%d').date()
-                    cleaned_data['travel_date'] = parsed_date
-                    print(f"DEBUG Post: Parsed travel_date from POST '{travel_date_str}' to {parsed_date}")
-                except ValueError:
-                    print(f"DEBUG Post: Invalid travel_date '{travel_date_str}' - falling back")
-                    cleaned_data['travel_date'] = self.tour.start_date or date.today()  # Fallback to tour or today
-            else:
-                print("DEBUG Post: No travel_date in POST - falling back")
-                cleaned_data['travel_date'] = self.tour.start_date or date.today()
-
-            print("Form valid - storing for confirmation")
-            print(f"DEBUG Post: Final cleaned travel_date: {cleaned_data['travel_date']} (type: {type(cleaned_data['travel_date'])})")
-
-            # Compute configs for reference
+            # Recompute pricing exactly like the old working version
             configs = compute_pricing(
-                cleaned_data['tour_type'], self.tour.id,
-                request.POST, request.session
+                cleaned_data['tour_type'],
+                self.tour.id,
+                request.POST,
+                request.session
             )
 
-            # Parse selected
-            selected_config_str = cleaned_data.get('selected_configuration', '0')
-            selected_index = int(selected_config_str) if selected_config_str.isdigit() else 0
-            selected_room_config = configs[selected_index] if selected_index < len(configs) else {}
+            selected_index = cleaned_data.get('selected_configuration', '0')
+            try:
+                selected_index = int(selected_index)
+            except (ValueError, TypeError):
+                selected_index = 0
 
+            selected_config = configs[selected_index] if selected_index < len(configs) else {}
 
-
-            # Store in session—no save yet
             proposal_data = {
                 'tour_type': cleaned_data['tour_type'],
                 'tour_id': cleaned_data['tour_id'],
@@ -154,52 +134,35 @@ class BookingStartView(FormView):
                 'nationality': cleaned_data.get('nationality', ''),
                 'notes': cleaned_data.get('notes', ''),
                 'number_of_adults': cleaned_data['number_of_adults'],
-                'number_of_children': cleaned_data['number_of_children'],
+                'number_of_children': cleaned_data.get('number_of_children', 0),
                 'child_ages': cleaned_data.get('child_ages', []),
-                'travel_date': cleaned_data['travel_date'].isoformat() if hasattr(cleaned_data['travel_date'], 'isoformat') else str(cleaned_data['travel_date']),
-                'selected_configuration': selected_index,
-                'currency': cleaned_data['currency'],
-                'supplier_email': self.tour.supplier_email,
-                'estimated_price': str(selected_room_config.get('total_price', '0')),  # Str for JSON
+                'travel_date': cleaned_data['travel_date'].isoformat(),
+                'currency': cleaned_data.get('currency', 'USD'),
+                'supplier_email': self.tour.supplier_email or '',
+                'estimated_price': str(selected_config.get('total_price', '0')),
                 'room_config': {'options': configs},
-                'selected_room_config': selected_room_config,
-                'number_of_infants': sum(1 for age in cleaned_data.get('child_ages', []) if age < self.tour.child_age_min),
+                'selected_room_config': selected_config,
+                'number_of_infants': sum(1 for age in cleaned_data.get('child_ages', []) if age < getattr(self.tour, 'child_age_min', 7)),
             }
 
-            temp_proposal = Proposal(
-                number_of_adults=proposal_data['number_of_adults'],
-                number_of_children=proposal_data['number_of_children'],
-                number_of_infants=proposal_data['number_of_infants'],
-                selected_config=proposal_data['selected_room_config'],
-                content_type=ContentType.objects.get_for_model(self.tour),
-                object_id=self.tour.id,
-                travel_date=datetime.strptime(proposal_data['travel_date'], '%Y-%m-%d').date(),
-                currency=proposal_data['currency'],
-                tour=self.tour,  # For calc
-            )
-            proposal_data['estimated_price'] = str(selected_room_config.get('total_price', '0'))
+            # ONLY override for inquiry-only
+            if not getattr(self.tour, 'collect_price', True):
+                proposal_data.update({
+                    'estimated_price': '0',
+                    'room_config': {'options': [], 'note': 'Inquiry only'},
+                    'selected_room_config': {'note': 'Inquiry only - contact required'},
+                })
 
             request.session['proposal_data'] = proposal_data
-            print(f"DEBUG Post: Saved session travel_date: {proposal_data['travel_date']}")
 
-            print(f"Stored data for confirmation: {len(proposal_data)} keys")
-
-            # Handle AJAX vs non-AJAX
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({'success': True, 'message': 'Data saved for confirmation'})
+                return JsonResponse({'success': True})
             else:
-                # Non-AJAX: FIXED: Redirect to modal loader (your render_confirmation)
                 return redirect('bookings:render_confirmation', tour_id=self.tour.id)
+
         else:
-            print(f"DEBUG Post: Form invalid - errors: {form.errors}")  # Add this for validation fails
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                # FIXED: Flatten errors to list of strings for JS
-                error_messages = []
-                for field, errors in form.errors.items():
-                    for error in errors:
-                        error_messages.append(f"{field.title() if field != '__all__' else 'Form'}: {error}")
-                return JsonResponse({'success': False, 'errors': error_messages}, status=400)
-            # Non-AJAX: re-render with errors
+                return JsonResponse({'success': False, 'errors': form.errors}, status=400)
             return self.form_invalid(form)
 
 class ProposalSuccessView(TemplateView):

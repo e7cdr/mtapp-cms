@@ -146,6 +146,8 @@ class AbstractTourPage(Page):
         default=False,
         help_text=_("If True, skip supplier confirmation and go direct to payment (company-run tour).")
     )
+    collect_price = models.BooleanField(default=True, help_text="If unchecked, the pricing options won't be available in the Booking Form. Basically, a proposal form without price")
+    inquiry_message = RichTextField(verbose_name="Inquiry Message", max_length=300, null=True, blank=True, help_text="If Collect Price is unchecked, or more specifically, if no prices to be collected, please write a message to show instead.")
     pricing_type = models.CharField(
         max_length=20,
         choices=[
@@ -156,7 +158,6 @@ class AbstractTourPage(Page):
         default='Combined',
         help_text="Combined = adult pays base price, gets discount when sharing room. Best for private tours."
         )
-    # Replace old flat pricing fields with this:
     combined_pricing_tiers = StreamField(
         [
             ('tier', blocks.PricingTierBlock()),
@@ -182,7 +183,6 @@ class AbstractTourPage(Page):
     price_sgl = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Single Room Price")
     price_dbl = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Double Room Price")
     price_tpl = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Triple Room Price")
-
     price_adult = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Adults Price")
     price_chd = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Children Price")
     price_inf = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Infant Price")
@@ -278,9 +278,10 @@ class AbstractTourPage(Page):
             FieldPanel('is_all_inclusive'),
             FieldPanel('is_sold_out'),
         ], heading="Tour Status", classname="collapsible collapsed"),
-
         # ─── PRICING CONFIGURATION (THE BIG ONE) ───
         MultiFieldPanel([
+            FieldPanel('collect_price'),
+            FieldPanel('inquiry_message'),
             FieldPanel('pricing_table'),
             FieldPanel('show_prices_in_table'),
             FieldPanel('button_text'),
@@ -394,6 +395,13 @@ class AbstractTourPage(Page):
 
     def clean(self):
         super().clean()
+
+        if not self.collect_price and not self.inquiry_message:
+            raise ValidationError({
+                'inquiry_message': _(
+                    "This field is required when 'Collect Price' is unchecked."
+                )
+            })
 
         if self.pricing_type == 'Per_room':
             self.price_adult = self.price_chd = self.price_inf = None

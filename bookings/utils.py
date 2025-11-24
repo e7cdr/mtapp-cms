@@ -522,7 +522,6 @@ def get_30_day_used_slots(tour_id, tour_model):
             status='CONFIRMED',
         ).aggregate(Sum('number_of_children'))['number_of_children__sum'] or 0
         used_slots += adults_sum + children_sum
-        print(f"Date {current_date}: weekday_python={weekday_python}, day_model={day_of_week_model}, adults_sum={adults_sum}, children_sum={children_sum}, used_slots so far={used_slots}")
 
         current_date += timedelta(days=1)
 

@@ -61,25 +61,36 @@
     </div>
 </div>
 
-<!-- Selected Room Config (readonly) -->
-{% if tour_type != 'day' and selected_room_config %}
-    <div class="card mb-4">
-        <div class="card-body">
-            <ul class="list-unstyled">
-                {% if selected_room_config.singles %}
-                    <li><strong>{% trans "Single Rooms" %}</strong>: {{ selected_room_config.singles }}</li>
+        {% if tour_type != 'day' and tour.collect_price %}
+            <!-- Selected Room Config (readonly) -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        {% if selected_room_config.singles %}
+                            <li><strong>{% trans "Single Rooms" %}</strong>: {{ selected_room_config.singles }}</li>
+                        {% endif %}
+                        {% if selected_room_config.doubles %}
+                            <li><strong>{% trans "Double Rooms" %}</strong>: {{ selected_room_config.doubles }}</li>
+                        {% endif %}
+                        {% if selected_room_config.triples %}
+                            <li><strong>{% trans "Triple Rooms" %}</strong>: {{ selected_room_config.triples }}</li>
+                        {% endif %}
+                        <li><strong>{% trans "Total Estimated Price" %}</strong>: 
+                            {{ form_data.currency|default:"USD" }} {{ form_data.estimated_price|floatformat:2 }}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        {% else %}
+            <div class="alert alert-info mb-4">
+                <strong>{% trans "Inquiry Only" %}</strong><br>
+                {% if tour_type == 'day' %}
+                    {% trans "This is a day tour — no accommodation included." %}
+                {% else %}
+                    {% trans "This is a request for availability and custom pricing. A team member will contact you shortly." %}
                 {% endif %}
-                {% if selected_room_config.doubles %}
-                    <li><strong>{% trans "Double Rooms" %}</strong>: {{ selected_room_config.doubles }}</li>
-                {% endif %}
-                {% if selected_room_config.triples %}
-                    <li><strong>{% trans "Triple Rooms" %}</strong>: {{ selected_room_config.triples }}</li>
-                {% endif %}
-                <li><strong>{% trans "Total Estimated Price" %}</strong>: {{ form_data.currency|default:"USD" }} {{ form_data.estimated_price|floatformat:2 }}</li>
-            </ul>
-        </div>
-    </div>
-{% endif %}
+            </div>
+        {% endif %}
 
 <!-- Error Handling -->
 {% if error %}

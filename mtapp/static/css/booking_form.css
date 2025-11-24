@@ -46,9 +46,12 @@ section {
 #refresh-captcha {
     font-size: 0.85em;
     padding: 4px 8px;
+    background-color: #0269d0;
+    color: white;
+    font-weight: bold;
 }
 #refresh-captcha:hover {
-    background-color: #f8f9fa;
+    color: rgb(255, 179, 179);
 }
 
 .tour-title {

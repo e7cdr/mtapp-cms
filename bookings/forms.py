@@ -60,10 +60,41 @@ class ProposalForm(forms.ModelForm):  # Changed to ModelForm
     def __init__(self, *args, **kwargs):
         self.tour = kwargs.pop('tour', None)
         super().__init__(*args, **kwargs)
-        form_submission = self.data.get('form_submission', 'pricing') if self.data else self.initial.get('form_submission', 'pricing')
-        if form_submission == 'pricing':
-            for field in ['customer_name', 'customer_email', 'customer_phone', 'customer_address', 'nationality', 'notes']:
-                self.fields[field].required = False
+
+        # Determine if this tour allows pricing
+        self.collect_price = getattr(self.tour, 'collect_price', True) if self.tour else True
+        self.is_inquiry_only = not self.collect_price
+
+        # Get current mode (from POST or initial)
+        form_submission = (
+            self.data.get('form_submission', 'pricing') if self.data
+            else self.initial.get('form_submission', 'pricing')
+        )
+
+        if self.is_inquiry_only:
+            # INQUIRY-ONLY MODE: Remove pricing fields, force contact required
+            for field_name in ['currency', 'selected_configuration', 'selected_config']:
+                self.fields.pop(field_name, None)
+
+            # Make contact fields REQUIRED
+            required_fields = [
+                'customer_name', 'customer_email', 'customer_phone',
+                'nationality', 'customer_address', 'notes'
+            ]
+            for field in required_fields:
+                if field in self.fields:
+                    self.fields[field].required = True
+
+            # Ensure travel date and pax are required
+            self.fields['travel_date'].required = True
+            self.fields['number_of_adults'].required = True
+
+        else:
+            # NORMAL PRICING MODE
+            if form_submission == 'pricing':
+                for field in ['customer_name', 'customer_email', 'customer_phone',
+                            'customer_address', 'nationality', 'notes']:
+                    self.fields[field].required = False
 
 
     def clean_child_ages(self):

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static i18n wagtailimages_tags wagtailcore_tags custom_filters %}
+{% load static i18n wagtailimages_tags wagtailcore_tags custom_filters model_extras %}
 
 {% block title %}Booking Form{% endblock title %}
 {% block extra_css %}
@@ -55,26 +55,27 @@
                     </div>
                 {% endif %}
 
-                    <!-- Preferences Section -->
-                    <div class="card" style="display: none">
-                        <div class="card-header">
-                            <h5>{% trans "Preferences" %}</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group mb-3">
-                                        <label for="{{ form.currency.id_for_label }}" class="form-label">{% trans "Currency" %}</label>
-                                        {{ form.currency }}
-                                        {% if form.currency.errors %}
-                                            <div class="text-danger small">{{ form.currency.errors }}</div>
-                                        {% endif %}
-                                        <small class="text-muted">{% trans "Prices will be displayed and calculated in the selected currency." %}</small>
-                                    </div>
+                {% if tour.collect_price %}
+                <div class="card" style="display: none">
+                    <div class="card-header">
+                        <h5>{% trans "Preferences" %}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.currency.id_for_label }}" class="form-label">{% trans "Currency" %}</label>
+                                    {{ form.currency }}
+                                    {% if form.currency.errors %}
+                                        <div class="text-danger small">{{ form.currency.errors }}</div>
+                                    {% endif %}
+                                    <small class="text-muted">{% trans "Prices will be displayed and calculated in the selected currency." %}</small>
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
+                {% endif %}
 
                 <!-- Tour Information Section -->
                 <div class="card">
@@ -211,7 +212,7 @@
                         </div>
                     </div>
                 </div>
-
+                {% if tour.collect_price %}
                 <div class="card">
                     <div class="card-header">
                         <h5>{% trans "Pricing & Configurations" %}</h5>
@@ -225,6 +226,17 @@
                         </div>
                     </div>
                 </div>
+                {% else %}
+                <div class="card border-info mb-4">
+                    <div class="card-body text-center py-5 bg-light">
+                        <i class="fas fa-envelope-open-text fa-3x text-info mb-3"></i>
+                        <h5 class="text-info">{{ tour|verbose_name:"inquiry_message" }}:</h5>
+                        <p class="lead mb-0">
+                            {{ tour.inquiry_message|richtext }}
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
 
                 <div class="text-center captcha-section">
                     {% if form.captcha.errors %}
@@ -265,8 +277,9 @@
 <script id="booking-data" type="application/json">
 {
     "tourType": "{{ tour_type|escapejs }}",
-    "tourId": "{{ tour.id|escapejs }}",
+    "tourId": {{ tour.id|escapejs }},
     "tourName": "{{ tour.name|escapejs }}",
+    "collect_price": {{ tour.collect_price|yesno:"true,false"|lower }},
     "languagePrefix": "{{ LANGUAGE_CODE|escapejs }}",
     "cancellationPolicy": "{{ tour.general_info|escapejs|truncatewords:20 }}",
     "tour_start_date": "{{ tour_start_date|escapejs }}",
@@ -275,7 +288,6 @@
     "blackout_dates": {{ blackout_dates_json|safe }}
 }
 </script>
-
 <!-- Flatpickr CSS/JS (kept for date picker) -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
