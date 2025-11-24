@@ -4,48 +4,57 @@
 <section class="carousel-container">
  <div class="slider-wrapper">
   <div class="carousel-title">
-    {% if self.carousel_subtitle %}
-   <h2>{{ self.carousel_subtitle }}</h2>
+    {% if block.value.carousel_subtitle %}
+   <h2>{{ block.value.carousel_subtitle }}</h2>
    {% endif %}
-   <h1>{{ self.carousel_title }}</h1>
-   {% if self.search_bar == True %}
+   <h1>{{ block.value.carousel_title }}</h1>
+   {% if block.value.search_bar == True %}
       <!--Search Bar -->
     {% include "search/search_bar.html" %}
     {% endif %}
   </div>
+
   <div class="slider">
-  {% for item in value.carousel %}
+  {% for item in block.value.slides %}
   <div class="slide-overlay-block">
-   {% image item.image fill-1265x712 as img %}
-   {% if item.link %}
-    <a href="{{ item.link.url }}">
-   {% endif %}
+
+    {# IMAGE SLIDE (unchanged) #}
+      {% image item.image fill-1265x712 as img %}
       <img
-      height=""
-      width=""
-      src="{{ img.url }}"
-      alt="{{ item.caption|default:'Carousel image' }}"
-      id="slide-{{ forloop.counter }}"
-      loading="lazy"
+        height=""
+        width=""
+        src="{{ img.url }}"
+        alt="{{ item.caption|default:'Carousel image' }}"
+        id="slide-{{ forloop.counter }}"
+        loading="lazy"
       />
-    {% if item.link %}</a>{% endif %}
-   <div class="slide-overlay"></div>
+
+    {# Optional link (works on both image and video slides) #}
+    {% if item.link %}
+      <a href="{{ item.link.url }}" class="full-slide-link"></a>
+    {% endif %}
+
+    <div class="slide-overlay"></div>
+
+    {# Optional caption overlay #}
+    {% if item.caption %}
+      <div class="slide-caption">{{ item.caption }}</div>
+    {% endif %}
   </div>
   {% empty %}
    <div class="slide-overlay-block">
-    <img src="{% static 'default_media/azuay.jpg' %}" alt="{{ item.caption|default:'Carousel image' }}"
+    <img src="{% static 'default_media/azuay.jpg' %}" alt="Default carousel image"
      id="slide-1"
-     loading="lazy"
      height=""
      width=""
-     >
+     loading="lazy">
     <div class="slide-overlay"></div>
    </div>
   {% endfor %}
 </div>
 
 <div class="slider-nav nav-fade-in">
-    {% for item in value.carousel %}
+    {% for item in block.value.slides %}
     <a href="#slide-{{ forloop.counter }}" aria-label="swiper navigation"></a>
     {% empty %}
     <a href="#slide-1" aria-label="swiper navigation"></a>
@@ -53,4 +62,5 @@
    </div>
  </div>
 </section>
+
 <script src="{% static 'js/carousel.js' %}"></script>

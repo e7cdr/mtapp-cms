@@ -99,23 +99,68 @@ def create_icons_list(icon_choices=None):
 # For generic use elsewhere (full choices):
 Icons_List = create_icons_list()  # Exports the default version
 
-class CarouselBlock(blocks.StructBlock):
-    carousel_title = blocks.CharBlock(required=True, help_text="Carousel main title")  # Optional caption
-    carousel_subtitle = blocks.CharBlock(required=False, help_text="Carousel subtitle above the title (optional)")  # Optional caption
-    carousel = blocks.ListBlock(
-        blocks.StructBlock([
-            ('image', ImageChooserBlock()),
-            ('caption', blocks.CharBlock(required=False, max_length=40 , help_text="Optional caption for the image")),
-            ('link', blocks.PageChooserBlock(required=False, help_text="Optional link for the image. If provided, the image will be clickable.")),
-        ]),
-        )
-    search_bar = blocks.BooleanBlock(required=False, help_text="If True, Carousel will have available the Search Bar")
+class CarouselSlideBlock(blocks.StructBlock):
+    image = ImageChooserBlock(required=False)
+    
+    # Optional overlay content (works on both image and video slides)
+    caption = blocks.CharBlock(required=False, max_length=100, help_text="Optional caption overlay")
+    link = blocks.PageChooserBlock(required=False, help_text="Optional link (makes whole slide clickable)")
 
 
     class Meta:
+        label = "Slide"
+        icon = "image"
+
+# streams/blocks.py
+
+class CarouselBlock(blocks.StructBlock):
+    carousel_title = blocks.CharBlock(required=True)
+    carousel_subtitle = blocks.CharBlock(required=False)
+    
+    # ← THIS IS THE IMPORTANT PART
+    slides = blocks.ListBlock(
+        CarouselSlideBlock(),
+        min_num=1,
+    )
+    
+    # Keep compatibility with old data
+    carousel = blocks.ListBlock(
+        blocks.StructBlock([
+            ('image', ImageChooserBlock(required=False)),
+            ('caption', blocks.CharBlock(required=False, max_length=40)),
+            ('link', blocks.PageChooserBlock(required=False)),
+        ]),
+        required=False,
+        classname="DEPRECATED_old_carousel_field"  # hides it in admin
+    )
+
+    search_bar = blocks.BooleanBlock(required=False, default=False)
+
+    def clean(self, value):
+        # Automatically migrate old data → new data on first save
+        old_carousel = value.get('carousel', [])
+        new_slides = value.get('slides', [])
+        
+        if old_carousel and not new_slides:
+            # Convert old format → new format
+            migrated = []
+            for item in old_carousel:
+                migrated.append({
+                    'image': item.value['image'],
+                    'caption': item.value.get('caption', ''),
+                    'link': item.value.get('link'),
+                    'video_url': None,
+                })
+            value['slides'] = migrated
+            value['carousel'] = []  # clear old
+
+        return super().clean(value)
+
+    class Meta:
         template = "streams/carousel.html"
+        icon = "image"
         label = "Carousel"
-        icon = 'image'
+
 
 class ExploreBlock(blocks.StructBlock):
     """A Block component to present products or announces with image"""
@@ -147,6 +192,7 @@ class ExploreBlock(blocks.StructBlock):
         template = "streams/explore_block.html"
         icon = "view"
         label = "Explore Block"
+        help_text = "A Block component to present products or announces with circular image."
 
 class Video_Text_Block(blocks.StructBlock):
     """ A Video block with texts below"""
@@ -345,11 +391,14 @@ class CTA_Block_2B(blocks.StructBlock):
         template = "streams/cta.html"
         icon = "doc-full"
         label = "CTA 2 Buttons"
+        help_text = "A text box with title, subtitle above title, description and two buttons that send user to another page"
+
 
 
 swipers = [
     ('basic', 'Basic Swiper'),
     ('collage', 'Collage Navigation'),
+    ('coverflow', 'Coverflow (3D)'),
     ('framed', 'Framed Pictures'),
     ('thumbnail', 'Thumbnail Navigation'),
 
@@ -371,6 +420,7 @@ class Swipers(blocks.StructBlock):
         template = "streams/swipers.html"
         icon = "image"
         label = "Swiper"
+        help_text = "Swiper with more than one variation to choose from."
 
 class PricingTierBlock(blocks.StructBlock):
     min_pax = blocks.IntegerBlock(required=True)
@@ -410,4 +460,55 @@ class PricingTierBlock(blocks.StructBlock):
         # This makes the JS work on add/remove
         form_classname = 'pricing-tier-block'
 
+class ParallaxImageBlock(blocks.StructBlock):
+    """
+    A full-width parallax background image section.
+    """
+    max_count = 1
+    image = ImageChooserBlock(required=True, help_text="Upload a high-res landscape image (1920x1080+ recommended).")
+    overlay_title = blocks.CharBlock(
+        required=False, 
+        help_text="Optional large title overlay (e.g., 'Discover Colombia').",
+        classname="title"
+    )
+    overlay_subtitle = blocks.TextBlock(
+        required=False, 
+        help_text="Optional subtitle or CTA (e.g., 'Scroll to explore adventures').",
+        classname="subtitle"
+    )
+    overlay_link = blocks.URLBlock(
+        required=False, 
+        help_text="Optional link for subtitle (e.g., to a tour page)."
+    )
+    section_height = blocks.CharBlock(
+        default="80vh",
+        help_text="Height of the section (e.g., '80vh', '600px').",
+        classname="fullwidth"
+    )
+    parallax_speed = blocks.CharBlock(
+        default="0.5",
+        help_text="Parallax intensity (0.1 = subtle, 1 = strong; use CSS transform for JS version).",
+        classname="fullwidth"
+    )
 
+    class Meta:
+        template = "streams/parallax_image_block.html"
+        icon = "image"
+        label = "Parallax Image Section"
+
+class GriddedImages(blocks.StructBlock):
+    """Gridded images. Please add a Minimum of 4 images to appreaciate the full and correct effect of the component"""
+
+    images = blocks.ListBlock(
+        blocks.StructBlock([
+            ('image', ImageChooserBlock()),
+            ('caption', blocks.CharBlock(required=False, max_length=30 , help_text="Optional caption for the image. Add one for Better SEO")),
+            ('link', blocks.PageChooserBlock(required=False, help_text="Although optional, we recommend to add internal links for better SEO")),
+        ]),
+        ) 
+   
+    class Meta:
+        help_text = "Please add a Minimum of 4 images to appreaciate the full and correct effect of the component"
+        template = "streams/gridded_images.html"
+        icon = "image"
+        label = "Gridded Images"

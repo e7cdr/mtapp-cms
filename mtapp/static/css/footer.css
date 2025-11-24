@@ -188,3 +188,24 @@ footer {
 .fa-x-twitter {
     color: black !important;
 }
+
+
+
+.band-container {
+    background: rgb(66, 51, 101);
+    width: 100%;
+    padding: 0.5rem;
+    box-shadow: 0px 0px 0.2rem black inset;
+}
+
+.badges-wrapper {
+    display: flex;
+    justify-self: center;
+    width: 15rem;
+ 
+}
+
+.badge {
+    width: 100%;
+    filter: contrast(0) brightness(100);
+}

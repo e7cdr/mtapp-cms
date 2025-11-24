@@ -1,0 +1,108 @@
+
+
+.squared-container {
+    width: auto;
+    height: auto;
+    border-radius: 1rem;
+}
+
+.grid-wrapper {
+    width: 100%;
+    margin: 0 auto;
+    padding: 0.3rem;
+    border-radius: inherit;
+    box-shadow: 0 0 1rem black;
+    background: #c9c9c9;
+
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-auto-rows: 15rem;
+    gap: 0.6rem;
+
+    /* Force maximum 4 columns */
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(clamp(1, auto-fit, 4), minmax(280px, 1fr));
+}
+
+.image-container {
+    border-radius: inherit;
+    transition: all ease-in-out 3s;
+    box-shadow: 0rem 0rem 0.3rem black;
+    position: relative;
+    z-index: 1;
+
+}
+
+.image-container:nth-child(1n):hover {
+    translate: 2rem 2rem;
+}
+
+.image-container:nth-child(4n):hover {
+    translate: -4rem 4rem
+}
+
+.image-container:nth-child(3n):hover {
+    translate: -6rem 2rem
+}
+
+.image-container:nth-child(1n):hover,
+.image-container:nth-child(2n):hover,
+.image-container:nth-child(3n):hover {
+    box-shadow: 1rem 1rem 4rem black;
+    scale: 1.1;
+    transition: all ease-in-out 1s;
+    z-index: 2;
+}
+
+.image-container img, .image-container a {
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    object-fit: cover;
+
+
+}
+
+.image-container:hover::after {
+    content: '';
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    top: 50%;
+    left: 50%;
+    translate: -50% -50%;
+    z-index: -1;
+    padding:  0;
+    border-radius: 1rem;
+    filter: blur(0.5rem);
+    background-image: conic-gradient(from var(--angle), rgba(68, 0, 255, 0.452), rgb(255, 0, 0), rgb(255, 251, 0), rgb(17, 0, 255));
+    animation: 5s spin linear infinite;
+}
+
+
+@keyframes spin {
+    from {
+        --angle: 0deg;
+    }
+    to {
+        --angle: 360deg;
+    }
+}
+
+@property --angle {
+    syntax: '<angle>';
+    inherits: false;
+    initial-value: 0deg;
+}
+
+
+.image-caption {
+    position: absolute;
+    color: rgb(255, 255, 255);
+    justify-self: anchor-center;
+    font-size: 2.5rem;
+    align-self: anchor-center;
+    font-family: 'Style Script';
+    text-shadow: 0.2rem 0.2rem 0.1rem BLACK;
+
+}

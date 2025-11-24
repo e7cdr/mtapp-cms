@@ -1,0 +1,66 @@
+
+.swiper-slide p {
+    position: absolute;
+    margin: 0;
+    height: 8rem;
+    width: 90%;
+    color: white;
+    font-family: Style Script, cursive;
+    font-size: xx-large;
+    border-radius: 3rem;
+    text-shadow: 0.1rem 0.1rem 0 black;
+    top: 32rem;
+    align-content: end;
+}
+
+.swiper-slide-shadow-left, 
+.swiper-slide-shadow-right {
+    border-radius: 3rem;
+
+}
+
+.coverflow-swiper-container {
+    height: 50rem;
+
+}
+
+.swiper-slide {
+    text-align: center;
+    font-size: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 20rem;
+    border-radius: 3rem;
+    transition-timing-function: linear;
+    opacity: 1;
+    transition: all ease-in 0.3s;
+    
+}
+
+
+
+.swiper-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+     border-radius: 3rem;
+    box-shadow: 0 0 1rem black;
+    
+}
+
+
+.swiper-wrapper {
+    height: 87% !important;
+    translate: 0rem 2rem;
+    max-height: 40rem;
+    position: relative;
+
+} 
+
+.swiper {
+    width: 100%;
+    height: 30rem;
+    border-radius: 3rem;
+
+}

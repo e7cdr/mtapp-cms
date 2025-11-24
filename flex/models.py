@@ -29,8 +29,8 @@ class FlexPage(Page):
             ("flex_images", blocks.Flex_Images_Block()),
             ("video_text_block", blocks.Video_Text_Block()),
             ("cta_2B", blocks.CTA_Block_2B()),
-
-
+            ("gridded_images", blocks.GriddedImages()),
+            ("ParallaxImageBlock", blocks.ParallaxImageBlock()),
         ],
         null=True,
         blank=True,
@@ -41,6 +41,12 @@ class FlexPage(Page):
         More blocks are currently being developed. If you need a specific design, please contact developer and show them the design you would like
         to see implemented. Anything is possible!.
         """,
+        block_counts={
+            "ParallaxImageBlock": {
+                "max_num": 1,
+                # "min_num": 1,   # uncomment if you want it required
+            }
+        }
     )
 
     content_panels = Page.content_panels + [

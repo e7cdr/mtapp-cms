@@ -1,0 +1,41 @@
+.parallax-container {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-align: center;
+    /* ↓↓↓ THIS IS THE MAGIC LINE ↓↓↓ */
+    isolation: isolate;   /* Creates a new stacking context */
+}
+
+.parallax-bg {
+    position: absolute;
+    top: -50%;
+    left: 0;
+    right: 0;
+    bottom: -50%;
+    background-size: cover;
+    background-position: center top;
+    background-repeat: no-repeat;
+    z-index: -1;
+    will-change: transform;
+    transform: translateY(0);
+}
+
+.parallax-overlay {
+    position: relative;
+    z-index: 2;
+    text-shadow: 2px 2px 12px black;
+    padding: 2rem;
+}
+
+.parallax-overlay h2 { font-family: 'Lora', cursive; font-size: 3.8rem; margin: 0 0 1rem; }
+.parallax-overlay p  { font-size: 1.7rem; margin: 0 0 1.5rem; }
+.parallax-overlay a  { 
+    background: #e6c558; color: #1a1a1a; padding: 1rem 2.5rem; border-radius: 50px; 
+    font-weight: bold; text-decoration: none; display: inline-block;
+}
+.parallax-overlay a:hover { background: white; }

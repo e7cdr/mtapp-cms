@@ -6,7 +6,6 @@ from modelcluster.models import ClusterableModel
 from wagtail.admin.panels import FieldPanel, InlinePanel
 from wagtail.contrib.settings.models import BaseGenericSetting, register_setting
 
-
 @register_setting # Decorator to register the setting with Wagtail
 class FooterLinks(BaseGenericSetting): # Inherit from BaseGenericSetting to create a generic setting
     """Model to store footer social media links."""
@@ -111,3 +110,66 @@ class BrandSettings(BaseGenericSetting, ClusterableModel):
 
     def __str__(self):
         return self.company_name
+
+
+@register_setting
+class Sponsors_Badges(BaseGenericSetting, ClusterableModel):
+    """Settings for sponsor logos / badges in footer"""
+
+    panels = [
+        InlinePanel('sponsor_logos', label="Sponsor / Badge Logos")
+    ]
+
+    class Meta:
+        verbose_name = "Sponsors & Badges"
+
+
+# Inline model for each logo
+class SponsorLogo(Orderable):
+    setting = ParentalKey(
+        "site_settings.Sponsors_Badges", 
+        related_name="sponsor_logos",
+        on_delete=models.CASCADE
+    )
+    
+    image = models.ForeignKey(
+        'wagtailimages.Image',
+        null=True,
+        blank=False,
+        on_delete=models.SET_NULL,
+        related_name='+'
+    )
+    
+    caption = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Optional caption / alt text for accessibility and SEO"
+    )
+    
+    link = models.ForeignKey(
+        'wagtailcore.Page',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='+',
+        help_text="Optional internal link (recommended for SEO)"
+    )
+    
+    external_link = models.URLField(
+        blank=True,
+        help_text="Use this if linking to an external site"
+    )
+
+    panels = [
+        FieldPanel('image'),
+        FieldPanel('caption'),
+        FieldPanel('link'),
+        FieldPanel('external_link'),
+    ]
+
+    def __str__(self):
+        return self.caption or "Sponsor Logo"
+
+    @property
+    def url(self):
+        return self.external_link or (self.link.url if self.link else None)

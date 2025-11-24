@@ -4,16 +4,25 @@
 <link rel="stylesheet" href="{% static 'css/footer.css' %}" />
 {% endblock extra_css %}
 <footer>
+{% if settings.site_settings.Sponsors_Badges.sponsor_logos.all %}
+<div class="band-container">
+    <div class="badges-wrapper">
+        {% for logo in settings.site_settings.Sponsors_Badges.sponsor_logos.all %}
+            <div class="badge">
+                {% if logo.url %}
+                    <a href="{{ logo.url }}" target="_blank" rel="noopener sponsored">
+                        {% image logo.image original loading="lazy" alt=logo.caption|default:"Sponsor logo" %}
+                    </a>
+                {% else %}
+                    {% image logo.image original loading="lazy" alt=logo.caption|default:"Badge" %}
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
     <div class="footer-container">
-        {% image settings.site_settings.BrandSettings.footer_background original as img %}
-            <img
-            height=""
-            width=""
-            src="{{ img.url }}"
-            alt="Footer Background"
-            class="footer-background"
-            loading="lazy"
-            />
+        {% image settings.site_settings.BrandSettings.footer_background original loading="lazy" class="footer-background" alt="Footer background" %}
         {% if settings.site_settings.BrandSettings %}
         <div class="contact-info-block">
             <div class="address">

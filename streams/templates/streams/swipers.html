@@ -190,5 +190,34 @@
         </div>
     </div>
 <script src="{% static 'js/swipers/collage_swiper.js' %}"></script>
+{% elif self.variations == 'coverflow' %}
+<link rel="stylesheet" href="{% static 'css/swipers/coverflow_swiper.css' %}">
 </section>
+<section class="coverflow-swiper-container swiper">
+    <div class="swiper-wrapper">
+            {% for item in value.images %}
+            <div class="swiper-slide">
+                {% image item.image original as img %}
+                {% if item.link %}
+                <a href="{{ item.link.url }}"></a>
+                {% endif %}
+                <img
+                height=""
+                width=""
+                src="{{ img.url }}"
+                alt="{{ item.caption|default:'Swiper images' }}"
+                id="slide-{{ forloop.counter }}"
+                loading="lazy"
+                />
+                <p class="caption">{{ item.caption }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    <div class="navigation">
+        <div class="swiper-pagination"></div>
+        <div class="swiper-button-next"></div>
+        <div class="swiper-button-prev"></div>
+    </div>
+</section>
+<script src="{% static 'js/swipers/coverflow_swiper.js' %}"></script>
 {% endif %}

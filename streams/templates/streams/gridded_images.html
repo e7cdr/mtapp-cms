@@ -1,0 +1,29 @@
+{% load static wagtailimages_tags wagtailcore_tags %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/gridded_images.css' %}"/>
+{% endblock extra_css %}
+{% block content %}
+<section>
+    <div class="squared-container">
+        <div class="grid-wrapper">
+            {% for item in self.images %}
+            <div class="image-container">
+                <h1 class="image-caption">
+                    {{ item.caption }}
+                </h1>
+                <a href="">
+            {% image item.image original as img %}
+                <img src="{{ img.url }}" 
+                alt="{{ item.caption }}"
+                height=""
+                width=""
+                loading="lazy"
+                >
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock content %}

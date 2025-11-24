@@ -49,11 +49,21 @@ class HomePage(SeoMixin, Page):
             ("text_band", blocks.TextBand_Block()),
             ("swipers", blocks.Swipers()),
             ("cta_2B", blocks.CTA_Block_2B()),
+            ("ParallaxImageBlock", blocks.ParallaxImageBlock()),
+            ("gridded_images", blocks.GriddedImages()),
 
 
         ],
         null=True,
         blank=True,
+        block_counts={
+        "ParallaxImageBlock": {
+            "max_num": 1,
+            # "min_num": 1,   # uncomment if you want it required
+        },
+        # you can add more limits here, e.g.
+        # "swipers": {"max_num": 3},
+    },
     )
 
     content_panels = Page.content_panels + [

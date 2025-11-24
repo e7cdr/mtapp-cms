@@ -1,0 +1,27 @@
+{% load static wagtailimages_tags %}
+
+{% block content %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/parallax_image.css' %}">
+{% endblock extra_css %}
+
+<section class="parallax-container" style="height: {{ self.section_height|default:'80vh' }};">
+    
+    <!-- Real background div (not ::before) -->
+    {% image self.image fill-1920x1080 as bg_image %}
+    <div class="parallax-bg" 
+         style="background-image: url('{{ bg_image.url }}'); --parallax-speed: {{ self.parallax_speed|default:'0.4' }};">
+    </div>
+
+    <!-- Overlay content -->
+    <div class="parallax-overlay">
+        {% if self.overlay_title %}<h2>{{ self.overlay_title }}</h2>{% endif %}
+        {% if self.overlay_subtitle %}<p>{{ self.overlay_subtitle }}</p>{% endif %}
+        {% if self.overlay_link %}<a href="{{ self.overlay_link }}">Explore Now</a>{% endif %}
+    </div>
+</section>
+{% block extra_js %}
+<script type="text/javascript"src="{% static 'js/parallax.js' %}"></script>
+
+{% endblock extra_js %}
+{% endblock content %}
