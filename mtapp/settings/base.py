@@ -346,7 +346,7 @@ WAGTAILIMAGES_FORMAT_CONVERSIONS = {
     'ico': 'ico',
 }
 
-WAGTAILIMAGES_EXTENSIONS = ['gif', 'ico', 'jpeg', 'png', 'svg']
+WAGTAILIMAGES_EXTENSIONS = ['gif', 'ico', 'jpeg', 'png', 'svg', 'jpg']
 WAGTAILIMAGES_DEFAULT_LAZY_ATTRIBUTES = {
     'loading': 'lazy',
     'decoding': 'async',
