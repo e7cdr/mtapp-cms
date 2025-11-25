@@ -67,4 +67,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial setup
   updateCarousel(0);
   startAutoPlay(); // Enable autoplay
+
+  // Force YouTube videos to play (works after any user interaction)
+document.addEventListener('click', function startVideos() {
+    document.querySelectorAll('.video-background iframe').forEach(function(iframe) {
+        iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+    });
+    // Remove the listener after first click so it doesn't run forever
+    document.removeEventListener('click', startVideos);
+}, { once: true });
 });

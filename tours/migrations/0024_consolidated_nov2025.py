@@ -29,7 +29,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='landtourpage',
             name='yt_vid',
-            field=models.CharField(default='UHLdLtEiFGs', help_text='For example: https://www.youtube.com/watch?v=UHLdLtEiFGs >> ID = UHLdLtEiFGs. This video will be shown in the Tours Watch Video.', max_length=22, verbose_name='Youtube Video ID'),
+            field=models.CharField(default='', help_text='For example: https://www.youtube.com/watch?v=UHLdLtEiFGs >> ID = UHLdLtEiFGs. This video will be shown in the Tours Watch Video.', max_length=22, verbose_name='Youtube Video ID'),
         ),
         migrations.AlterField(
             model_name='toursindexpage',

@@ -344,6 +344,7 @@ WAGTAILIMAGES_FORMAT_CONVERSIONS = {
     'gif': 'gif',
     'webp': 'webp',
     'ico': 'ico',
+    'jpg': 'jpg',
 }
 
 WAGTAILIMAGES_EXTENSIONS = ['gif', 'ico', 'jpeg', 'png', 'svg', 'jpg']
