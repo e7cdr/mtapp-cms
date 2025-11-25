@@ -99,69 +99,6 @@ def create_icons_list(icon_choices=None):
 # For generic use elsewhere (full choices):
 Icons_List = create_icons_list()  # Exports the default version
 
-class CarouselSlideBlock(blocks.StructBlock):
-    image = ImageChooserBlock(required=False)
-    
-    # Optional overlay content (works on both image and video slides)
-    caption = blocks.CharBlock(required=False, max_length=100, help_text="Optional caption overlay")
-    link = blocks.PageChooserBlock(required=False, help_text="Optional link (makes whole slide clickable)")
-
-
-    class Meta:
-        label = "Slide"
-        icon = "image"
-
-# streams/blocks.py
-
-class CarouselBlock(blocks.StructBlock):
-    carousel_title = blocks.CharBlock(required=True)
-    carousel_subtitle = blocks.CharBlock(required=False)
-    
-    # ← THIS IS THE IMPORTANT PART
-    slides = blocks.ListBlock(
-        CarouselSlideBlock(),
-        min_num=1,
-    )
-    
-    # Keep compatibility with old data
-    carousel = blocks.ListBlock(
-        blocks.StructBlock([
-            ('image', ImageChooserBlock(required=False)),
-            ('caption', blocks.CharBlock(required=False, max_length=40)),
-            ('link', blocks.PageChooserBlock(required=False)),
-        ]),
-        required=False,
-        classname="DEPRECATED_old_carousel_field"  # hides it in admin
-    )
-
-    search_bar = blocks.BooleanBlock(required=False, default=False)
-
-    def clean(self, value):
-        # Automatically migrate old data → new data on first save
-        old_carousel = value.get('carousel', [])
-        new_slides = value.get('slides', [])
-        
-        if old_carousel and not new_slides:
-            # Convert old format → new format
-            migrated = []
-            for item in old_carousel:
-                migrated.append({
-                    'image': item.value['image'],
-                    'caption': item.value.get('caption', ''),
-                    'link': item.value.get('link'),
-                    'video_url': None,
-                })
-            value['slides'] = migrated
-            value['carousel'] = []  # clear old
-
-        return super().clean(value)
-
-    class Meta:
-        template = "streams/carousel.html"
-        icon = "image"
-        label = "Carousel"
-
-
 class ExploreBlock(blocks.StructBlock):
     """A Block component to present products or announces with image"""
     title = blocks.RichTextBlock(required=True, help_text='Add title i.e.: Explore this awesome tour')
@@ -421,6 +358,25 @@ class Swipers(blocks.StructBlock):
         icon = "image"
         label = "Swiper"
         help_text = "Swiper with more than one variation to choose from."
+
+class FadeCarousel(blocks.StructBlock):
+    """Fade Swiper or carousel with fade effect"""
+    fade_title = blocks.CharBlock(required=False, help_text="The main title.", max_length=33)
+    fade_subtitle = blocks.CharBlock(required=False, help_text="The subtitle.", max_length=33)
+    images = blocks.ListBlock(
+        blocks.StructBlock([
+            ('image', ImageChooserBlock()),
+            ('caption', blocks.CharBlock(required=False, max_length=40 , help_text="Optional caption for the image")),
+            ('link', blocks.PageChooserBlock(required=False, help_text="Optional link for the image. If provided, the image will be clickable.")),
+        ]),
+        ) 
+    search_bar = blocks.BooleanBlock(required=False, default=False)
+
+    class Meta:
+        template = "streams/fade_carousel.html"
+        icon = "image"
+        label = "Fade Carousel"
+        help_text = "Fade Carousel intended to be used as initial cover pages"
 
 class PricingTierBlock(blocks.StructBlock):
     min_pax = blocks.IntegerBlock(required=True)

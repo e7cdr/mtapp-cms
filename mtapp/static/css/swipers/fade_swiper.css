@@ -1,0 +1,127 @@
+
+section .swiper{
+    width: 100%;
+    overflow: hidden;
+    min-width: 27rem;
+    position: relative;
+    max-height: 50rem;
+    height: 50rem;
+    border-radius: 0;
+
+}
+
+.fade-swiper-container h1 {
+    color: white;
+    z-index: 2;
+    font-family: Style Script, cursive;
+    text-shadow: 2px 1px 3px rgba(0, 0, 0, 0.9);
+    font-size: 5.5rem;
+    animation: blur-fadein ease-in 2s;
+    place-self: anchor-center;
+}
+
+.fade-swiper-container .swiper-wrapper .swiper-slide {
+    text-align: center;
+    font-size: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 20rem;
+    height: auto !important;
+    background: black;
+    border-radius: 0;
+}
+
+.fade-swiper-container .swiper-wrapper .swiper-slide img {
+    width: 100%;
+    opacity: 0.6;
+    height: 100%;
+    border-radius: 0;
+    object-fit: cover;
+    
+}
+
+.fade-swiper-container .swiper-wrapper {
+    height: 100% !important;
+    max-height: 100%;
+    translate: 0;
+}
+
+.swiper-pagination {
+    bottom: 43% !important;
+}
+
+@media (max-width:600px) {
+    .swiper-pagination {
+    min-width: 27rem;
+    bottom: 36% !important;
+}
+    
+}
+
+
+.caption {
+    position: absolute;
+    font-size: xx-large;
+    color: white;
+    text-shadow: 2px 1px 3px rgba(0, 0, 0, 0.9);
+    bottom: 0;
+    justify-self: center;
+    font-variant: small-caps;
+    animation: blur-fadein ease-in 1s;
+    
+
+}
+
+.fade-title {
+    position: absolute;
+    z-index: 2;
+    text-align: center;
+    opacity: 0;
+    filter: blur(20px);
+    animation: blur-fadein 2s ease-in forwards 1;  /* animation: animation name, time, effect, how many times*/
+    color: white;
+    place-self: anchor-center;
+    width: 30rem;
+}
+
+
+.fade-title h1 {
+    font-family: Style Script, cursive;
+    text-shadow: 2px 1px 3px rgba(0, 0, 0, 0.9);
+    font-size: 5rem;
+}
+
+.fade-title h2 {
+    font-family: lora;
+    margin-top: 2rem;
+
+}
+@keyframes blur-fadein {
+    from {
+        opacity: 0;
+        filter: blur(20px);
+
+    }
+    to{
+        opacity: 1;
+        filter: blur(0);
+    }
+}
+
+@media (max-width:510px){
+    .fade-title h1 {
+        font-size: 2.3rem
+    }
+
+    .fade-title h2 {
+        font-size: 1rem;
+        margin-top: 2rem;
+    }
+
+    .fade-title h6 {
+        font-size: 0.7rem;
+    }
+
+
+}

@@ -34,12 +34,12 @@ class HomePage(SeoMixin, Page):
     )
 
     carousel = StreamField(
-        [("carousel", blocks.CarouselBlock())], # A StreamField containing a single CarouselBlock.
+        [("carousel", blocks.FadeCarousel())], # A StreamField containing a single CarouselBlock.
         blank=True,
         null=True,
         max_num=1,
         use_json_field=True,
-        help_text="Add images to the carousel. Each image can have an optional caption and link.",
+        help_text="Add images to the fade carousel. Each image can have an optional caption and link.",
     )
 
     content = StreamField(

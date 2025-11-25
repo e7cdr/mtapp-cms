@@ -24,7 +24,7 @@ class FlexPage(Page):
     content = StreamField(
         [
             ("explore_block", blocks.ExploreBlock()),
-            ("carousel", blocks.CarouselBlock()),
+            ("carousel", blocks.FadeCarousel()),
             ("text_band", blocks.TextBand_Block()),
             ("flex_images", blocks.Flex_Images_Block()),
             ("video_text_block", blocks.Video_Text_Block()),

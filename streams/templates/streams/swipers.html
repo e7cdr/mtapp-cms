@@ -220,4 +220,33 @@
     </div>
 </section>
 <script src="{% static 'js/swipers/coverflow_swiper.js' %}"></script>
+{% elif self.variations == 'fade' %}
+<link rel="stylesheet" href="{% static 'css/swipers/fade_swiper.css' %}">
+<section>
+<div class="fade-swiper-container swiper">
+    <div class="swiper-wrapper">
+        {% for item in value.images %}
+        <div class="swiper-slide">
+            {% image item.image original as img %}
+            {% if item.link %}
+            <a href="{{ item.link.url }}"></a>
+            {% endif %}
+            <img
+            height=""
+            width=""
+            src="{{ img.url }}"
+            alt="{{ item.caption|default:'Swiper images' }}"
+            id="slide-{{ forloop.counter }}"
+            loading="lazy"
+            />
+            {% if item.caption %}
+            <p class="caption">{{ item.caption }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+<div class="swiper-pagination"></div>
+</div>
+</section>
+<script src="{% static 'js/swipers/fade_swiper.js' %}"></script>
 {% endif %}

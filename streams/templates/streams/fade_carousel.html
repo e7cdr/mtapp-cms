@@ -1,0 +1,39 @@
+{% load static i18n dict_tags navbar_tags wagtailcore_tags wagtailimages_tags %}
+<link rel="stylesheet" href="{% static 'css/swipers/fade_swiper.css' %}">
+<section>
+<div class="fade-swiper-container swiper">
+      <div class="fade-title">
+    {% if block.value.fade_subtitle %}
+   <h2>{{ block.value.fade_subtitle }}</h2>
+   {% endif %}
+   <h1>{{ block.value.fade_title }}</h1>
+   {% if block.value.search_bar == True %}
+      <!--Search Bar -->
+    {% include "search/search_bar.html" %}
+    {% endif %}
+  </div>
+    <div class="swiper-wrapper">
+        {% for item in value.images %}
+        <div class="swiper-slide">
+            {% image item.image original as img %}
+            {% if item.link %}
+            <a href="{{ item.link.url }}"></a>
+            {% endif %}
+            <img
+            height=""
+            width=""
+            src="{{ img.url }}"
+            alt="{{ item.caption|default:'Swiper images' }}"
+            id="slide-{{ forloop.counter }}"
+            loading="lazy"
+            />
+            {% if item.caption %}
+            <p class="caption">{{ item.caption }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+<div class="swiper-pagination"></div>
+</div>
+</section>
+<script src="{% static 'js/swipers/fade_swiper.js' %}"></script>
