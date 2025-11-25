@@ -160,11 +160,12 @@ textarea {
 .d-none { display: none !important; }
 
 .flatpickr-calendar {
-z-index: 9999 !important;  /* Above Bootstrap modals/cards */
+z-index: 9999 !important;
 position: absolute !important;
 opacity: 1 !important;
-display: block !important;  /* Override any hidden states */
-box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);  /* Bootstrap shadow for visibility */
+display: block !important;
+box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+top: 0;
 }
 
 .flatpickr-input { width: 100%;}
