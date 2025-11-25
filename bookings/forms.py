@@ -79,7 +79,7 @@ class ProposalForm(forms.ModelForm):  # Changed to ModelForm
             # Make contact fields REQUIRED
             required_fields = [
                 'customer_name', 'customer_email', 'customer_phone',
-                'nationality', 'customer_address', 'notes'
+                'nationality'
             ]
             for field in required_fields:
                 if field in self.fields:
@@ -93,7 +93,7 @@ class ProposalForm(forms.ModelForm):  # Changed to ModelForm
             # NORMAL PRICING MODE
             if form_submission == 'pricing':
                 for field in ['customer_name', 'customer_email', 'customer_phone',
-                            'customer_address', 'nationality', 'notes']:
+                            'nationality']:
                     self.fields[field].required = False
 
 
