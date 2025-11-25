@@ -54,44 +54,102 @@ document.addEventListener('DOMContentLoaded', function () {
         'input[name="number_of_children"]',
         '#id_travel_date'
     ];
-
     function loadPricing() {
-        clearTimeout(pricingTimeout);
-        pricingTimeout = setTimeout(() => {
-            const formData = new FormData(document.getElementById('bookingForm'));
-            const tourType = document.querySelector('#id_tour_type').value;
-            const tourId = document.querySelector('#id_tour_id').value;
-            const url = `/bookings/calculate_pricing/${tourType}/${tourId}/`;
-
-            fetch(url, {
-                method: 'POST',
-                body: formData,
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            })
-                .then(response => response.text())
-                .then(html => {
-                    document.getElementById('pricing-options').innerHTML = html;
-                    setTimeout(() => {
-                        initializeFilters();
-                        rebindRadioSelection();
-                    }, 50);
-                })
-                .catch(error => {
-                    console.error('Pricing fetch error:', error);
-                    document.getElementById('pricing-options').innerHTML = '<div class="alert alert-warning">Pricing unavailable—please try again.</div>';
-                });
-        }, 300);
+    // INQUIRY-ONLY: DO NOTHING + SILENT
+    if (isInquiryOnly) {
+        console.log('loadPricing() blocked — inquiry-only tour');
+        return;
     }
 
-    pricingInputs.forEach(selector => {
-        document.addEventListener('change', function (event) {
-            if (event.target.matches(selector)) loadPricing();
+    // Safety check: if pricing container was removed (should never happen, but safe)
+    const pricingContainer = document.getElementById('pricing-options');
+    if (!pricingContainer) {
+        console.log('Pricing container not found — skipping loadPricing()');
+        return;
+    }
+
+    clearTimeout(pricingTimeout);
+    pricingTimeout = setTimeout(() => {
+        const formData = new FormData(document.getElementById('bookingForm'));
+        const tourType = document.querySelector('#id_tour_type').value;
+        const tourId = document.querySelector('#id_tour_id').value;
+        const url = `/bookings/calculate_pricing/${tourType}/${tourId}/`;
+
+        fetch(url, {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => response.text())
+        .then(html => {
+            // Final safety — double-check container still exists
+            if (document.getElementById('pricing-options')) {
+                document.getElementById('pricing-options').innerHTML = html;
+                setTimeout(() => {
+                    initializeFilters();
+                    rebindRadioSelection();
+                }, 50);
+            }
+        })
+        .catch(error => {
+            // Only log real errors — not expected nulls
+            if (document.getElementById('pricing-options')) {
+                console.error('Pricing fetch error:', error);
+                document.getElementById('pricing-options').innerHTML = 
+                    '<div class="alert alert-warning">Pricing temporarily unavailable.</div>';
+            }
+            // Otherwise: silent (inquiry mode or container gone)
         });
-    });
+    }, 300);
+}
 
+    // Bind events ONLY if NOT inquiry-only
     if (!isInquiryOnly) {
-        loadPricing();  // Initial
+        pricingInputs.forEach(selector => {
+            document.addEventListener('change', function (event) {
+                if (event.target.matches(selector)) loadPricing();
+            });
+        });
+        loadPricing(); // Initial load
     }
+
+    // function loadPricing() {
+    //     clearTimeout(pricingTimeout);
+    //     pricingTimeout = setTimeout(() => {
+    //         const formData = new FormData(document.getElementById('bookingForm'));
+    //         const tourType = document.querySelector('#id_tour_type').value;
+    //         const tourId = document.querySelector('#id_tour_id').value;
+    //         const url = `/bookings/calculate_pricing/${tourType}/${tourId}/`;
+
+    //         fetch(url, {
+    //             method: 'POST',
+    //             body: formData,
+    //             headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    //         })
+    //             .then(response => response.text())
+    //             .then(html => {
+    //                 document.getElementById('pricing-options').innerHTML = html;
+    //                 setTimeout(() => {
+    //                     initializeFilters();
+    //                     rebindRadioSelection();
+    //                 }, 50);
+    //             })
+    //             .catch(error => {
+    //                 console.error('Pricing fetch error:', error);
+    //                 document.getElementById('pricing-options').innerHTML = '<div class="alert alert-warning">Pricing unavailable—please try again.</div>';
+    //             });
+    //     }, 300);
+    // }
+
+    // pricingInputs.forEach(selector => {
+    //     document.addEventListener('change', function (event) {
+    //         if (event.target.matches(selector)) loadPricing();
+    //     });
+    // });
+
+    // if (!isInquiryOnly) {
+    //     loadPricing();  // Initial
+    // }
 
 
     // ────────────────────── Submit Proposal (Modal Flow) ──────────────────────
@@ -542,7 +600,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const ages = Array.from(selects).map(s => parseInt(s.value)).filter(age => !isNaN(age));
             childAgesHidden.value = JSON.stringify(ages);
             console.log('Updated child_ages:', ages);
-            loadPricing();
+            if (typeof window.loadPricing === 'function' && !isInquiryOnly) {
+                window.loadPricing();
+        }
         }
 
         function toggleAges() {
