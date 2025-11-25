@@ -189,10 +189,10 @@
             {% endfor %}
         </div>
     </div>
+</section>
 <script src="{% static 'js/swipers/collage_swiper.js' %}"></script>
 {% elif self.variations == 'coverflow' %}
 <link rel="stylesheet" href="{% static 'css/swipers/coverflow_swiper.css' %}">
-</section>
 <section class="coverflow-swiper-container swiper">
     <div class="swiper-wrapper">
             {% for item in value.images %}

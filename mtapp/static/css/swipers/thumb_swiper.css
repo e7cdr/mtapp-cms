@@ -1,5 +1,5 @@
 
-.swiper h1 {
+.thumb-swiper1-container h1 {
     position: absolute;
     color: white;
     z-index: 2;
@@ -10,7 +10,7 @@
     place-self: anchor-center;
 }
 
-.caption {
+.thumb-swiper1-container .swiper-wrapper .caption {
     position: absolute;
     font-size: xx-large;
     color: white;

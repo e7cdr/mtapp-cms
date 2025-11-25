@@ -13,10 +13,10 @@
 
 .parallax-bg {
     position: absolute;
-    top: -50%;
+    top: -270%;
     left: 0;
     right: 0;
-    bottom: -50%;
+    bottom: 87%;
     background-size: cover;
     background-position: center top;
     background-repeat: no-repeat;

@@ -1,5 +1,5 @@
 
-section .swiper{
+.fade-swiper-section .swiper{
     width: 100%;
     overflow: hidden;
     min-width: 27rem;
@@ -122,6 +122,12 @@ section .swiper{
     .fade-title h6 {
         font-size: 0.7rem;
     }
+
+
+}
+
+.fade-swiper-container .swiper-wrapper .swiper-slide::before {
+    content: "";
 
 
 }
