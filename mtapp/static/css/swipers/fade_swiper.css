@@ -47,7 +47,7 @@
     translate: 0;
 }
 
-.swiper-pagination {
+.fade-swiper-container .swiper-pagination {
     bottom: 43% !important;
 }
 

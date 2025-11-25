@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
     var fadeSwiper = new Swiper('.fade-swiper-container', {
-     slidesPerView: 1,
+     slidesPerView: 3,
      spaceBetween: 10,
      loop: true,
      pagination: {
@@ -11,9 +11,9 @@ document.addEventListener('DOMContentLoaded', function () {
       fadeEffect: {
       crossFade: true
     },
-    //  autoplay: {
-    //   delay: 3000,
-    //  },
+     autoplay: {
+      delay: 3000,
+     },
      speed: 2000,
      lazy: true,
     });

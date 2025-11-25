@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function(){
     var framedSwiper = new Swiper('.framed-swiper-container', { // Options inside the {}
-            slidesPerView: 1,
-            spaceBetween: 60,
+            slidesPerView: 2,
+            spaceBetween: 50,
             loop: true,
             pagination: {
                 el: ".swiper-pagination",
@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function(){
             },
             autoplay: {
                 delay: 3000,
-                pauseOnMouseEnter: true,
+                reverseDirection: true,
             },
 
             speed: 2000,
