@@ -222,6 +222,7 @@ body {
 
 .tab-content img {
     border-radius: 1rem;
+    width: 100%;
 }
 
 .section-nav {
@@ -396,7 +397,7 @@ body {
         font-size: 2rem ;
     }
 
-}  
+}
 
 .hidden {
     display: none;
