@@ -5,7 +5,6 @@ from wagtailseo.models import SeoMixin
 from wagtail.models import Page, Site
 from wagtail.fields import RichTextField, StreamField
 from wagtail.admin.panels import FieldPanel, PageChooserPanel
-from wagtail.images import get_image_model
 
 class HomePage(SeoMixin, Page):
     """Home page model."""
@@ -18,7 +17,7 @@ class HomePage(SeoMixin, Page):
     banner_title = models.CharField(max_length=100, blank=False, null=True)
     banner_subtitle = RichTextField(features=["bold", "italic"], blank=True, null=True)
     banner_image = models.ForeignKey(
-        get_image_model(),
+        'wagtailimages.Image',
         null=True, # True Because HomePage is the first page, it can be created without an image.
         blank=True,
         on_delete=models.SET_NULL,
@@ -87,18 +86,18 @@ class HomePage(SeoMixin, Page):
         context['carousel'] = self.carousel # Access the StreamField directly. First 'For' loop in template will be {% for block in carousel %}
 
         return context
-    
+
 
 class SitemapPage(Page):
     content_panels = Page.content_panels
 
     def get_context(self, request):
             context = super().get_context(request)
-            
+
             # Get site and localized root
             site = Site.find_for_request(request)
             root = site.root_page.specific.localized
-            
+
             # All top-level pages for the sitemap tree
             context['pages'] = root.get_children().live().public()
 

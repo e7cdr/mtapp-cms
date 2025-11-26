@@ -5,7 +5,6 @@ from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
 from wagtail.admin.panels import FieldPanel, InlinePanel
 from wagtail.contrib.settings.models import BaseGenericSetting, register_setting
-from wagtail.images import get_image_model
 
 @register_setting # Decorator to register the setting with Wagtail
 class FooterLinks(BaseGenericSetting): # Inherit from BaseGenericSetting to create a generic setting
@@ -77,7 +76,7 @@ class BrandSettings(BaseGenericSetting, ClusterableModel):
     """Model to store brand settings like logo and company name."""
     company_name = models.CharField(max_length=300, blank=False, null=False, default='Milano Travel')
     logo = models.ForeignKey(
-        get_image_model(),
+        'wagtailimages.Image',
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
@@ -88,7 +87,7 @@ class BrandSettings(BaseGenericSetting, ClusterableModel):
     telephone = models.CharField(max_length=20, blank=False, null=False, default='+593')
     search_suggestion = RichTextField(blank=True, null=True, default="Don't know what to look for? Try >>[Insert Link]")
     footer_background = models.ForeignKey(
-        get_image_model(),
+        'wagtailimages.Image',
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
@@ -107,7 +106,7 @@ class BrandSettings(BaseGenericSetting, ClusterableModel):
     ]
 
     class Meta:
-        verbose_name = "Brand Settings" 
+        verbose_name = "Brand Settings"
 
     def __str__(self):
         return self.company_name
@@ -128,25 +127,25 @@ class Sponsors_Badges(BaseGenericSetting, ClusterableModel):
 # Inline model for each logo
 class SponsorLogo(Orderable):
     setting = ParentalKey(
-        "site_settings.Sponsors_Badges", 
+        "site_settings.Sponsors_Badges",
         related_name="sponsor_logos",
         on_delete=models.CASCADE
     )
-    
+
     image = models.ForeignKey(
-        get_image_model(),
+        'wagtailimages.Image',
         null=True,
         blank=False,
         on_delete=models.SET_NULL,
         related_name='+'
     )
-    
+
     caption = models.CharField(
         max_length=100,
         blank=True,
         help_text="Optional caption / alt text for accessibility and SEO"
     )
-    
+
     link = models.ForeignKey(
         'wagtailcore.Page',
         null=True,
@@ -155,7 +154,7 @@ class SponsorLogo(Orderable):
         related_name='+',
         help_text="Optional internal link (recommended for SEO)"
     )
-    
+
     external_link = models.URLField(
         blank=True,
         help_text="Use this if linking to an external site"
