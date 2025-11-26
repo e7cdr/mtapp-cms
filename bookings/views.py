@@ -10,7 +10,7 @@ from decimal import Decimal, InvalidOperation, ROUND_HALF_UP  # Add InvalidOpera
 
 from .forms import ProposalForm
 from partners.models import Partner
-from tours.models import LandTourPage
+from tours.models import DayTourPage, LandTourPage
 from bookings.forms import ProposalForm
 from bookings.models import (
     ExchangeRate,
@@ -396,7 +396,7 @@ def get_pricing_tier(tour, number_of_adults):
 
 def compute_pricing(tour_type, tour_id, form_data, session):
     logger.debug(f"compute_pricing inputs: form_data={form_data}, tour_type={tour_type}, tour_id={tour_id}")
-    model_map = {'full': "FullTourPage", 'land': LandTourPage, 'day': "DayTourPage"}
+    model_map = {'full': "FullTourPage", 'land': LandTourPage, 'day': DayTourPage}
     model = model_map.get(tour_type.lower())
     if not model:
         logger.error(f"Invalid tour type: {tour_type}")
@@ -774,7 +774,7 @@ def render_pricing(request, tour_type, tour_id):
     logger.debug(f"Selected currency: {currency}")
 
     configurations = compute_pricing(tour_type, tour_id, request.POST, request.session)
-    model_map = {'full': "FullTourPage", 'land': LandTourPage, 'day': "DayTourPage"}
+    model_map = {'full': "FullTourPage", 'land': LandTourPage, 'day': DayTourPage}
     tour = get_object_or_404(model_map.get(tour_type.lower()), pk=tour_id)
     form_errors = []
     if not configurations:
@@ -911,7 +911,7 @@ def child_ages(request) -> HttpResponse:
     except json.JSONDecodeError:
         child_ages = []
 
-    model_map = {'full': "FullTourPage", 'land': LandTourPage, 'day': "DayTourPage"}
+    model_map = {'full': "FullTourPage", 'land': LandTourPage, 'day': DayTourPage}
     model = model_map.get(tour_type.lower())
     if not model:
         logger.error(f"Invalid tour type: {tour_type}")
@@ -963,7 +963,7 @@ def revert_to_booking_form(request, tour_type: str, tour_id: int) -> HttpRespons
     logger.debug(f"revert_to_booking_form called: tour_type={tour_type}, tour_id={tour_id}")
 
     # Map tour type to model
-    model_map = {'full': "FullTourPage", 'land': LandTourPage, 'day': "DayTourPage"}
+    model_map = {'full': "FullTourPage", 'land': LandTourPage, 'day': DayTourPage}
     model = model_map.get(tour_type.lower())
     if not model:
         logger.error(f"Invalid tour type: {tour_type}")

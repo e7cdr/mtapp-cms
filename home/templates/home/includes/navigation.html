@@ -18,6 +18,8 @@
       loading="lazy"
       height=""
       width=""/>
+    </a>
+    <ul class="navbar-menu">
       <form action="{% url 'set_language' %}" method="post" id="languageForm" class="lang-toggle">
           {% csrf_token %}
           <input type="hidden" name="language" id="languageInput">
@@ -32,37 +34,37 @@
               </span>
           </button>
       </form>
-    </a>
-    <ul class="navbar-menu">
       {% for navbar_page in navbar_pages %}
-        <li class="{% if navbar_page.get_children.live|length > 0 %}has-dropdown{% endif %}">
-          {% if navbar_page.title != 'Tours' %}
-          <a href="{{ navbar_page.url }}">{{ navbar_page.title }}</a>
-          {% if navbar_page.get_children.live|length > 0 %}
-            <div class="dropdown">
-              <ul>
-                {% for child in navbar_page.get_children.live %}
-                  <li>
-                    <a href="{{ child.url }}">{{ child.title }}</a>
-                    {% comment %} Optional: Add sub-dropdown for second-level children (multi-level) {% endcomment %}
-                    {% if child.get_children.live|length > 0 %}
-                      <div class="sub-menu">
-                        <ul>
-                          {% for grandchild in child.get_children.live %}
-                            <li><a href="{{ grandchild.url }}">{{ grandchild.title }}</a></li>
-                          {% endfor %}
-                        </ul>
-                      </div>
-                    {% endif %}
-                  </li>
-                {% endfor %}
-              </ul>
-            </div>
-          {% endif %}
-          {% else %}
-          <a href="{{ navbar_page.url }}">{{ navbar_page.title }}</a>
-          {% endif %}
-        </li>
+        {% with children=navbar_page.get_children.live.specific %}
+          <li class="{% if children %}has-dropdown{% endif %}">
+            <a href="{{ navbar_page.url }}">{{ navbar_page.title }}</a>
+
+            {% if children %}
+              <div class="dropdown">
+                <ul>
+                  {% for child in children %}
+                    <li>
+                      <a href="{{ child.url }}">{{ child.title }}</a>
+
+                      {# Optional second level #}
+                      {% with grandkids=child.get_children.live.specific %}
+                        {% if grandkids %}
+                          <div class="sub-menu">
+                            <ul>
+                              {% for grand in grandkids %}
+                                <li><a href="{{ grand.url }}">{{ grand.title }}</a></li>
+                              {% endfor %}
+                            </ul>
+                          </div>
+                        {% endif %}
+                      {% endwith %}
+                    </li>
+                  {% endfor %}
+                </ul>
+              </div>
+            {% endif %}
+          </li>
+        {% endwith %}
       {% endfor %}
     </ul>
   </nav>

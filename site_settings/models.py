@@ -5,6 +5,7 @@ from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
 from wagtail.admin.panels import FieldPanel, InlinePanel
 from wagtail.contrib.settings.models import BaseGenericSetting, register_setting
+from wagtail.images import get_image_model
 
 @register_setting # Decorator to register the setting with Wagtail
 class FooterLinks(BaseGenericSetting): # Inherit from BaseGenericSetting to create a generic setting
@@ -76,7 +77,7 @@ class BrandSettings(BaseGenericSetting, ClusterableModel):
     """Model to store brand settings like logo and company name."""
     company_name = models.CharField(max_length=300, blank=False, null=False, default='Milano Travel')
     logo = models.ForeignKey(
-        'wagtailimages.Image',
+        get_image_model(),
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
@@ -87,7 +88,7 @@ class BrandSettings(BaseGenericSetting, ClusterableModel):
     telephone = models.CharField(max_length=20, blank=False, null=False, default='+593')
     search_suggestion = RichTextField(blank=True, null=True, default="Don't know what to look for? Try >>[Insert Link]")
     footer_background = models.ForeignKey(
-        'wagtailimages.Image',
+        get_image_model(),
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
@@ -133,7 +134,7 @@ class SponsorLogo(Orderable):
     )
     
     image = models.ForeignKey(
-        'wagtailimages.Image',
+        get_image_model(),
         null=True,
         blank=False,
         on_delete=models.SET_NULL,

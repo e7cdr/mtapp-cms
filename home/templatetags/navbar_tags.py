@@ -1,27 +1,31 @@
 from django import template
+from django.conf import settings
 from django.utils import translation
 from wagtail.models import Site, Locale
 from tours.models import ToursIndexPage  # Keep if needed for .specific()
+from wagtail.models import Page
 
 register = template.Library()
 
 @register.simple_tag(takes_context=True)
 def get_navbar_pages(context):
-    """Retrieve top-level pages for the navigation bar, filtered by current locale."""
-    request = context['request']
-    language = translation.get_language()  # e.g., 'en' from URL prefix or middleware
-    
-    try:
-        locale = Locale.objects.get(language_code=language)
-    except Locale.DoesNotExist:
-        locale = Locale.get_default()  # Fallback to default locale
-    
+    """
+    Returns top-level menu pages for the current locale, already specific().
+    """
+    request = context.get('request')
+    if not request:
+        return Page.objects.none()
+
     site = Site.find_for_request(request)
-    # Get the root page translated to the current locale
-    root = site.root_page.get_translation(locale)
-    
-    # Return direct children (top-level nav items) for this locale only
-    return root.get_children().live().public().in_menu()
+    locale = Locale.get_active()               # wagtail_localize helper (or fallback below)
+
+    # Fallback if wagtail_localize not active
+    if not locale:
+        language = translation.get_language() or settings.LANGUAGE_CODE
+        locale = Locale.objects.get(language_code=language.split('-')[0])
+
+    root = site.root_page.localized  # automatically the translation in active locale
+    return root.get_children().live().public().in_menu().specific()
 
 @register.simple_tag
 def get_staff_pages():

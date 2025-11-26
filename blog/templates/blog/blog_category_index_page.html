@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}{{ current_category.name }} Articles{% endblock %}
+{% block content %}
+  <h1>Category: {{ current_category.name }}</h1>
+  {% include "blog/includes/post_grid.html" with posts=posts %}
+{% endblock %}

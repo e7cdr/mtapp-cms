@@ -68,6 +68,9 @@ INSTALLED_APPS = [
     'django_ratelimit',  # For form throttling
     "accounts",
     "home",
+    "blog",
+    "images",
+    "documents",
     "search",
     "flex",
     "streams",
@@ -200,6 +203,7 @@ TIME_ZONE = "UTC"
 
 USE_I18N = True
 USE_L10N = True
+USE_TZ = True
 
 
 # Wagtail internationalization settings
@@ -212,7 +216,10 @@ WAGTAIL_CONTENT_LANGUAGES = LANGUAGES = [
     ('pl', 'Polski'),
 ]
 
-USE_TZ = True
+LOCALE_PATHS = [os.path.join(BASE_DIR, 'locale')]
+
+WAGTAIL_LOCALIZE_TRANSLATE_UI = True   
+WAGTAIL_CONTENT_LANGUAGES = LANGUAGES
 
 
 STATICFILES_FINDERS = [
@@ -268,7 +275,7 @@ WAGTAILADMIN_BASE_URL = "https://www.milanotravel.com.ec"
 # if untrusted users are allowed to upload files -
 # see https://docs.wagtail.org/en/stable/advanced_topics/deploying.html#user-uploaded-files
 WAGTAILDOCS_EXTENSIONS = ['csv', 'docx', 'key', 'odt', 'pdf', 'pptx', 'rtf', 'txt', 'xlsx', 'zip']
-
+WAGTAILDOCS_DOCUMENT_MODEL = 'documents.CustomDocument'
 
 logs_dir = Path(BASE_DIR) / 'logs'
 logs_dir.mkdir(exist_ok=True)
@@ -352,6 +359,8 @@ WAGTAILIMAGES_DEFAULT_LAZY_ATTRIBUTES = {
     'loading': 'lazy',
     'decoding': 'async',
 }
+
+WAGTAILIMAGES_IMAGE_MODEL = 'images.CustomImage'
 
 WAGTAILADMIN_RICH_TEXT_EDITORS = {
     'default': {

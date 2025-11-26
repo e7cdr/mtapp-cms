@@ -1,0 +1,53 @@
+<!-- templates/blog/blog_detail_page.html -->
+{% extends "base.html" %}
+{% load static wagtailcore_tags wagtailimages_tags %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/blog/blog_detail.css' %}"/>
+{% endblock extra_css %}
+
+{% block content %}
+<article class="blog-detail">
+<div class="blog-detail-hero" style="
+  {% if page.banner_image %}
+    {% image page.banner_image original as banner_img %}
+    background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url('{{ banner_img.url }}');
+  background-size: cover;
+    background-position: center;
+  {% else %}
+    background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url('{% static "images/blog-fallback.jpg" %}');
+    background-size: cover;
+    background-position: center;
+  {% endif %}
+">
+  <div class="container hero-content">
+    <h1 class="display-4 fw-bold">{{ page.title }}</h1>
+    <div class="meta-bar">
+      <span>By Milano Travel</span>
+      <span>•</span>
+      <span>{{ page.date_published|date:"d \"\" F \"\" Y" }}</span>
+      <span>•</span>
+      <span>{{ page.get_read_time_display }}</span>
+      {% if page.source_country != 'general' %}
+        <span class="tag bg-primary text-white px-3 py-1 rounded-pill">
+          {{ page.get_source_country_display }}
+        </span>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+  <div class="container blog-content">
+  {% if page.intro %}
+    <div class="lead fs-4 mb-5">{{ page.intro|richtext }}</div>
+  {% endif %}
+  <hr>
+
+  {% for block in page.body %}
+    {% include_block block %}
+  {% endfor %}
+
+    <!-- Tour teasers will appear here automatically -->
+  </div>
+</article>
+{% endblock content %}

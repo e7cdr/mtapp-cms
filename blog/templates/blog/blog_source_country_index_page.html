@@ -1,0 +1,8 @@
+{# templates/blog/blog_source_country_index_page.html #}
+{% extends "base.html" %}
+{% block title %}Blog for travelers from {{ current_country }}{% endblock %}
+{% block content %}
+  <h1>Especially for visitors from {{ current_country }}</h1>
+  <p class="lead">Hand-picked guides, flight tips and exclusive offers.</p>
+  {% include "blog/includes/post_grid.html" with posts=posts %}
+{% endblock %}

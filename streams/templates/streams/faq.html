@@ -1,0 +1,12 @@
+{% load wagtailcore_tags %}
+
+<div class="faq-accordion my-5" itemscope itemtype="https://schema.org/FAQPage">
+    {% for item in value.questions %}
+        <div itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+            <h5 itemprop="name">{{ item.question }}</h5>
+            <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                <div itemprop="text">{{ item.answer|richtext }}</div>
+            </div>
+        </div>
+    {% endfor %}
+</div>

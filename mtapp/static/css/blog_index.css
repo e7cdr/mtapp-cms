@@ -1,0 +1,103 @@
+  :root {
+      --primary: #1a535c;
+      --accent: #4ecdc4;
+      --radius: 30px;
+      --shadow: 0 8px 25px rgba(0, 0, 0, 0.07);
+      --transition: all .3s ease;
+  }
+
+  .filters-wrapper {
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px 20px;
+      margin-bottom: 32px;
+      position: sticky;
+      top: 80px;
+      z-index: 10;
+      overflow: hidden;
+  }
+
+  .filters-scroll {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      padding-bottom: 10px;
+      margin-bottom: -10px;
+  }
+
+  .filters-scroll::-webkit-scrollbar {
+      display: none;
+  }
+
+  .filter-badge {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #f0f9f8;
+      color: var(--primary);
+      padding: 10px 16px;
+      border-radius: var(--radius);
+      font-size: .92rem;
+      font-weight: 600;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: var(--transition);
+      border: 2px solid transparent;
+  }
+
+  .filter-badge:hover,
+  .filter-badge.active {
+      background: var(--accent);
+      color: white;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(78, 205, 196, .3);
+  }
+
+  .filter-badge.active {
+      border-color: var(--primary);
+      font-weight: 700;
+  }
+
+  .filter-badge .count {
+      background: rgba(255, 255, 255, .35);
+      padding: 3px 9px;
+      border-radius: 12px;
+      font-size: .78rem;
+  }
+
+  .clear-filters {
+      margin-left: auto;
+      color: #e74c3c;
+      font-weight: 600;
+      font-size: .9rem;
+      padding: 10px 16px;
+      border-radius: var(--radius);
+      background: #fdf2f2;
+      transition: var(--transition);
+  }
+
+  .clear-filters:hover {
+      background: #e74c3c;
+      color: white;
+  }
+
+  .blog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 28px;
+  }
+
+  @media(max-width:480px) {
+      .filters-wrapper {
+          padding: 12px 14px;
+      }
+
+      .filter-badge {
+          padding: 8px 12px;
+          font-size: .85rem;
+      }
+  }

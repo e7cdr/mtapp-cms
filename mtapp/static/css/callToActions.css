@@ -8,7 +8,9 @@
     border-radius: 1rem 1rem 1rem 1rem;
     box-shadow: 0 0 4px black;
     transition: 0.3s ease-in-out;
+    margin: 1rem 0;
 }
+
 
 
 .basic-cta-container {
@@ -61,7 +63,7 @@
 
     list-style-type: circle;
     padding-inline-start: 1.3rem;
-    column-count: 3; /* Creates 3 columns */
+    column-count: 4; /* Creates 3 columns */
     column-gap: 2rem; /* Optional: Space between columns (adjust as needed) */
     /* column-rule: 1px solid #555; Optional: Thin line between columns for visual separation */
 }
@@ -91,7 +93,7 @@
 }
 
 .cta-image-container {
-    height: auto;
+    height: 20rem;
     position: relative;
     padding: 0;
     margin: 0;

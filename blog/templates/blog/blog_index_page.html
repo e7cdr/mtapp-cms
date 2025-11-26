@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% load static wagtailcore_tags wagtailimages_tags i18n %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/blog_index.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<section class="blog-hero">
+  <div class="container text-center py-5">
+    <h1 class="display-4 fw-bold">{% trans "Milano Travel Blog" %}</h1>
+    <p class="lead opacity-90">{% trans "Authentic experiences for travelers from around the world" %}</p>
+  </div>
+</section>
+
+<div class="container">
+  <!-- RESPONSIVE FILTER BAR -->
+  <div class="filters-wrapper">
+    <div class="filters-scroll">
+      <a href="{% pageurl page %}" 
+         class="filter-badge {% if not selected_category and not selected_tag and not selected_country %}active{% endif %}">
+        <span>{% trans "All posts" %}</span>
+        <span class="count">{{ posts.paginator.count }}</span>
+      </a>
+
+      {% for cat in categories %}
+        <a href="?category={{ cat.slug }}" 
+           class="filter-badge {% if selected_category and selected_category.slug == cat.slug %}active{% endif %}">
+          <span>{{ cat.name }}</span>
+          <span class="count">{{ cat.count }}</span>
+        </a>
+      {% endfor %}
+
+      {% for tag in popular_tags %}
+        <a href="?tag={{ tag.slug }}" 
+           class="filter-badge {% if selected_tag and selected_tag|lower == tag.name|lower %}active{% endif %}">
+          <span>#{{ tag.name }}</span>
+          <span class="count">{{ tag.num_times }}</span>
+        </a>
+      {% endfor %}
+
+      {% if selected_category or selected_tag or selected_country %}
+        <a href="{% pageurl page %}" class="clear-filters">
+          {% trans "Clear filters" %}
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if selected_category or selected_tag %}
+    <div class="text-center mb-4 text-muted">
+      {% trans "Showing" %}:
+      {% if selected_category %}<strong>{{ selected_category.name }}</strong>{% endif %}
+      {% if selected_tag %}<strong>#{{ selected_tag }}</strong>{% endif %}
+    </div>
+  {% endif %}
+
+  <div class="blog-grid">
+    {% for post in posts %}
+      <article class="blog-card">
+        {% if post.banner_image %}
+          {% image post.banner_image fill-800x600 as img %}
+          <a href="{% pageurl post %}">
+            <img height=""
+            width=""
+            src="{{ img.url }}" alt="{{ img.alt }}" loading="lazy" style="border-radius:14px 14px 0 0;">
+          </a>
+        {% endif %}
+
+        <div class="card-body">
+          <div class="card-meta">
+            <small>{{ post.date_published|date:"d M Y" }} • {{ post.get_read_time_display }}</small>
+            {% if post.category %}
+              <a href="?category={{ post.category.slug }}" class="tag">{{ post.category.name }}</a>
+            {% endif %}
+          </div>
+
+          <h3 class="card-title mt-2">
+            <a href="{% pageurl post %}">{{ post.title }}</a>
+          </h3>
+
+          <!-- <p>{{ post.intro|richtext|truncatewords_html:25 }}</p> -->
+
+          <a href="{% pageurl post %}" class="read-more">
+            {% trans "Read more" %} →
+          </a>
+        </div>
+      </article>
+    {% empty %}
+      <div class="text-center py-5 col-span-full">
+        <p class="fs-3 text-muted">{% trans "No posts match these filters." %}</p>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- PAGINATION -->
+  {% if posts.has_other_pages %}
+  <nav class="text-center mt-5">
+    <div class="btn-group">
+      {% if posts.has_previous %}
+        <a href="?page={{ posts.previous_page_number }}{% if selected_category %}&category={{ selected_category.slug }}{% endif %}{% if selected_tag %}&tag={{ selected_tag|slugify }}{% endif %}"
+           class="btn btn-outline-primary">{% trans "Previous" %}</a>
+      {% endif %}
+
+      <span class="btn btn-light">
+        {% blocktrans with current=posts.number total=posts.paginator.num_pages %}
+        Page {{ current }} of {{ total }}
+        {% endblocktrans %}
+      </span>
+
+      {% if posts.has_next %}
+        <a href="?page={{ posts.next_page_number }}{% if selected_category %}&category={{ selected_category.slug }}{% endif %}{% if selected_tag %}&tag={{ selected_tag|slugify }}{% endif %}"
+           class="btn btn-outline-primary">{% trans "Next" %}</a>
+      {% endif %}
+    </div>
+  </nav>
+  {% endif %}
+</div>
+{% endblock content %}

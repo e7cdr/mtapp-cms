@@ -11,63 +11,11 @@ from wagtail import blocks
 from wagtail.images.blocks import ImageChooserBlock
 from django.contrib.sites.shortcuts import get_current_site  # NEW: For safe site resolution
 from site_settings.models import FooterLinks
+from mtapp.choices import colors, swipers, position, GLOBAL_ICON_CHOICES
 
 
-GLOBAL_ICON_CHOICES = [
-    ('fa-swimming-pool', 'Swimming Pool'),
-    ('fa-wifi', 'Free WiFi'),
-    ('fa-parking', 'Parking'),
-    ('fa-spa', 'Spa'),
-    ('fa-utensils', 'Restaurant'),
-    ('fa-bed', 'Comfortable Beds'),
-    ('fa-concierge-bell', 'Concierge Service'),
-    ('fa-dumbbell', 'Fitness Center'),
-    ('fa-shuttle-van', 'Airport Shuttle'),
-    ('fa-hot-tub', 'Hot Tub'),
-    ('fa-coffee', 'Breakfast Included'),
-    ('fa-tv', 'In-Room TV'),
-    ('fa-snowflake', 'Air Conditioning'),
-    ('fa-smoking-ban', 'Non-Smoking Rooms'),
-    ('fa-paw', 'Pet Friendly'),
-    ('fa-child', 'Family Friendly'),
-    ('fa-wheelchair', 'Accessibility Features'),
-    ('fa-glass-martini', 'Bar'),
-    ('fa-bicycle', 'Bicycle Rental'),
-    ('fa-hiking', 'Hiking Trails'),
-    ('fa-tree', 'Garden'),
-    ('fa-water', 'Beach Access'),
-    ('fa-shower', 'Private Bathroom'),
-    ('fa-laptop', 'Business Center'),
-    ('fa-car', 'Car Rental'),
-    ('fa-taxi', 'Taxi Service'),
-    ('fa-sun', 'Outdoor Terrace'),
-    ('fa-umbrella-beach', 'Beach Umbrellas'),
-    ('fa-fish', 'Fishing'),
-    ('fa-golf-ball', 'Golf Course'),
-    ('fa-horse', 'Horseback Riding'),
-    ('fa-spa', 'Massage Services'),
-    ('fa-tshirt', 'Laundry Service'),
-    ('fa-concierge-bell', '24-Hour Front Desk'),
-    ('fa-bell', 'Room Service'),
-    ('fa-lock', 'Safe Deposit Box'),
-    ('fa-shopping-bag', 'Gift Shop'),
-    ('fa-camera', 'Photography Tours'),
-    ('fa-binoculars', 'Sightseeing Tours'),
-    ('fa-map', 'Guided Tours'),
-    ('fa-bus', 'Public Transport Access'),
-    ('fa-bath', 'Bathtub'),
-    ('fa-leaf', 'Eco-Friendly'),
-    ('fa-plug', 'Electric Vehicle Charging'),
-    ('fa-smoking', 'Smoking Area'),
-    ('fa-wine-glass', 'Wine Tasting'),
-    ('fa-theater-masks', 'Entertainment Shows'),
-    ('fa-briefcase', 'Conference Rooms'),
-    ('fa-sun', 'Sun Deck'),
-    ('fa-umbrella', 'Poolside Bar'),
-]
+
 GLOBAL_ICON_CHOICES = sorted(GLOBAL_ICON_CHOICES, key=lambda x: x[1].lower())
-
-
 
 def create_icons_list(icon_choices=None):
     """
@@ -207,26 +155,6 @@ class HomeCardsBlock(Cards_Block):
     class Meta:
         label = "Home Card"  # Optional: Distinguishes in admin dropdown
 
-colors = [
-    ('--cyan-60', 'Sky Blue'),
-    ('--cyan-10', 'Cyan'),
-    ('--cyan-dark-70', 'Dark Cyan'),
-    ('--yellow-dark-30', 'Sand'),
-    ('--yellow-0', 'Yellow'),
-    ('--yellow-dark-40', 'Dark Yellow'),
-    ('--yellow-dark-70', 'Brown'),
-    ('--red-10', 'Red'),
-    ('--red-dark-20', 'Red Blood'),
-    ('--red-dark-60', 'Dark Red'),
-    ('--red-50', 'Pink'),
-    ('--green2-10', 'Green'),
-    ('--green2-dark-70', 'Dark Green'),
-    ('--yellow-dark-100', 'Black'),
-    ('gray', 'Gray'),
-    ('--yellow-100', 'White'),
-
-]
-
 class TextBand_Block(blocks.StructBlock):
     '''Three bands with text. #1 and #3 with background color. #2 with cover image'''
     band_title = blocks.CharBlock(required=False, max_length=36)
@@ -299,11 +227,6 @@ class Flex_Images_Block(blocks.StructBlock):
         icon = "image"
         label = "Flex images"
 
-
-position = [
-    ('top', 'Top Side'),
-    ('bottom', 'Bottom Side'),
-]
 class CTA_Block_2B(blocks.StructBlock):
     """A text box with title, subtitle above title, description and two buttons that send user to another page"""
     image_position = blocks.ChoiceBlock(choices=position, default='bottom', help_text="Text box background color")
@@ -329,17 +252,6 @@ class CTA_Block_2B(blocks.StructBlock):
         icon = "doc-full"
         label = "CTA 2 Buttons"
         help_text = "A text box with title, subtitle above title, description and two buttons that send user to another page"
-
-
-
-swipers = [
-    ('basic', 'Basic Swiper'),
-    ('collage', 'Collage Navigation'),
-    ('coverflow', 'Coverflow (3D)'),
-    ('framed', 'Framed Pictures'),
-    ('thumbnail', 'Thumbnail Navigation'),
-
-]
 
 class Swipers(blocks.StructBlock):
     """Swiper design with different variations"""
@@ -377,44 +289,6 @@ class FadeCarousel(blocks.StructBlock):
         icon = "image"
         label = "Fade Carousel"
         help_text = "Fade Carousel intended to be used as initial cover pages"
-
-class PricingTierBlock(blocks.StructBlock):
-    min_pax = blocks.IntegerBlock(required=True)
-    max_pax = blocks.IntegerBlock(required=True, help_text="Do not leave it empty")
-
-    price_adult = blocks.DecimalBlock(required=True, decimal_places=2)
-    price_sgl_supplement = blocks.DecimalBlock(default=0, decimal_places=2)
-    price_dbl_discount = blocks.DecimalBlock(default=0, decimal_places=2)
-    price_tpl_discount = blocks.DecimalBlock(default=0, decimal_places=2)
-
-    child_price_percent = blocks.FloatBlock(default=60.0, min_value=0, max_value=100)
-
-    # INFANT FLEXIBILITY
-    infant_price_type = blocks.ChoiceBlock(
-        choices=[
-            ('free', 'Free'),
-            ('percent', 'Percentage of adult price'),
-            ('fixed', 'Fixed amount per infant'),
-        ],
-        default='free',
-    )
-    infant_percent_of_adult = blocks.FloatBlock(
-        default=10.0,
-        min_value=0,
-        max_value=100,
-        required=False,
-    )
-    infant_fixed_amount = blocks.DecimalBlock(
-        default=0,
-        decimal_places=2,
-        required=False,
-    )
-
-    class Meta:
-        icon = 'currency'
-        label = "Pricing Tier"
-        # This makes the JS work on add/remove
-        form_classname = 'pricing-tier-block'
 
 class ParallaxImageBlock(blocks.StructBlock):
     """
@@ -468,3 +342,44 @@ class GriddedImages(blocks.StructBlock):
         template = "streams/gridded_images.html"
         icon = "image"
         label = "Gridded Images"
+
+class TourTeaserBlock(blocks.StructBlock):
+    tour = blocks.PageChooserBlock(
+        required=True,
+        page_type=["tours.LandTourPage", "tours.FullTourPage", "tours.DayTourPage"],  # ← THIS IS THE FIX
+        help_text="Choose any tour: Land, Full, or Day tour"
+    )
+    custom_title = blocks.CharBlock(required=False, help_text="Override tour name")
+    cta_text = blocks.CharBlock(default="Book this tour", required=False)
+
+    def get_context(self, value, parent_context=None):
+        context = super().get_context(value, parent_context=parent_context)
+        tour = value["tour"].specific
+
+        context.update({
+            "tour_url": tour.url,
+            "tour_title": value["custom_title"] or getattr(tour, "name", tour.title),
+            "cta_text": value["cta_text"],
+        })
+
+        # Price logic (safe)
+        try:
+            if tour.collect_price and hasattr(tour, "active_prices"):
+                price = None
+                prices = tour.active_prices
+                if tour.pricing_type == "Per_person":
+                    price = prices.get("adult") or prices.get("chd")
+                elif tour.pricing_type in ["Per_room", "Combined"]:
+                    price = prices.get("dbl") or prices.get("adult")
+                context["price"] = f"From ${price}" if price else "Contact us"
+            else:
+                context["price"] = "Inquiry only"
+        except:
+            context["price"] = "View tour"
+
+        return context
+
+    class Meta:
+        template = "blog/blocks/tour_teaser.html"
+        icon = "pick"
+

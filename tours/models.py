@@ -5,6 +5,7 @@ import os
 import logging
 
 from mtapp.utils import generate_code_id  # Generic JSONField
+from mtapp.choices import DESTINATION_CHOICES, GLOBAL_ICON_CHOICES
 
 from django.db import models
 from django.db.models import Q
@@ -29,6 +30,9 @@ from wagtail.blocks import (
     ChoiceBlock,
     IntegerBlock,
     DateBlock,
+    DecimalBlock,
+    FloatBlock,
+
 )
 from wagtail.contrib.routable_page.models import RoutablePageMixin, path
 
@@ -39,13 +43,6 @@ logger = logging.getLogger(__name__)
 #TODO: Full and Daytour models.
 
 # Destination Choices
-DESTINATION_CHOICES = [
-    ('Dominican Republic', _('Dominican Republic')),
-    ('Colombia', _('Colombia')),
-    ('Ecuador', _('Ecuador')),
-    ('Iceland', _('Iceland')),
-    ('Poland', _('Poland')),
-]
 
 ITINERARY_BLOCKS = [
     ('day', StructBlock([
@@ -53,6 +50,45 @@ ITINERARY_BLOCKS = [
         ('description', RichTextBlock(label="Description")),
     ]))
 ]
+
+class PricingTierBlock(StructBlock):
+    min_pax = IntegerBlock(required=True)
+    max_pax = IntegerBlock(required=True, help_text="Do not leave it empty")
+
+    price_adult = DecimalBlock(required=True, decimal_places=2)
+    price_sgl_supplement = DecimalBlock(default=0, decimal_places=2)
+    price_dbl_discount = DecimalBlock(default=0, decimal_places=2)
+    price_tpl_discount = DecimalBlock(default=0, decimal_places=2)
+
+    child_price_percent = FloatBlock(default=60.0, min_value=0, max_value=100)
+
+    # INFANT FLEXIBILITY
+    infant_price_type = ChoiceBlock(
+        choices=[
+            ('free', 'Free'),
+            ('percent', 'Percentage of adult price'),
+            ('fixed', 'Fixed amount per infant'),
+        ],
+        default='free',
+    )
+    infant_percent_of_adult = FloatBlock(
+        default=10.0,
+        min_value=0,
+        max_value=100,
+        required=False,
+    )
+    infant_fixed_amount = DecimalBlock(
+        default=0,
+        decimal_places=2,
+        required=False,
+    )
+
+    class Meta:
+        icon = 'currency'
+        label = "Pricing Tier"
+        # This makes the JS work on add/remove
+        form_classname = 'pricing-tier-block'
+
 
 class AbstractTourPage(Page):
     # Common content fields
@@ -73,7 +109,7 @@ class AbstractTourPage(Page):
     disclaimer = RichTextField(blank=True, null=True, default="", verbose_name="Disclaimer Message (Tours Details)", help_text="For example: All prices are subject to availability")
 
     amenity = StreamField([
-        ('include', ListBlock(ChoiceBlock(choices=blocks.GLOBAL_ICON_CHOICES)))
+        ('include', ListBlock(ChoiceBlock(choices=GLOBAL_ICON_CHOICES)))
     ], blank=True, use_json_field=True, help_text=_("Add as many amenities."))
 
     no_inclusions = RichTextField(default="Air Ticket", help_text=_("Not included"), blank=True)
@@ -160,7 +196,7 @@ class AbstractTourPage(Page):
         )
     combined_pricing_tiers = StreamField(
         [
-            ('tier', blocks.PricingTierBlock()),
+            ('tier', PricingTierBlock()),
         ],
         use_json_field=True,
         verbose_name="Combined Pricing Tiers (by Group Size)",
@@ -539,6 +575,110 @@ class AbstractTourPage(Page):
     def get_code_prefix(self):
         """Override in children for 'LT', 'FT', 'DT'."""
         raise NotImplementedError("Subclasses must define get_code_prefix()")
+    
+    # tours/models.py — add inside AbstractTourPage class (near the bottom)
+
+    def get_jsonld_schema(self):
+        """
+        100% safe TouristTrip JSON-LD — works on ALL tour types
+        """
+        site = self.get_site()
+        base_url = site.root_url if site else "https://milanotravel.com.ec"
+
+        # Safe description
+        description = ""
+        if self.description:
+            description = self.description.source if hasattr(self.description, 'source') else str(self.description)
+
+        # Safe images
+        images = []
+        for img in [self.cover_image, self.image]:
+            if img:
+                try:
+                    images.append(img.get_rendition("fill-1200x630").url)
+                except:
+                    pass
+
+        # Safe itinerary
+        itinerary_items = []
+        if hasattr(self, 'itinerary') and self.itinerary:
+            for i, block in enumerate(self.itinerary, 1):
+                desc = ""
+                if block.value.get("description"):
+                    d = block.value["description"]
+                    desc = d.source if hasattr(d, 'source') else str(d)
+                if block.value.get("highlight"):
+                    h = block.value["highlight"]
+                    h_text = h.source if hasattr(h, 'source') else str(h)
+                    if desc:
+                        desc += f" — {h_text}"
+                    else:
+                        desc = h_text
+                if desc.strip():
+                    itinerary_items.append({
+                        "@type": "TouristAttraction",
+                        "name": f"Day {i}",
+                        "description": desc.strip()
+                    })
+
+        # Safe pricing
+        price = None
+        price_text = "Contact us"
+        if getattr(self, 'collect_price', False) and not getattr(self, 'is_sold_out', False):
+            prices = getattr(self, 'active_prices', {})
+            if self.pricing_type == "Per_person":
+                price = prices.get("adult") or prices.get("chd") or prices.get("inf")
+            elif self.pricing_type == "Per_room":
+                price = prices.get("dbl") or prices.get("sgl") or prices.get("tpl")
+            else:  # Combined
+                tiers = getattr(self, 'combined_pricing_tiers', [])
+                if tiers:
+                    price = tiers[0].value.get("price_per_person")
+                else:
+                    price = prices.get("adult") or prices.get("dbl")
+
+            if price:
+                price_text = f"From ${price}"
+
+        # Build schema
+        schema = {
+            "@context": "https://schema.org",
+            "@type": "TouristTrip",
+            "name": getattr(self, 'name', self.title),
+            "description": description.strip(),
+            "url": self.full_url or f"{base_url}{self.url}",
+            "image": images or None,
+            "itinerary": {
+                "@type": "ItemList",
+                "numberOfItems": len(itinerary_items),
+                "itemListElement": itinerary_items
+            } if itinerary_items else None,
+            "offers": {
+                "@type": "Offer",
+                "url": self.full_url or f"{base_url}{self.url}",
+                "priceCurrency": "USD",
+                "price": float(price) if price else None,
+                "priceSpecification": {
+                    "@type": "PriceSpecification",
+                    "price": float(price) if price else None,
+                    "priceCurrency": "USD",
+                    "description": price_text
+                } if price else None,
+                "availability": "https://schema.org/InStock" if not getattr(self, 'is_sold_out', False) else "https://schema.org/SoldOut",
+                "seller": {"@type": "TravelAgency", "name": "Milano Travel"}
+            }
+        }
+
+        # FullTour flight
+        if getattr(self, 'includes_international_flight', False):
+            schema["subTrip"] = {
+                "@type": "Flight",
+                "departureAirport": {"@type": "Airport", "name": getattr(self, 'departure_cities', 'International')},
+                "airline": {"@type": "Airline", "name": getattr(self, 'airline', 'Multiple carriers')}
+            }
+
+        # Remove empty values
+        return {k: v for k, v in schema.items() if v not in (None, "", [], {})}
 
     def __str__(self):
         return self.title or self.name or 'Untitled Tour'
@@ -551,7 +691,7 @@ class ToursIndexPage(RoutablePageMixin, Page):
     template = "tours/tours_index_page.html"
 
     parent_page_types = ['home.HomePage']
-    subpage_types = ['tours.LandTourPage']  # TODO: Add 'tours.DayTourPage', 'tours.FullTourPage'
+    subpage_types = ['tours.LandTourPage', 'tours.DayTourPage', 'tours.FullTourPage']  # TODO: Add 'tours.DayTourPage', 'tours.FullTourPage'
 
 #
     body_content = StreamField([
@@ -798,7 +938,112 @@ Block representation
     def get_code_prefix(self):
         return "LT"
 
+# ──────────────────────────────────────────────────────────────
+# 1. FULL TOUR PAGE → LandTour + Air Tickets included
+# ──────────────────────────────────────────────────────────────
+class FullTourPage(AbstractTourPage):
+    """
+    Exactly like LandTourPage but includes international/domestic air tickets.
+    Perfect for packages from Poland, Iceland, Colombia, Dominican Republic → Ecuador.
+    """
+    duration_days = models.PositiveIntegerField(default=8, help_text="Total trip days (including flights)")
+    nights = models.PositiveIntegerField(default=7)
 
+    # Air-ticket specific fields
+    includes_international_flight = models.BooleanField(
+        default=True,
+        help_text="Check if round-trip international flight is included"
+    )
+    departure_cities = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="e.g. Warsaw (WAW), Reykjavik (KEF), Bogotá (BOG), Santo Domingo (SDQ)"
+    )
+    airline = models.CharField(max_length=100, blank=True, help_text="e.g. LATAM, Avianca, Copa Airlines")
+    flight_class = models.CharField(
+        max_length=20,
+        choices=[('economy', 'Economy'), ('premium', 'Premium Economy'), ('business', 'Business')],
+        default='economy'
+    )
+
+    content_panels = AbstractTourPage.content_panels + [
+        MultiFieldPanel([
+            FieldPanel('duration_days'),
+            FieldPanel('nights'),
+        ], heading="Duration"),
+
+        MultiFieldPanel([
+            FieldPanel('includes_international_flight'),
+            FieldPanel('departure_cities'),
+            FieldPanel('airline'),
+            FieldPanel('flight_class'),
+        ], heading="Flight Details", classname="collapsible"),
+    ]
+
+    parent_page_types = ['tours.ToursIndexPage']
+    subpage_types = []
+
+    def get_code_prefix(self):
+        return "FT"  # FT = Full Tour
+
+    class Meta:
+        verbose_name = "Full Tour (with flights)"
+        verbose_name_plural = "Full Tours"
+
+
+# ──────────────────────────────────────────────────────────────
+# 2. DAY TOUR PAGE → One-day excursion (no hotel, no flights)
+# ──────────────────────────────────────────────────────────────
+class DayTourPage(AbstractTourPage):
+    """
+    Single-day or max 2-day tours from Cuenca.
+    No hotel nights, no flights → pure experiences.
+    """
+    duration_hours = models.PositiveIntegerField(default=8, help_text="Duration in hours (e.g. 8–10)")
+    start_time = models.TimeField(help_text="Usual departure time, e.g. 08:00")
+    meeting_point = models.CharField(max_length=255, default="Milano Travel office - Cuenca", help_text="Where clients meet the guide")
+    min_group_size = models.PositiveIntegerField(default=2, help_text="Minimum to operate the tour")
+    max_group_size = models.PositiveIntegerField(default=15, help_text="Maximum per guide")
+
+    # Usually fixed price per person for day tours
+    price_per_person = models.DecimalField(
+        max_digits=8, decimal_places=2,
+        help_text="Flat price per person (most common for day tours)",
+        null=True, blank=True
+    )
+    template = "tours/tour_detail.html"
+
+    content_panels = AbstractTourPage.content_panels + [
+        MultiFieldPanel([
+            FieldPanel('duration_hours'),
+            FieldPanel('start_time'),
+            FieldPanel('meeting_point'),
+            FieldPanel('min_group_size'),
+            FieldPanel('max_group_size'),
+        ], heading="Day Tour Details", classname="collapsible"),
+
+        MultiFieldPanel([
+            FieldPanel('price_per_person'),
+        ], heading="Simple Pricing (optional override)", classname="collapsible collapsed"),
+    ]
+
+    parent_page_types = ['tours.ToursIndexPage']
+    subpage_types = []
+
+    def get_code_prefix(self):
+        return "DT"  # DT = Day Tour
+
+    # Smart fallback: if price_per_person is set → use it in teasers
+    @property
+    def active_prices(self):
+        prices = super().active_prices if hasattr(super(), 'active_prices') else {}
+        if self.price_per_person:
+            prices['adult'] = self.price_per_person
+        return prices
+
+    class Meta:
+        verbose_name = "Day Tour"
+        verbose_name_plural = "Day Tours"
 
 
 def convert_pdf_to_images(pdf_path, output_dir, tour_id):

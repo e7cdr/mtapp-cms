@@ -1,0 +1,35 @@
+{# templates/streams/blocks/tour_teaser.html #}
+<div class="tour-teaser-card my-5 p-4 border rounded shadow-sm bg-white">
+    <div class="row g-4 align-items-center">
+        {% if cover_image %}
+            <div class="col-md-4">
+                <a href="{{ tour_url }}">
+                    <img src="{{ cover_image.url }}" alt="{{ tour.title }}" class="img-fluid rounded" loading="lazy">
+                </a>
+            </div>
+        {% endif %}
+
+        <div class="col-md-{% if cover_image %}8{% else %}12{% endif %}">
+            <h4 class="fw-bold">
+                <a href="{{ tour_url }}" class="text-decoration-none">{{ tour_title }}</a>
+            </h4>
+
+            {% if tour_subtitle %}
+                <p class="text-primary fw-semibold">{{ tour_subtitle }}</p>
+            {% endif %}
+
+            <div class="mb-3">
+                {% if starting_price and show_price %}
+                    <span class="h5 text-success fw-bold">{{ price_text }}</span>
+                    <small class="text-muted">per person</small>
+                {% else %}
+                    <em class="text-muted">{{ price_text }}</em>
+                {% endif %}
+            </div>
+
+            <a href="{{ tour_url }}" class="btn btn-primary btn-lg">
+                {{ cta_text }} →
+            </a>
+        </div>
+    </div>
+</div>

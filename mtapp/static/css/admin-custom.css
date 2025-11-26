@@ -1,0 +1,6 @@
+.wagtail-action-dropdown .button {
+    margin-right: 4px !important;
+}
+.logo-menu-item .icon-home:before {
+    content: url('/static/img/logo-mini.png'); /* optional tiny logo */
+}

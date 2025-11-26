@@ -2,10 +2,10 @@ from streams import blocks
 from django.db import models
 
 from wagtailseo.models import SeoMixin
-from wagtail.models import Page, Locale, Site
-from django.utils.translation import get_language  # For current language code from request
+from wagtail.models import Page, Site
 from wagtail.fields import RichTextField, StreamField
 from wagtail.admin.panels import FieldPanel, PageChooserPanel
+from wagtail.images import get_image_model
 
 class HomePage(SeoMixin, Page):
     """Home page model."""
@@ -18,7 +18,7 @@ class HomePage(SeoMixin, Page):
     banner_title = models.CharField(max_length=100, blank=False, null=True)
     banner_subtitle = RichTextField(features=["bold", "italic"], blank=True, null=True)
     banner_image = models.ForeignKey(
-        "wagtailimages.Image",
+        get_image_model(),
         null=True, # True Because HomePage is the first page, it can be created without an image.
         blank=True,
         on_delete=models.SET_NULL,
