@@ -18,8 +18,7 @@
   position: relative;
   height: 90vh;
   min-height: 600px;
-  background: linear-gradient(rgba(26, 83, 92, 0.7), rgba(26, 83, 92, 0.85)), 
-              url('/static/images/hero-milano.jpg') center/cover no-repeat;
+  background: linear-gradient(rgba(26, 83, 92, 0.7), rgba(26, 83, 92, 0.85));
   display: flex;
   align-items: center;
   justify-content: center;
