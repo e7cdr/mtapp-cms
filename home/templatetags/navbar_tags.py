@@ -26,13 +26,3 @@ def get_navbar_pages(context):
 
     root = site.root_page.localized  # automatically the translation in active locale
     return root.get_children().live().public().in_menu().specific()
-
-@register.simple_tag
-def get_staff_pages():
-    return ['ITem 4', 'Item 5', 'Item 6']
-
-
-#TODO: Get tour pages and insert them in a dropdown
-@register.simple_tag
-def get_tour_pages():
-    return ['ITem 7', 'Item 8', 'Item 9']

@@ -1,7 +1,7 @@
 {% load static wagtailcore_tags wagtailuserbar i18n dict_tags %}
 <!DOCTYPE html>
 <html lang="{% get_current_language as LANGUAGE_CODE %}{{ LANGUAGE_CODE }}">
-    <head>
+  <head>
         <meta charset="utf-8" />
         <meta name="keywords" content="tours, travel agency, Ecuador, Cuenca, Poland, Dominican Republic, Colombia, Iceland, airtickets ">
         {% if page.search_description %}
@@ -24,7 +24,7 @@
         <base target="_blank">
         {% endif %}
 
-          <!-- templates/base.html — add inside <head>, after SEO tags -->
+          <!-- templates/base.html — add inside head, after SEO tags -->
       {% if page.get_jsonld_schema %}
       <script type="application/ld+json">
       {{ page.get_jsonld_schema|safe }}
@@ -54,7 +54,7 @@
         {% block extra_css %}
         {# Override this in templates to add extra stylesheets #}
         {% endblock extra_css %}
-    </head>
+  </head>
 
     <body class="{% block body_class %}{% endblock body_class %}">
 

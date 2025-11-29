@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Posts tagged “{{ current_tag }}”{% endblock %}
+{% block title %}Posts tagged “{{ current_tag }}”{% endblock block title %}
 {% block content %}
   <h1>Tag: {{ current_tag }}</h1>
   {% include "blog/includes/post_grid.html" with posts=posts %}
-{% endblock %}
+{% endblock content %}

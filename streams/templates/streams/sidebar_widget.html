@@ -1,0 +1,42 @@
+{% load wagtailimages_tags %}
+{% load static wagtailcore_tags wagtailimages_tags i18n %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/blog/blog_sidebar.css' %}">
+{% endblock extra_css %}
+{% block content %}
+<div class="sidebar-widget">
+  <h1 class="widget-title">{{ value.title }}</h1>
+
+  {% if value.widget_type == 'toc' %}
+    <nav class="toc-list" id="auto-toc">
+      <ul aria-label="hidden"></ul>
+    </nav>
+
+  {% elif value.widget_type == 'share' %}
+    <div class="share-buttons">
+      <a href="https://wa.me/?text={{ request.build_absolute_uri|urlencode }}" target="_blank" class="share-btn whatsapp">WhatsApp</a>
+      <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" target="_blank" class="share-btn facebook">Facebook</a>
+      <a href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri|urlencode }}&text={{ page.title|urlencode }}" target="_blank" class="share-btn twitter">Twitter</a>
+    </div>
+
+  {% elif value.widget_type == 'author' and value.image %}
+    <div class="author-card">
+      {% image value.image fill-100x100 as author_img %}
+      <img src="{{ author_img.url }}" alt="{{ value.name }}" height="" width="" class="author-photo">
+      <div class="author-info">
+        <strong>{{ value.name|default:"Milano Travel" }}</strong>
+        <small>{{ value.role|default:"Travel Expert" }}</small>
+      </div>
+    </div>
+
+  {% elif value.widget_type == 'custom' and value.content %}
+    <div class="widget-custom">
+      {{ value.content|richtext }}
+    </div>
+
+  {% else %}
+    <p>Add content in the editor</p>
+  {% endif %}
+</div>
+{% endblock content %}

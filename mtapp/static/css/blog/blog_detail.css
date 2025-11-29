@@ -1,69 +1,148 @@
-  :root {
-    --primary: #1a535c;
-    --accent: #4ecdc4;
-    --radius: 20px;
-  }
+/* css/blog/blog_detail.css – Only hero and main article */
+:root {
+  --primary: #1a535c;
+  --accent: #4ecdc4;
+  --radius: 20px;
+  --text: #2d3436;
+  --light: #f8fffe;
+}
 
-  .blog-detail-hero {
-    background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6));
-    height: 70vh;
-    min-height: 500px;
-    border-radius: var(--radius);
-    margin: -80px auto 60px;
-    display: flex;
-    align-items: end;
-    padding: 0 5% 8%;
+.blog-detail-hero {
+  position: relative;
+  height: 70vh;
+  min-height: 500px;
+  border-radius: var(--radius);
+  margin: -80px auto 80px;
+  overflow: hidden;
+  color: white;
+}
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  z-index: 1;
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(26,83,92,0.4), rgba(26,83,92,0.8));
+  z-index: 2;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 3;
+  max-width: 900px;
+  padding: 0 5% 8%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+}
+
+.post-title {
+  font-size: 3.6rem;
+  font-weight: 800;
+  margin: 0 0 20px;
+  line-height: 1.15;
+  text-shadow: 0 4px 15px rgba(0,0,0,0.4);
+}
+
+.post-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 1.1rem;
+  opacity: 0.95;
+}
+
+.meta-country-tag {
+  background: var(--accent);
+  color: white;
+  padding: 6px 16px;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.detail-layout {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 80px;
+  align-items: start;
+}
+
+.blog-article {
+  background: white;
+  padding: 40px;
+  border-radius: var(--radius);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+  line-height: 1.85;
+  font-size: 1.15rem;
+  text-align: justify;
+  box-shadow: 0 0 1rem gray;
+}
+
+.fade-swiper-container .swiper-wrapper .swiper-slide img {
+    height: 42rem !important;
+    border-radius: 0;
+}
+
+blockquote {
+  margin: 0rem 3rem 1rem 2rem;
+    border-left: 5px dashed #da3535;
+    padding-inline: 10px;
+    background-color: green;
     color: white;
-    position: relative;
-  }
+    border-radius: 13px;
+}
 
-  .hero-content {
-    max-width: 900px;
-    animation: fadeUp 1s ease-out;
-  }
+.richtext-image {
+  border-radius: 2rem;
+    width: 100%;
+    box-shadow: 0 0 0.5rem black;
+}
 
-  .blog-content {
-    max-width: 900px;
-    margin: 0 auto;
-    line-height: 1.8;
-    font-size: 1.1rem;
-  }
+.post-intro {
+  font-size: 1.35rem;
+  color: #555;
+  margin-bottom: 40px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
 
-  .blog-content h2, .blog-content h3 {
-    color: var(--primary);
-    margin-top: 2.5rem;
-  }
+.post-body h2, .post-body h3 {
+  color: var(--primary);
+  margin: 2.5rem 0 1rem;
+  font-weight: 700;
+}
 
-  .blog-content img {
-    border-radius: var(--radius);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-    max-width: 100%;
-    height: auto;
-    margin: 2rem 0;
-  }
+.post-body img {
+  border-radius: 16px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+  margin: 2rem 0;
+  width: 100%;
+  height: auto;
+}
 
-  .meta-bar {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    flex-wrap: wrap;
-    margin: 30px 0;
-    padding: 20px;
-    background: #f8fffe1a;
-    border-radius: var(--radius);
-  }
+/* Responsive */
+@media (max-width: 1100px) {
+  .detail-layout { grid-template-columns: 1fr; gap: 60px; }
+  .blog-sidebar { order: -1; }
+}
 
-  .tour-teaser-card {
-    border: 1px solid #eee;
-    transition: all 0.4s;
-  }
-
-  .tour-teaser-card:hover {
-    border-color: var(--accent);
-    transform: translateY(-8px);
-  }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(40px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+@media (max-width: 768px) {
+  .blog-detail-hero { height: 60vh; margin: -60px auto 60px; }
+  .post-title { font-size: 2.8rem; }
+  .blog-article { padding: 24px; }
+}

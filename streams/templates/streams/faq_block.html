@@ -1,0 +1,21 @@
+
+{% load static wagtailcore_tags i18n %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/faq.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<div class="faq-section" itemscope itemtype="https://schema.org/FAQPage">
+  {% for item in value %}
+    {% with faq=item.value %}
+    <details class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+      <summary itemprop="name">{{ faq.question }}</summary>
+      <div class="faq-answer" itemprop="acceptedAnswer" itemscope itemtype="https://schema.org/Answer">
+        <div itemprop="text">{{ faq.answer|richtext }}</div>
+      </div>
+    </details>
+    {% endwith %}
+  {% endfor %}
+</div>
+{% endblock content %}

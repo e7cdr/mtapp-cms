@@ -4,7 +4,7 @@ from django import forms
 from datetime import timedelta
 from django.db.models import Sum
 from .models import Booking, Proposal, ExchangeRate
-from tours.models import LandTourPage
+from tours.models import DayTourPage, FullTourPage, LandTourPage
 from django.utils.translation import gettext_lazy as _
 from django.contrib.contenttypes.models import ContentType
 from captcha.fields import CaptchaField
@@ -214,8 +214,7 @@ class ProposalForm(forms.ModelForm):  # Changed to ModelForm
         return proposal
 
     def get_content_type(self):
-            # model_map = {'full': FullTourPage, 'land': LandTourPage, 'day': DayTourPage} #TODO
-        model_map = {'land': LandTourPage, }
+        model_map = {'full': FullTourPage, 'land': LandTourPage, 'day': DayTourPage}
         model = model_map.get(self.cleaned_data.get('tour_type', '').lower())
         if model:
             return ContentType.objects.get_for_model(model)

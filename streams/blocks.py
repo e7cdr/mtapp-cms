@@ -14,7 +14,6 @@ from site_settings.models import FooterLinks
 from mtapp.choices import colors, swipers, position, GLOBAL_ICON_CHOICES
 
 
-
 GLOBAL_ICON_CHOICES = sorted(GLOBAL_ICON_CHOICES, key=lambda x: x[1].lower())
 
 def create_icons_list(icon_choices=None):
@@ -275,6 +274,7 @@ class FadeCarousel(blocks.StructBlock):
     """Fade Swiper or carousel with fade effect"""
     fade_title = blocks.CharBlock(required=False, help_text="The main title.", max_length=33)
     fade_subtitle = blocks.CharBlock(required=False, help_text="The subtitle.", max_length=33)
+    height = blocks.IntegerBlock(default=50, help_text="Image height in 'rem' units.", verbose_name="Image Height")
     images = blocks.ListBlock(
         blocks.StructBlock([
             ('image', ImageChooserBlock()),
@@ -383,3 +383,56 @@ class TourTeaserBlock(blocks.StructBlock):
         template = "blog/blocks/tour_teaser.html"
         icon = "pick"
 
+# ------------------------------------------------------------------
+# SIDEBAR – Fully customizable via Wagtail editor!
+# ------------------------------------------------------------------
+
+class SidebarWidgetBlock(blocks.StructBlock):
+    """One widget for the sidebar – you can add as many as you want"""
+    title = blocks.CharBlock(required=True, help_text="e.g. On this page, Share, About the author")
+    
+    widget_type = blocks.ChoiceBlock(
+        choices=[
+            ('toc', 'Table of Contents (auto-generated)'),
+            ('share', 'Share Buttons'),
+            ('author', 'Author Card'),
+            ('newsletter', 'Newsletter Signup'),
+            ('related', 'Related Posts'),
+            ('custom', 'Custom Content'),
+        ],
+        default='custom',
+        help_text="Auto TOC is smart – it reads H2/H3 from the article body"
+    )
+
+    # Only used for certain types
+    content = blocks.RichTextBlock(required=False, features=['bold', 'italic', 'link'])
+    image = ImageChooserBlock(required=False)
+    name = blocks.CharBlock(required=False, help_text="Author name")
+    role = blocks.CharBlock(required=False, help_text="e.g. Travel Expert in Poland")
+    social_twitter = blocks.CharBlock(required=False)
+    social_instagram = blocks.CharBlock(required=False)
+
+    class Meta:
+        template = "streams/sidebar_widget.html"
+        icon = "cogs"
+
+class FAQItemBlock(blocks.StructBlock):
+    question = blocks.CharBlock(required=True, label="Question")
+    answer = blocks.RichTextBlock(
+        required=True,
+        features=['bold', 'italic', 'link'],
+        label="Answer"
+    )
+
+    class Meta:
+        icon = "help"
+        template = "streams/faq_item.html"  # one item
+
+class FAQBlock(blocks.StreamBlock):
+    """Multiple FAQs — cleaner than ListBlock + StructBlock"""
+    item = FAQItemBlock()
+
+    class Meta:
+        template = "streams/faq_block.html"
+        icon = "list-ul"
+        label = "FAQ Section"

@@ -1,0 +1,44 @@
+{% load static i18n wagtailcore_tags wagtailimages_tags %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/blog/post_cards.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<section class="post-container">
+    <div class="post-wrapper">
+        {% for post in posts %}
+        <a href="{% pageurl post %}">
+            <div class="post-card">
+                <div class="post-image-overlay" aria-label="hidden"></div>
+
+                {% if post.banner_image %}
+                    {% image post.banner_image fill-800x600 as img %}
+                    <img class="post-cover" height="" width="" src="{{ img.url }}" alt="{{ img.alt }}" loading="lazy">
+                {% else %}
+                    <img class="post-cover" height="" width="" src="{% static 'images/placeholder.jpg' %}" alt="">
+                {% endif %}
+
+                <div class="post-desc">
+                    <p class="post-date">{{ post.date_published|date:"M d, Y" }}</p>
+                    <div class="author-info">    
+                        {% if post.owner.profile_picture %}
+                            {% image post.owner.profile_picture fill-50x50 as author_img %}
+                            <img src="{{ author_img.url }}" height="25" width="25" alt="{{ post.owner.get_full_name }}" class="author-pic">
+                        {% else %}
+                            {% comment %} <img src="{% static 'images/default-avatar.jpg' %}" height="25" width="25" alt="" class="author-pic"> {% endcomment %}
+                        {% endif %}
+                        <p class="author-name">{{ post.owner.get_full_name|default:"Milano Travel " }}</p>
+                    </div>
+                    <p class="post-title">{{ post.title }}</p>
+                </div>
+            </div>
+        </a>
+        {% empty %}
+        <div class="text-center py-5 col-span-full">
+            <p class="fs-3 text-muted">{% trans "No posts to show." %}</p>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock content %}

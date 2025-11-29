@@ -49,9 +49,9 @@
         </div>
             <div class="footer-links">
                 {% if sitemap_page %}
-                    <h4>{{ sitemap_page.title }}</h4>
+                    <h1>{{ sitemap_page.title }}</h1>
                 {% else %}
-                <h4>{% trans "Sitemap" %}</h4>
+                <h1>{% trans "Sitemap" %}</h1>
                     {% endif %}
                 <ul class="footer-menu">
                     {% for link in settings.site_settings.BrandSettings.footer_menu_links.all %}

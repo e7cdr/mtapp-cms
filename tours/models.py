@@ -20,7 +20,6 @@ from wagtail.api import APIField
 from wagtail.search import index
 from wagtail.fields import StreamField, RichTextField
 from wagtail.images.models import Image
-from wagtail.documents.models import Document
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel
 from wagtail.blocks import (
     CharBlock,
@@ -34,15 +33,12 @@ from wagtail.blocks import (
     FloatBlock,
 
 )
+from django.utils.translation import gettext_lazy as _
 from wagtail.contrib.routable_page.models import RoutablePageMixin, path
 
 from streams import blocks
 
 logger = logging.getLogger(__name__)
-
-#TODO: Full and Daytour models.
-
-# Destination Choices
 
 ITINERARY_BLOCKS = [
     ('day', StructBlock([
@@ -154,7 +150,7 @@ class AbstractTourPage(Page):
         help_text=_("Company logo for the final page.")
     )
     pdf_file = models.ForeignKey(
-        Document, on_delete=models.SET_NULL, null=True, blank=True,
+        "documents.CustomDocument", on_delete=models.SET_NULL, null=True, blank=True,
         related_name='%(app_label)s_%(class)s_pdf'
     )
     pdf_images = models.JSONField(default=list, blank=True, help_text=_("List of URLs for PDF page images"))
@@ -293,6 +289,7 @@ class AbstractTourPage(Page):
         # ─── MEDIA ───
         MultiFieldPanel([
             FieldPanel('cover_image'),
+            FieldPanel('pdf_file'),
             FieldPanel('yt_vid'),
         ], heading="Media", classname="collapsible collapsed"),
 
@@ -831,11 +828,18 @@ class ToursIndexPage(RoutablePageMixin, Page):
         return self.render(request, context_overrides=context)
 
     # TODO: Add routes for other types
-    # @path('day-tours/', name='day_tours')
-    # def day_tours(self, request):
-    #     request.GET['tour_type'] = 'day'
-    #     context = self.get_context(request)
-    #     return self.render(request, context_overrides=context)
+    @path('day-tours/', name='day_tours')
+    def day_tours(self, request):
+        request.GET['tour_type'] = 'day'
+        context = self.get_context(request)
+        return self.render(request, context_overrides=context)
+    
+    @path('full-tours/', name='full_tours')
+    def full_tours(self, request):
+        request.GET['tour_type'] = 'full'
+        context = self.get_context(request)
+        return self.render(request, context_overrides=context)
+
 
 
 class LandTourPage(AbstractTourPage): # Land Tour Details
@@ -989,7 +993,6 @@ class FullTourPage(AbstractTourPage):
     class Meta:
         verbose_name = "Full Tour (with flights)"
         verbose_name_plural = "Full Tours"
-
 
 # ──────────────────────────────────────────────────────────────
 # 2. DAY TOUR PAGE → One-day excursion (no hotel, no flights)

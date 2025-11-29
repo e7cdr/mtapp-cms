@@ -2,8 +2,6 @@
 {% load static i18n dict_tags navbar_tags wagtailcore_tags wagtailadmin_tags lang_filters %}
 
 {% get_navbar_pages as navbar_pages %}
-{% get_staff_pages as staff_pages %}
-{% get_tour_pages as tour_pages %}
 {% wagtail_site as current_site %}
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/navbar.css' %}" />

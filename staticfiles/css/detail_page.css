@@ -59,9 +59,10 @@ body {
     position: absolute; /* To overlay text on the image */
     text-align: center;
     color: white; /* Example for visibility */
-    z-index: 0.5;
+    z-index: 1;
     top: auto;
     bottom: auto;
+    width: 30rem;
 
 
 
@@ -143,7 +144,7 @@ body {
     text-align: center;
     position: relative;
     width: 25%;
-    transition: all 0.2s ease;
+    transition: all 0.9s ease;
     border-style: none;
     border-radius: 1rem;
     margin: auto;
@@ -164,6 +165,10 @@ body {
     background-image: conic-gradient(from var(--angle), rgba(255, 0, 0, 0), rgb(255, 128, 0), rgb(0, 204, 255), rgba(255, 255, 0, 0));
     animation: 5s spin linear infinite;
     filter: blur(2px);
+}
+
+.book-button:hover {
+    scale: 1.05;
 }
 
 @keyframes spin {

@@ -1,13 +1,21 @@
 {% load static i18n dict_tags navbar_tags wagtailcore_tags wagtailimages_tags %}
+{% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/swipers/fade_swiper.css' %}">
+<style>
+  .fade-swiper-container .swiper-wrapper .swiper-slide img {
+    height: {{ self.height }}rem;
+}
+</style>
+{% endblock extra_css %}
+{% block content %}
 <section class="fade-swiper-section">
 <div class="fade-swiper-container swiper">
       <div class="fade-title">
-    {% if block.value.fade_subtitle %}
-   <h2>{{ block.value.fade_subtitle }}</h2>
+    {% if self.fade_subtitle %}
+   <h2>{{ self.fade_subtitle }}</h2>
    {% endif %}
-   <h1>{{ block.value.fade_title }}</h1>
-   {% if block.value.search_bar == True %}
+   <h1>{{ self.fade_title }}</h1>
+   {% if self.search_bar == True %}
       <!--Search Bar -->
     {% include "search/search_bar.html" %}
     {% endif %}
@@ -36,4 +44,7 @@
 <div class="swiper-pagination"></div>
 </div>
 </section>
+{% block extra_js %}
 <script src="{% static 'js/swipers/fade_swiper.js' %}"></script>
+{% endblock extra_js %}
+{% endblock content %}

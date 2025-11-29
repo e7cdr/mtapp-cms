@@ -1,53 +1,123 @@
-<!-- templates/blog/blog_detail_page.html -->
 {% extends "base.html" %}
-{% load static wagtailcore_tags wagtailimages_tags %}
+{% load static wagtailcore_tags wagtailimages_tags i18n %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/blog/blog_detail.css' %}"/>
+<link rel="stylesheet" href="{% static 'css/blog/blog_detail.css' %}">
 {% endblock extra_css %}
 
+{% block extra_js %}
+<script>
+// Auto-generated TOC + smooth scroll + active state
+document.addEventListener("DOMContentLoaded", function () {
+  const tocUl = document.querySelector('#auto-toc ul');
+  if (!tocUl) return;
+
+  const headings = document.querySelectorAll('.post-body h2, .post-body h3');
+  let tocHTML = '';
+
+  headings.forEach((heading, i) => {
+    const id = 'section-' + i;
+    heading.id = id;
+    const level = heading.tagName === 'H3' ? 'toc-h3' : 'toc-h2';
+    tocHTML += `<li class="${level}"><a href="#${id}" class="toc-link">${heading.textContent.trim()}</a></li>`;
+  });
+
+  if (tocHTML) {
+    tocUl.innerHTML = tocHTML;
+  } else {
+    tocUl.closest('.sidebar-widget')?.remove();
+  }
+
+  // Smooth scroll
+  document.querySelectorAll('.toc-link').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      document.querySelector(link.getAttribute('href')).scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+    });
+  });
+
+  // Highlight active section
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        document.querySelectorAll('.toc-link').forEach(l => l.classList.remove('active'));
+        document.querySelector(`a[href="#${entry.target.id}"]`)?.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-15% 0% -70% 0%' });
+
+  headings.forEach(h => observer.observe(h));
+});
+</script>
+{% endblock extra_js %}
+
 {% block content %}
-<article class="blog-detail">
-<div class="blog-detail-hero" style="
+
+<!-- STABLE HERO – Your original design, now bulletproof -->
+<section class="blog-detail-hero">
   {% if page.banner_image %}
-    {% image page.banner_image original as banner_img %}
-    background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url('{{ banner_img.url }}');
-  background-size: cover;
-    background-position: center;
+    {% image page.banner_image original as banner %}
+    <div class="hero-bg" style="background-image: url('{{ banner.url }}')"></div>
   {% else %}
-    background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url('{% static "images/blog-fallback.jpg" %}');
-    background-size: cover;
-    background-position: center;
+    <div class="hero-bg" style="background-image: url('{% static 'images/blog-fallback.jpg' %}')"></div>
   {% endif %}
-">
+
+  <div class="hero-overlay"></div>
+
   <div class="container hero-content">
-    <h1 class="display-4 fw-bold">{{ page.title }}</h1>
-    <div class="meta-bar">
+    <h1 class="post-title">{{ page.title }}</h1>
+
+    <div class="post-meta">
       <span>By Milano Travel</span>
       <span>•</span>
-      <span>{{ page.date_published|date:"d \"\" F \"\" Y" }}</span>
+      <span>{{ page.date_published|date:"d F Y" }}</span>
       <span>•</span>
       <span>{{ page.get_read_time_display }}</span>
+
       {% if page.source_country != 'general' %}
-        <span class="tag bg-primary text-white px-3 py-1 rounded-pill">
+        <span class="meta-country-tag">
           {{ page.get_source_country_display }}
         </span>
       {% endif %}
     </div>
   </div>
+</section>
+
+<!-- TWO-COLUMN LAYOUT -->
+<div class="container detail-layout">
+  <article class="blog-article">
+    {% if page.intro %}
+      <div class="post-intro">{{ page.intro|richtext }}</div>
+    {% endif %}
+
+    <div class="post-body">
+      {% for block in page.body %}
+        {% include_block block %}
+      {% endfor %}
+    </div>
+  </article>
+
+  <!-- SIDEBAR -->
+  <aside class="blog-sidebar">
+    <div class="sidebar-inner">
+      {% for widget in page.sidebar %}
+        {% include "streams/sidebar_widget.html" with value=widget.value %}
+      {% endfor %}
+
+      <!-- Fallback: Auto TOC if no sidebar widgets -->
+      {% if not page.sidebar %}
+      <div class="sidebar-widget">
+        <h4 class="widget-title">On this page</h4>
+        <nav class="toc-list" id="auto-toc">
+          <ul aria-label="Scroll down"></ul>
+        </nav>
+      </div>
+      {% endif %}
+    </div>
+  </aside>
 </div>
 
-  <div class="container blog-content">
-  {% if page.intro %}
-    <div class="lead fs-4 mb-5">{{ page.intro|richtext }}</div>
-  {% endif %}
-  <hr>
-
-  {% for block in page.body %}
-    {% include_block block %}
-  {% endfor %}
-
-    <!-- Tour teasers will appear here automatically -->
-  </div>
-</article>
 {% endblock content %}

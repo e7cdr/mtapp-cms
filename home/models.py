@@ -1,3 +1,4 @@
+from blog.models import BlogDetailPage, BlogIndexPage
 from streams import blocks
 from django.db import models
 
@@ -32,6 +33,11 @@ class HomePage(SeoMixin, Page):
         help_text="Choose a page to link to from the banner button.",
     )
 
+    include_latest_blog_posts = models.BooleanField(
+        default=False,
+        help_text="If checked, latest blog posts will be included in home page.",
+        verbose_name="Include Blog Posts Component",
+    )
     carousel = StreamField(
         [("carousel", blocks.FadeCarousel())], # A StreamField containing a single CarouselBlock.
         blank=True,
@@ -50,6 +56,7 @@ class HomePage(SeoMixin, Page):
             ("cta_2B", blocks.CTA_Block_2B()),
             ("ParallaxImageBlock", blocks.ParallaxImageBlock()),
             ("gridded_images", blocks.GriddedImages()),
+            ('faq', blocks.FAQBlock()),
 
 
         ],
@@ -72,6 +79,7 @@ class HomePage(SeoMixin, Page):
         PageChooserPanel('banner_cta'),
         FieldPanel('carousel'),
         FieldPanel('content'),
+        FieldPanel('include_latest_blog_posts'),
     ]
 
     promote_panels = SeoMixin.seo_panels
@@ -81,9 +89,19 @@ class HomePage(SeoMixin, Page):
         verbose_name_plural = "Home Pages"
 
     def get_context(self, request):
-        """Add additional context variables to the template."""
         context = super().get_context(request)
-        context['carousel'] = self.carousel # Access the StreamField directly. First 'For' loop in template will be {% for block in carousel %}
+        
+        context['carousel'] = self.carousel
+        try:
+                context['blog_page'] = BlogIndexPage.objects.live().first()
+                # or: BlogIndexPage.objects.get()  # will raise if not exist
+        except BlogIndexPage.DoesNotExist:
+                context['blog_page'] = None
+        # Only fetch blog posts if the checkbox is checked
+        if self.include_latest_blog_posts:
+            context['latest_blog_posts'] = BlogDetailPage.objects.live().public().order_by('-date_published')[:6]
+        else:
+            context['latest_blog_posts'] = None  # or just don't set it
 
         return context
 

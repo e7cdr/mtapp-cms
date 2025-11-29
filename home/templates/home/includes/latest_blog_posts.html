@@ -1,0 +1,23 @@
+{% load i18n wagtailcore_tags %}
+
+{% if latest_blog_posts %}
+<section class="latest-from-blog py-5 bg-light">
+  <div class="container">
+    <div class="text-center mb-5">
+      <h2 class="display-5 fw-bold">{% trans "Latest from the Blog" %}</h2>
+      <p class="lead text-muted">{% trans "Travel tips, stories, and hidden gems" %}</p>
+    </div>
+
+    <!-- REUSE YOUR EXACT POST CARDS DESIGN -->
+    {% with posts=latest_blog_posts %}
+      {% include "blog/includes/post_cards.html" %}
+    {% endwith %}
+
+    <div class="text-center mt-5">
+      <a href="{% pageurl blog_page %}" class="btn btn-primary btn-lg px-5">
+        {% trans "View All Posts" %}
+      </a>
+    </div>
+  </div>
+</section>
+{% endif %}

@@ -1,12 +1,34 @@
-{% extends "base.html" %} 
-{% load static i18n dict_tags navbar_tags wagtailcore_tags wagtailimages_tags %}
+{% extends "base.html" %}
+{% load wagtailcore_tags wagtailimages_tags i18n %}
+
 {% block content %}
+
   {% block carousel %}
-      {% for block in page.carousel %}
-        {% include_block block %}
-      {% endfor %}
+    {% for block in page.carousel %}
+      {% include_block block %}
+    {% endfor %}
   {% endblock carousel %}
-  {% block main_content %} 
-  {% include "home/includes/main_content.html" %}
+
+  {% block main_content %}
+    {% include "home/includes/main_content.html" %}
   {% endblock main_content %}
+
+  {% if page.include_latest_blog_posts %}
+      <style>
+        .latest-from-blog .post-card {
+          border-radius: 20px;
+          overflow: hidden;
+          box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+          transition: transform 0.3s ease;
+        }
+
+        .latest-from-blog .post-card:hover {
+          transform: translateY(-12px);
+        }
+      </style>
+    {% block latest_blog_posts %}
+      {% include "home/includes/latest_blog_posts.html" %}
+    {% endblock latest_blog_posts %}
+  {% endif %}
+
 {% endblock content %}

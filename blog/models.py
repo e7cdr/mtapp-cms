@@ -17,13 +17,11 @@ from modelcluster.fields import ParentalKey
 from modelcluster.contrib.taggit import ClusterTaggableManager
 from taggit.models import TaggedItemBase, Tag as TaggitTag
 
-from wagtail.images import get_image_model
-from wagtail.images.blocks import ImageChooserBlock
 from wagtail import blocks
 
 from wagtail_localize.fields import TranslatableField, SynchronizedField
 
-from streams.blocks import TourTeaserBlock
+from streams.blocks import CTA_Block_2B, FAQBlock, SidebarWidgetBlock, TourTeaserBlock, FadeCarousel
 from taggit.models import Tag
 from django.db.models import Count
 
@@ -73,10 +71,18 @@ class BlogIndexPage(RoutablePageMixin, SeoMixin, Page):
 
     subpage_types = ['blog.BlogDetailPage']
     max_count = 1
+    cover_page = StreamField(
+        [("FadeCarousel", FadeCarousel())],
+        blank=True,
+        null=True,
+        max_num=1,
+        use_json_field=True,
+    )
 
     content_panels = Page.content_panels + [
         FieldPanel('intro'),
         FieldPanel('posts_per_page'),
+        FieldPanel('cover_page'),
     ]
 
     translated_fields = [
@@ -225,12 +231,17 @@ class BlogDetailPage(SeoMixin, Page):
     body = StreamField([
         ('content', blocks.RichTextBlock(features=['bold', 'italic', 'h3', 'h4', 'ol', 'ul', 'hr', 'link', 'document-link', 'image', 'embed'])),
         ('tour_teaser', TourTeaserBlock()),
-        ('faq', blocks.ListBlock(blocks.StructBlock([('q', blocks.CharBlock()), ('a', blocks.RichTextBlock())]), template="streams/faq.html")),
-        ('cta', blocks.StructBlock([('text', blocks.CharBlock()), ('button', blocks.CharBlock())], template="streams/cta.html")),
+        ('faq', FAQBlock()),
+        ('cta', CTA_Block_2B()),
     ], use_json_field=True, collapsed=False)
 
-    banner_image = models.ForeignKey(get_image_model(), null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
+    sidebar = StreamField([
+    ('widget', SidebarWidgetBlock()),
+    ('faq', FAQBlock()),
+    ], blank=True, use_json_field=True, collapsed=True)
 
+    banner_image = models.ForeignKey("wagtailimages.Image", null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
+    #TODO: Foreignkey to user/profiles for Author image and name
     date_published = models.DateField(default=timezone.now)
     source_country = models.CharField(max_length=100, choices=[
         ('poland', 'Poland'), ('iceland', 'Iceland'),
@@ -258,6 +269,7 @@ class BlogDetailPage(SeoMixin, Page):
         FieldPanel('intro'),
         FieldPanel('banner_image'),
         FieldPanel('body'),
+        FieldPanel('sidebar'),
         MultiFieldPanel([
             FieldPanel('date_published'),
             FieldPanel('source_country'),
@@ -316,34 +328,53 @@ class BlogDetailPage(SeoMixin, Page):
 
     def get_faq_schema(self):
         """
-        Works with ListBlock + StructBlock — 100% safe
+        Works with the new FAQBlock (StreamBlock of FAQItemBlock)
+        Also backward compatible with the old ListBlock version!
         """
         faqs = []
+
         for block in self.body:
-            if block.block_type == "faq":
-                # ← matches your StreamField name
-                # block.value is ListValue → iterate directly
-                for item in block.value:
-                    question = item.get("q") or item.get("question", "")
-                    answer = item.get("a") or item.get("answer")
-                    if question and answer:
-                        answer_text = (
-                            "".join(answer.__html__().splitlines())
-                            if hasattr(answer, "__html__")
-                            else str(answer)
-                        )
+            if block.block_type != "faq":
+                continue
+
+            # New way: StreamBlock → each child is a StreamChild with .value
+            if hasattr(block.value, '__iter__'):  # it's a StreamBlock
+                for child_block in block.value:
+                    # child_block is a StreamChild → access via .value
+                    q = child_block.value.get('question') or child_block.value.get('q', '')
+                    a = child_block.value.get('answer') or child_block.value.get('a')
+
+                    if q and a:
+                        answer_text = a.source if hasattr(a, 'source') else str(a)
                         faqs.append({
                             "@type": "Question",
-                            "name": question,
+                            "name": str(q),
                             "acceptedAnswer": {
                                 "@type": "Answer",
                                 "text": answer_text.strip()
                             }
                         })
-        
-        return {
-            "@context": "https://schema.org",
-            "@type": "FAQPage",
-            "mainEntity": faqs
-        } if faqs else None
-    
+
+            # Old way fallback (just in case you have legacy content)
+            else:
+                for item in block.value:
+                    question = item.get("q") or item.get("question", "")
+                    answer = item.get("a") or item.get("answer")
+                    if question and answer:
+                        answer_text = answer.source if hasattr(answer, 'source') else str(answer)
+                        faqs.append({
+                            "@type": "Question",
+                            "name": str(question),
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": answer_text.strip()
+                            }
+                        })
+
+        if faqs:
+            return {
+                "@context": "https://schema.org",
+                "@type": "FAQPage",
+                "mainEntity": faqs
+            }
+        return None

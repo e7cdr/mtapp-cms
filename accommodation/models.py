@@ -7,6 +7,8 @@ from wagtail.models import Page
 from mtapp.utils import generate_code_id
 from streams import blocks
 from tours.models import DESTINATION_CHOICES
+from django.utils.translation import gettext_lazy as _
+
 
 
 class BaseDistribution(Page):
