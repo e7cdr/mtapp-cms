@@ -18,15 +18,14 @@ document.addEventListener('DOMContentLoaded', function(){
                 400: {
                     slidesPerView: 1,
                     spaceBetween: 10,
-                }
+                },
             },
             autoplay: {
                 delay: 2000,
-                reverseDirection: true,
             },        
             speed: 2000,
-
         lazy: true,
         // lazyPreloaderClass:"swiper-lazy-preloader",
         // lazyPreloadPrevNext: 1,
-});});
+});
+});
