@@ -2,7 +2,6 @@
 
 footer {
     background: white;
-    min-width: 27rem;
 
 }
 
@@ -14,6 +13,11 @@ footer {
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-auto-rows: 2rem;
+    
+}
+
+.footer-menu li {
+    font-size: 2vw;
 }
 
 
@@ -26,7 +30,7 @@ footer {
     position: relative;
     box-shadow: inset 0px 0px 0px 1000px rgb(0 0 11 / 90%);
     color: white;
-
+    text-align: center;
 }
 .footer-background {
     position: absolute;
@@ -39,13 +43,13 @@ footer {
     border-radius: inherit;
 }
 .contact-info-block {
-    flex-basis: 25%;
+    flex-basis: 35%;
 }   
 
 .brand-wrap {
     flex-shrink: 0;
     width: 100%;
-    flex-basis: 49%;
+    flex-basis: 30%;
     text-align: center;
 }
 
@@ -53,6 +57,7 @@ footer {
     align-content: center;
     display: block;
     z-index: 2;
+    place-items: center;
 
 }
 
@@ -70,17 +75,17 @@ footer {
 }
 
 .footer-links {
-    flex-basis: 25%;
+    flex-basis: 30%;
 }
 
-.footer-links ul {
+.footer-links ul, .footer-links h1 {
     list-style-type: circle;
+    font-size: 3vw;
 }
 
 .footer-container div a img{
-    width: auto;
-    height: 6rem;
-    transition-property: transform ease;
+    width: 100%;
+    height: auto;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 150ms;
     border-style: solid;
@@ -144,8 +149,7 @@ footer {
 }
 
 .footer-copyright {
-    flex-direction: column;
-    display: flex;
+    flex-basis: 100%;
     text-align: center;
 
 }
@@ -156,6 +160,9 @@ footer {
         justify-content: space-between;
         width: 100%;
 
+    }
+        .footer-links h1 {
+        font-size: 3vw
     }
 }
 
@@ -208,4 +215,21 @@ footer {
 .badge {
     width: 100%;
     filter: contrast(0) brightness(100);
+}
+
+@media (max-width: 640px) {
+    .footer-container {
+        font-size: 0.6rem;
+    }
+
+    .footer-copyright p {
+        font-size: 3.5vw;
+        line-height: 1.25rem;
+        z-index: 2;
+    }
+
+    .footer-links h1, .footer-links li {
+        font-size: 5vw
+    }
+
 }

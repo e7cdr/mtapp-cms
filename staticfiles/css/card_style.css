@@ -20,11 +20,12 @@
 }
 
 .card {
-    border: 0.1rem groove rgba(38, 0, 255, 0.354);
+    border: 0.18rem groove rgba(72, 39, 255, 0.284);
     border-radius: 1rem;
     display: flex;
-    /* height: calc(var(--card-height) * 1.2); */
-    width: calc(var(--card-width) * 1.1);
+    height: auto;
+    width: 100%;
+    max-width: 16em;
     background-color: var(--card-background);
     box-shadow: 0.2rem 0.2rem 1rem;
     box-sizing: border-box; 
