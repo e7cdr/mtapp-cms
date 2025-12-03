@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load wagtailcore_tags wagtailimages_tags i18n %}
+{% load static wagtailcore_tags wagtailimages_tags i18n %}
 
 {% block content %}
 
@@ -17,7 +17,6 @@
       <style>
         .latest-from-blog .post-card {
           border-radius: 20px;
-          overflow: hidden;
           box-shadow: 0 15px 40px rgba(0,0,0,0.1);
           transition: transform 0.3s ease;
         }
@@ -32,3 +31,6 @@
   {% endif %}
 
 {% endblock content %}
+{% block extra_js %}
+ <script src="{% static 'js/gsap/navigation.js' %}"></script>
+{% endblock extra_js %}

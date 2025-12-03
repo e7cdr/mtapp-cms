@@ -12,8 +12,7 @@
 
 .collage-grid-container {
     display: grid;
-    grid-template-columns: 2fr 1fr;
-    grid-auto-rows: 40rem;
+    grid-template-columns: 1fr;
     width: auto;
 }
 
@@ -28,7 +27,9 @@
 .collage-swiper2-container {
     height: 100%;
     color: white;
-    padding: 0.5rem 0 0 0.5rem !important;}
+    padding: 0.5rem 0 0 0.5rem !important;
+    width: 100%;
+}
 
 
 /* Images fill cells without distortion */
@@ -42,20 +43,20 @@
 .collage-swiper2-container .swiper-wrapper {
     display: grid !important;  /* Reinforce grid on wrapper */
     grid-template-columns: repeat(4, 1fr);  /* 3 equal cols */
-    grid-auto-rows: 7rem;  /* Fixed row height = your square size */
+    grid-auto-rows: 10rem;  /* Fixed row height = your square size */
     gap: 0.5rem;  /* Matches spaceBetween */
 }
 
 @media (max-width:1000px) {
     .collage-swiper2-container .swiper-wrapper {
-        grid-template-columns: repeat(2, 1fr);  /* 3 equal cols */
+        grid-template-columns: repeat(5, 1fr);  /* 3 equal cols */
 }
     
 }
 
 @media (max-width:700px) {
     .collage-swiper2-container .swiper-wrapper {
-        grid-template-columns: repeat(1, 1fr);  /* 3 equal cols */
+        grid-template-columns: repeat(4, 1fr);  /* 3 equal cols */
         grid-auto-rows: 5rem;  /* Fixed row height = your square size */
 
 }

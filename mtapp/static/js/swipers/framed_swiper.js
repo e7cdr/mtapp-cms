@@ -17,14 +17,12 @@ document.addEventListener('DOMContentLoaded', function(){
                 },
             },
             autoplay: {
-                delay: 3000,
+                delay: 2500,
                 reverseDirection: true,
-            },
-
+            },        
             speed: 2000,
 
-            lazy: true,
-            // lazyPreloaderClass:"swiper-lazy-preloader",
-            // lazyPreloadPrevNext: 1,
-    });
-});
+        lazy: true,
+        // lazyPreloaderClass:"swiper-lazy-preloader",
+        // lazyPreloadPrevNext: 1,
+});});

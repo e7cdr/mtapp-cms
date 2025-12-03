@@ -1,4 +1,4 @@
-   document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function () {
     var coverflowSwiper = new Swiper('.coverflow-swiper-container', {
      slidesPerView: 2,
      spaceBetween: 10,
@@ -27,3 +27,4 @@
      lazy: true,
     });
    });
+

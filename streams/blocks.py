@@ -257,8 +257,9 @@ class Swipers(blocks.StructBlock):
     swiper_title = blocks.CharBlock(required=False, help_text="The main title.", max_length=33)
     images = blocks.ListBlock(
         blocks.StructBlock([
-            ('image', ImageChooserBlock()),
+            ('image', ImageChooserBlock(required=False,)),
             ('caption', blocks.CharBlock(required=False, max_length=40 , help_text="Optional caption for the image")),
+            ('yt_vid', blocks.CharBlock(required=False, max_length=40 , help_text="Youtube video ID. This will only work for COLLAGE AND THUMBNAIL Variation")),
             ('link', blocks.PageChooserBlock(required=False, help_text="Optional link for the image. If provided, the image will be clickable.")),
         ]),
         ) 
@@ -268,7 +269,7 @@ class Swipers(blocks.StructBlock):
         template = "streams/swipers.html"
         icon = "image"
         label = "Swiper"
-        help_text = "Swiper with more than one variation to choose from."
+        help_text = "Swiper with more than one variation to choose from. Only Collage and Thumbnail variation support Embed Youtube Videos"
 
 class FadeCarousel(blocks.StructBlock):
     """Fade Swiper or carousel with fade effect"""

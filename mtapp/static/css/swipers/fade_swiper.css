@@ -1,11 +1,13 @@
 
+* {
+    box-sizing: border-box;
+}
 .fade-swiper-section .swiper{
     width: 100%;
     overflow: hidden;
-    min-width: 27rem;
     position: relative;
     max-height: 50rem;
-    /* height: 50rem; */
+    height: auto;
     border-radius: 0;
 
 }
@@ -26,7 +28,6 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 20rem;
     height: auto !important;
     background: black;
     border-radius: 0;
@@ -34,6 +35,7 @@
 
 .fade-swiper-container .swiper-wrapper .swiper-slide img {
     width: 100%;
+    height: auto;
     opacity: 0.6;
     border-radius: 0;
     object-fit: cover;
@@ -51,7 +53,6 @@
 
 @media (max-width:600px) {
     .swiper-pagination {
-    min-width: 27rem;
     bottom: 36% !important;
 }
     
@@ -80,7 +81,8 @@
     animation: blur-fadein 2s ease-in forwards 1;  /* animation: animation name, time, effect, how many times*/
     color: white;
     place-self: anchor-center;
-    width: 30rem;
+    width: 100%;
+    height: auto;
 }
 
 

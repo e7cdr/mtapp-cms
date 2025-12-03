@@ -1,9 +1,9 @@
 {% load i18n wagtailcore_tags %}
 
 {% if latest_blog_posts %}
-<section class="latest-from-blog py-5 bg-light">
-  <div class="container">
-    <div class="text-center mb-5">
+<section class="latest-from-blog">
+  <div>
+    <div class="text-center">
       <h2 class="display-5 fw-bold">{% trans "Latest from the Blog" %}</h2>
       <p class="lead text-muted">{% trans "Travel tips, stories, and hidden gems" %}</p>
     </div>
@@ -14,7 +14,7 @@
     {% endwith %}
 
     <div class="text-center mt-5">
-      <a href="{% pageurl blog_page %}" class="btn btn-primary btn-lg px-5">
+      <a href="{% pageurl blog_page %}" class="btn btn-primary btn-lg">
         {% trans "View All Posts" %}
       </a>
     </div>

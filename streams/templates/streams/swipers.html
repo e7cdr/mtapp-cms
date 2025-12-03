@@ -1,6 +1,41 @@
 {% load static wagtailimages_tags custom_filters wagtailcore_tags %}
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.css" />
+<style>
+.youtube-lazy {
+    background: #000 url('https://img.youtube.com/vi/{{ item.yt_vid }}/maxresdefault.jpg') center center no-repeat;
+    background-size: cover;
+    cursor: pointer;
+}
+.play-button {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 68px; height: 48px;
+    margin-left: -34px; margin-top: -24px;
+    background: rgba(0,0,0,0.7) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="68" height="48" viewBox="0 0 68 48"><path d="M66.52 7.74c-.78-2.93-3.09-5.24-6.02-6.02C55.79 0 34 0 34 0S12.21 0 7.49 1.72c-2.93.78-5.24 3.09-6.02 6.02C0 12.21 0 24 0 24s0 11.79 1.72 17.49c.78 2.93 3.09 5.24 6.02 6.02C12.21 48 34 48 34 48s21.79 0 26.51-1.72c2.93-.78 5.24-3.09 6.02-6.02C68 34.79 68 24 68 24s0-11.79-1.48-17.26z" fill="%23f00"/><path d="M45 24l-18-12v24z" fill="%23fff"/></svg>') center center no-repeat;
+    background-size: 100%;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.youtube-thumb {
+    cursor: pointer;
+}
+.thumb-play-icon {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 68px; height: 48px;
+    margin-left: -34px; margin-top: -24px;
+    background: rgba(0,0,0,0.7) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 68 48"><path d="M66.52 7.74c-.78-2.93-3.09-5.24-6.02-6.02C55.79 0 34 0 34 0S12.21 0 7.49 1.72c-2.93.78-5.24 3.09-6.02 6.02C0 12.21 0 24 0 24s0 11.79 1.72 17.49c.78 2.93 3.09 5.24 6.02 6.02C12.21 48 34 48 34 48s21.79 0 26.51-1.72c2.93-.78 5.24-3.09 6.02-6.02C68 34.79 68 24 68 24s0-11.79-1.48-17.26z" fill="%23f00"/><path d="M45 24l-18-12v24z" fill="%23fff"/></svg>') center center no-repeat;
+    background-size: 100%;
+    border-radius: 50%;
+    pointer-events: none;
+    transition: transform 0.2s;
+}
+.youtube-thumb:hover .thumb-play-icon {
+    transform: scale(1.1);
+}
+</style>
 {% endblock extra_css %}
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.js"></script>
@@ -16,6 +51,7 @@
         <div class="swiper-wrapper">
             {% for item in value.images %}
             <div class="swiper-slide">
+                {% if item.image %}
                 {% image item.image original as img %}
                    {% if item.link %}
                     <a href="{{ item.link.url }}"></a>
@@ -24,10 +60,18 @@
                 height=""
                 width=""
                 src="{{ img.url }}"
-                alt="{{ self.caption|default:'Swiper images' }}"
+                alt="{{ item.caption|default:'Swiper images' }}"
                 id="slide-{{ forloop.counter }}"
+                loading="lazy"
                 />
-                <p class="caption">{{ item.caption }}</p>
+                {% elif item.yt_vid %}
+                <div 
+                    class="youtube-lazy" 
+                    data-video-id="{{ item.yt_vid }}"
+                    style="width:100%; height:100%; background:#000; position:relative;">
+                    <div class="play-button">Play</div>
+                </div>
+                {% endif %}
             </div>
             {% empty %}
                 <p>No images found. Please go to the admin panel to add them.</p>
@@ -40,6 +84,7 @@
         <div class="swiper-wrapper">
             {% for item in value.images %}
             <div class="swiper-slide">
+                {% if item.image %}
                 {% image item.image original as img %}
                    {% if item.link %}
                     <a href="{{ item.link.url }}"></a>
@@ -50,7 +95,21 @@
                 src="{{ img.url }}"
                 alt="{{ item.caption|default:'Swiper images' }}"
                 id="slide-{{ forloop.counter }}"
+                loading="lazy"
                 />
+                {% elif item.yt_vid %}
+                <div class="youtube-thumb" style="position:relative; display:inline-block; width:100%; height:100%;">
+                    <img 
+                        src="https://i.ytimg.com/vi/{{ item.yt_vid }}/hqdefault.jpg" 
+                        alt="YouTube video"
+                        height=""
+                        width=""
+                        loading="lazy"
+                        style="width:100%; height:100%; object-fit:cover;"
+                        onerror="this.src='https://i.ytimg.com/vi/{{ item.yt_vid }}/mqdefault.jpg'">
+                    <div class="thumb-play-icon"></div>
+                </div>
+                {% endif %}
             </div>
             {% empty %}
                 <p>No images found. Please go to the admin panel to add them.</p>
@@ -69,6 +128,7 @@
         <div class="swiper-wrapper">
             {% for item in value.images %}
             <div class="swiper-slide">
+                {% if item.image %}
                 {% image item.image original as img %}
                    {% if item.link %}
                     <a href="{{ item.link.url }}"></a>
@@ -81,7 +141,7 @@
                 id="slide-{{ forloop.counter }}"
                 loading="lazy"
                 />
-                <p class="caption">{{ item.caption }}</p>
+                {% endif %}
             </div>
             {% empty %}
                 <p>No images found. Please go to the admin panel to add them.</p>
@@ -103,6 +163,7 @@
         <div class="swiper-wrapper">
             {% for item in value.images %}
             <div class="swiper-slide">
+                {% if item.image %}
                 {% image item.image original as img %}
                    {% if item.link %}
                     <a href="{{ item.link.url }}"></a>
@@ -115,7 +176,7 @@
                 id="slide-{{ forloop.counter }}"
                 loading="lazy"
                 />
-            <p class="caption">{{ item.caption }}</p>
+                {% endif %}
             </div>
             {% empty %}
                 <p>No images found. Please go to the admin panel to add them.</p>
@@ -144,6 +205,7 @@
         <div class="swiper-wrapper">
             {% for item in value.images %}
             <div class="swiper-slide">
+                {% if item.image %}
                 {% image item.image original as img %}
                    {% if item.link %}
                     <a href="{{ item.link.url }}"></a>
@@ -156,6 +218,16 @@
                 id="slide-{{ forloop.counter }}"
                 loading="lazy"
                 />
+            {% elif item.yt_vid %}
+            <div class="youtube-lazy"
+                data-video-id="{{ item.yt_vid }}"
+                style="position:absolute; inset:0; background:#000;">
+                <div style="position:absolute; inset:0; background:url('https://i.ytimg.com/vi/{{ item.yt_vid }}/maxresdefault.jpg') center/cover no-repeat; filter:brightness(0.7);"></div>
+                <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none;">
+                    <div style="width:100px; height:100px; background:rgba(255,255,255,0.2); backdrop-filter:blur(20px); border-radius:50%; border:4px solid rgba(255,255,255,0.4); box-shadow:0 20px 40px rgba(0,0,0,0.5);"></div>
+                </div>
+            </div>
+            {% endif %}
             </div>
             <p class="caption">{{ item.caption }}</p>
             {% empty %}
@@ -171,6 +243,7 @@
         <div class="swiper-wrapper grid-thumb">
             {% for item in value.images %}
             <div class="swiper-slide">
+                {% if item.image %}
                 {% image item.image original as img %}
                    {% if item.link %}
                     <a href="{{ item.link.url }}"></a>
@@ -183,6 +256,12 @@
                 id="slide-{{ forloop.counter }}"
                 loading="lazy"
                 />
+                {% elif item.yt_vid %}
+                <img height="" width="" src="https://i.ytimg.com/vi/{{ item.yt_vid }}/hqdefault.jpg"
+                    alt="YouTube thumbnail"
+                    loading="lazy"
+                    style="width:100%; height:100%; object-fit:cover; border-radius:8px;">
+                {% endif %}
             </div>
             {% empty %}
                 <p>No images found. Please go to the admin panel to add them.</p>
@@ -197,6 +276,7 @@
     <div class="swiper-wrapper">
             {% for item in value.images %}
             <div class="swiper-slide">
+                {% if item.image %}
                 {% image item.image original as img %}
                 {% if item.link %}
                 <a href="{{ item.link.url }}"></a>
@@ -210,6 +290,7 @@
                 loading="lazy"
                 />
                 <p class="caption">{{ item.caption }}</p>
+                {% endif %}
             </div>
             {% endfor %}
         </div>
@@ -227,6 +308,7 @@
     <div class="swiper-wrapper">
         {% for item in value.images %}
         <div class="swiper-slide">
+            {% if item.image %}
             {% image item.image original as img %}
             {% if item.link %}
             <a href="{{ item.link.url }}"></a>
@@ -241,6 +323,16 @@
             />
             {% if item.caption %}
             <p class="caption">{{ item.caption }}</p>
+            {% endif %}
+            {% elif item.yt_vid %}
+            <div class="youtube-lazy"
+                data-video-id="{{ item.yt_vid }}"
+                style="position:absolute; inset:0; background:#000;">
+                <div style="position:absolute; inset:0; background:url('https://i.ytimg.com/vi/{{ item.yt_vid }}/maxresdefault.jpg') center/cover no-repeat; filter:brightness(0.7);"></div>
+                <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none;">
+                    <div style="width:90px; height:90px; background:rgba(255,255,255,0.15); backdrop-filter:blur(20px); border-radius:50%; border:3px solid rgba(255,255,255,0.3);"></div>
+                </div>
+            </div>
             {% endif %}
         </div>
         {% endfor %}

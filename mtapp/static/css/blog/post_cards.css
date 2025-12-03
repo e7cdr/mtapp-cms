@@ -19,14 +19,15 @@
 }
 
 .post-wrapper {
-    gap: 1.6rem;
-    width: auto;
-    display: flex;
-    flex-wrap: wrap;
-    max-height: inherit;
+    gap: 0.6rem;
+    width: 100%;
+    display: grid;
     justify-content: center;
-    margin: 1rem 0 0 0;
+    height: auto;
+    grid-template-columns: 1fr 1fr 1fr;
 }
+
+
 
 @property --angle {
     syntax: '<angle>';
@@ -34,9 +35,14 @@
     initial-value: 0deg;
 }
 
+.post-wrapper a {
+    flex-basis: 30%;
+}
+
 .post-card {
     position: relative;
-    width: 20rem;
+    width: 100%;
+    height: auto;
     max-height: inherit;
     transition: all 0.3s ease-in;
 }
@@ -109,7 +115,7 @@
     border-radius: 1rem;
 }
 .post-cover {
-    height: 25rem;
+    height: 45vh;
     width: 100%;
     object-fit: cover;
     border-radius: 2rem;
@@ -132,4 +138,28 @@
     width: 100%;
     font-size: 1.1rem;
     text-align: justify;
+}
+
+
+@media (max-width: 450px) {
+    .post-wrapper {
+        gap: 0.5rem;
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 300px) {
+    .post-wrapper {
+        gap: 0.4rem;
+        grid-template-columns: 1fr;
+    }
+    .post-title {
+        margin: 0.6rem;
+        width: 100%;
+        font-size: 0.6rem;
+        text-align: justify;
+    }
+    .post-date, .author-name {
+        font-size: 0.5rem;
+    }
 }

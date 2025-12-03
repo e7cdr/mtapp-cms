@@ -72,6 +72,8 @@
     display: flex;
     flex-wrap: wrap;
     place-content: center;
+    width: 100%;
+    height: auto;
 
 }
 
@@ -108,7 +110,7 @@
 
     .area-2 {
         place-self: center;
-        min-width: 27rem;
+        /* min-width: 27rem; */
        
 
     }
