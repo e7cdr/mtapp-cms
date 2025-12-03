@@ -8,7 +8,6 @@ document.addEventListener('DOMContentLoaded', function () {
         loop: totalSlides > 2,                    // Auto-disable loop if ≤2 items
         pagination: {
             el: '.swiper-pagination',
-            type: 'progressbar',
         },
         effect: 'fade',
         fadeEffect: {
@@ -22,7 +21,6 @@ document.addEventListener('DOMContentLoaded', function () {
         allowTouchMove: true                      // Optional: allow swipe on mobile
     });
 
-    // === SAME BULLETPROOF YOUTUBE LOGIC ===
     const players = {};
 
     function loadAndPlayYouTubeVideo(container) {
