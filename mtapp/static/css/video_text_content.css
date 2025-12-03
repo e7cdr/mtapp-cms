@@ -130,8 +130,3 @@
 
 }
 
-
-@media (max-width: 360px) {
-        .video-container  {
-    width: 105%;
-}

@@ -37,7 +37,6 @@ document.addEventListener('DOMContentLoaded', function () {
         allowTouchMove: true
     });
 
-    // === BULLETPROOF YOUTUBE LOGIC (6th time — perfection!) ===
     const players = {};
 
     function loadAndPlayYouTubeVideo(container) {

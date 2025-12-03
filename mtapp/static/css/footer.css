@@ -17,7 +17,7 @@ footer {
 }
 
 .footer-menu li {
-    font-size: 2vw;
+    font-size: 1vw;
 }
 
 
@@ -56,7 +56,6 @@ footer {
 .footer-container div {
     align-content: center;
     display: block;
-    z-index: 2;
     place-items: center;
 
 }
@@ -100,7 +99,7 @@ footer {
 
 .address {
     text-align: left;
-    margin: 0 1rem;
+    margin: 0 0.5rem;
 }
 
 .social-media-wrap {
@@ -229,7 +228,9 @@ footer {
     }
 
     .footer-links h1, .footer-links li {
-        font-size: 5vw
+        font-size: 1.5vw
     }
-
+    .footer-container div a img {
+        width: 60%;
+    }
 }
