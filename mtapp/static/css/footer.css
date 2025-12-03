@@ -78,7 +78,6 @@ footer {
 
 .footer-links ul, .footer-links h1 {
     list-style-type: circle;
-    font-size: 3vw;
 }
 
 .footer-container div a img{
@@ -152,7 +151,7 @@ footer {
 
 }
 
-@media (min-width: 640px) {
+@media (min-width: 740px) {
     .footer-copyright {
         flex-direction: row;
         justify-content: space-between;
@@ -161,6 +160,10 @@ footer {
     
     .footer-links h1 {
         font-size: 2vw
+    }
+
+    .footer-links li {
+        font-size: 1vw
     }
 }
 
