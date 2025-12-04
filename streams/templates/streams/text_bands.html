@@ -3,7 +3,7 @@
 <link rel="stylesheet" href="{% static 'css/text_bands.css' %}"/>
 {% endblock extra_css %}
 
-<section>
+<section class="flex-section">
 {% if self.background_image %}
  <div class="content-flex-1" style="background: linear-gradient( var({{ self.background_color }}));">
    {% image self.background_image original as img %}
@@ -42,5 +42,46 @@
   {% endif %}
  </div>
  {% endif %}
-
 </section>
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        gsap.registerPlugin(ScrollTrigger, SplitText);
+        let tl = gsap.timeline({
+            scrollTrigger: ".flex-section",
+            scrub: 1,
+            start: "top top",
+        });
+
+        tl.to('.flex-section', {
+            scale: 0.99,
+            boxShadow: '0 0 1rem black',
+            duration: 2,
+            repeat: -1,
+            yoyo: true,
+            ease: "power1.inOut",
+        });
+        document.fonts.ready.then(() => {
+            SplitText.create(".item", 
+                {type: "words",
+                onSplit(self) {
+                    tl.from(self.words, {
+                        autoAlpha: 0,
+                        scale: 0,
+                        x: "random(-220, 300)",
+                        y: "random(-120, 100)",
+                        stagger: {
+                            grid: 'auto',
+                            from: 'center',
+                            each: 0.15,
+                        },
+                        duration: 0.4,
+                        ease: "power1.inOut",
+                        onComplete: () => self.revert()
+                    },);
+                },
+                });
+            });
+    });
+</script>
+{% endblock extra_js %}
