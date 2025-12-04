@@ -905,7 +905,7 @@ Block representation
         'src': value.get_rendition('fill-400x400').url
         }
 
-    class CustomPAgeChooserBlock(blocks.PageChooserBlock):
+    class CustomPageChooserBlock(blocks.PageChooserBlock):
 
     def get_api_representation(self, value, context=None):
         return {

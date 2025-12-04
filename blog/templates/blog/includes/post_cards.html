@@ -42,3 +42,62 @@
     </div>
 </section>
 {% endblock content %}
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        gsap.registerPlugin(ScrollTrigger, SplitText);
+        let tl = gsap.timeline({
+            scrollTrigger: ".post-container",
+            scrub: 1,
+            start: "top top",
+        });
+
+        tl.from('.post-wrapper', {
+            opacity: 0,
+            scale: 0,
+            duration: 0.6,
+            ease: "power1.inOut",
+        }).fromTo('.post-card', {
+            opacity: 0,
+            scale: 3,
+            y: 300,
+         }, {
+            opacity: 1,
+            scale: 1,
+            duration: 0.3,
+            y: 0,
+            ease: "sine.out",
+            stagger: {
+                grid: 'auto',
+                from: "start",
+                each: 0.5,
+            }
+        }).to('.post-wrapper', {
+            scale: 1.008,
+            duration: 2,
+            repeat: -1,
+            yoyo: true,
+            ease: "power1.inOut",
+        });
+        document.fonts.ready.then(() => {
+            SplitText.create(".post-card", 
+                {type: "words, chars",
+                onSplit(self) {
+                    tl.from(self.words, {
+                        autoAlpha: 0,
+                        scale: 5,
+                        x: "random(-220, 600)",
+                        y: "random(-420, 100)",
+                        stagger: 0.05,
+                        duration: 0.3,
+                        ease: "power1.inOut",
+                    }, 1.3
+                    ).to(self.chars, {color: "rgba(245, 254, 213, 1)", x: -3, stagger: 0.08, repeat: -1, yoyo: true,
+                        onComplete: () => self.revert()
+                    });
+                },
+                });
+            });
+    });
+</script>
+{% endblock extra_js %}

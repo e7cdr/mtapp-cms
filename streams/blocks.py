@@ -9,6 +9,7 @@ this file in the models.py file where we want to use these blocks. And we're goo
 
 from wagtail import blocks
 from wagtail.images.blocks import ImageChooserBlock
+from wagtail.admin.panels import PageChooserPanel
 from django.contrib.sites.shortcuts import get_current_site  # NEW: For safe site resolution
 from site_settings.models import FooterLinks
 from mtapp.choices import colors, swipers, position, GLOBAL_ICON_CHOICES
@@ -53,7 +54,7 @@ class ExploreBlock(blocks.StructBlock):
         required=True
     )
     image_alt_text = blocks.CharBlock(required=True, help="Alternative text. This won't appear to the user but it is used for better SEO.")
-    image_link = blocks.URLBlock(required=False, help_text="Link to redirect the user. The more internal links to other part of the page, the better for SEO.")
+    image_link = blocks.PageChooserBlock(required=False, help_text="Link to redirect the user. The more internal links to other part of the page, the better for SEO.")
     body = blocks.ListBlock(
     blocks.StructBlock([
         ('icon_alt_text', blocks.CharBlock(required=True, default="Icon")),

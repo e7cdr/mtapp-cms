@@ -146,6 +146,12 @@
     border-radius: 999px;
 }
 
+.explore-content-grid div:nth-child(5) img:hover {
+
+    scale: 1.05;
+    box-shadow: 0 0 1rem black;
+}
+
 .explore-content-item span {
     padding: 0.5rem;
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);

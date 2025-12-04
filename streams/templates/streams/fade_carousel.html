@@ -46,5 +46,35 @@
 </section>
 {% block extra_js %}
 <script src="{% static 'js/swipers/fade_swiper.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        gsap.registerPlugin(ScrollTrigger, SplitText);
+        let tl = gsap.timeline({
+            scrollTrigger: ".fade-swiper-section",
+            scrub: 1,
+            start: "top top",
+        });
+
+        tl.fromTo('.fade-swiper-container', {
+            opacity: 0,
+        }, {
+            opacity: 1,
+            duration: 2,
+            ease: "sine.out",
+        });
+        document.fonts.ready.then(() => {
+            SplitText.create(".fade-title h1", 
+                {type: "chars",
+                onSplit(self) {
+                    tl.to(self.chars, {color: "#ffe66cff", x: -2, scale: 1.005,
+                                    stagger: { grid: 'auto', from: 'random', each: 0.5, }, 
+                                    repeat: -1, delay: 2, repeatDelay: 2, yoyo: true,
+                        onComplete: () => self.revert()
+                    });
+                },
+                });
+            });
+    });
+</script>
 {% endblock extra_js %}
 {% endblock content %}
