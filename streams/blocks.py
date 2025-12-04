@@ -72,7 +72,11 @@ class ExploreBlock(blocks.StructBlock):
         ('text_4', blocks.RichTextBlock(required=True, max_length=300)),
     ]),
     )
-
+    def clean(self, value):
+        if value.get('image_link') == '':
+            value['image_link'] = None
+        return super().clean(value)
+    
     class Meta: #noqa
         template = "streams/explore_block.html"
         icon = "view"

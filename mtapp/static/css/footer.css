@@ -67,6 +67,7 @@ footer {
 
 .footer-links ul, .footer-links h1 {
     list-style-type: circle;
+    place-items: anchor-center;
 }
 
 .footer-container div a img{
@@ -195,8 +196,9 @@ footer {
 .footer-menu {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    
+    gap: 0 1rem;
 }
+
 
 .footer-menu li {
     font-size: 1vw !important;

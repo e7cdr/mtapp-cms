@@ -52,7 +52,7 @@
     </div>
     {% endfor %}
     <div>
-    <a href="{{ self.image_link }}">
+    <a href="{% if self.image_link %} {{ self.image_link }} {% else %} {% url 'wagtail_serve' '' %} {% endif %}">
      {% image self.image fill-1400x1400 alt="{{ self.image_alt_text }}" %}
      </a>
     </div>
