@@ -1,0 +1,19 @@
+{
+  "dependencies": {
+    "bootstrap-icons": "^1.13.1",
+    "flag-icons": "^7.5.0"
+  },
+  "name": "mtapp",
+  "version": "1.0.0",
+  "main": "index.js",
+  "devDependencies": {
+    "critical": "^7.2.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

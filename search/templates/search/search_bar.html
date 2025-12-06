@@ -1,10 +1,5 @@
 {% load static wagtailcore_tags %} 
 {% block content %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/search_bar.css' %}">
-{% endblock extra_css %}
-
 <section class="search-bar-container">
 <form action="{% url 'search' %}" method="get" class="search-bar">
  <input type="text" placeholder="i.e: Cuenca" name="query" {% if search_query %} value="{{ search_query }}" {% endif %} />

@@ -3,9 +3,6 @@
 
 {% get_navbar_pages as navbar_pages %}
 {% wagtail_site as current_site %}
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/navbar.css' %}" />
-{% endblock extra_css %}
 
 <header>
   <nav class="navbar">
@@ -187,4 +184,3 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
- {% comment %} <script src="{% static 'js/gsap/navigation.js' %}"></script> {% endcomment %}

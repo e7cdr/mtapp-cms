@@ -10,7 +10,7 @@
         <div id="image">
             {% for item in block.value.image_caption %}
             <div id="image-cont" class="image-cont transparent-lines image-container-0">
-                {% image item.image original as img %}
+                {% image item.image fill-1920x1080 format-webp webpquality-80  as img %}
                 <img src="{{ img.url }}" class="flex-image" 
                 height=""
                 width=""

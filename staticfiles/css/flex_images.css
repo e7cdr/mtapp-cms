@@ -2,10 +2,6 @@ body {
     margin: 0;
 }
 
-section {
-    min-width: 27rem;
-}
-
 .flex-images-container {
     justify-content: center;
     align-items: center;

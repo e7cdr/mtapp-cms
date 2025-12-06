@@ -1,8 +1,5 @@
-@import url('variables.css');
 
-section {
-    min-width: 27rem;
-}
+
 .booking-section {
     padding-top: 3.5rem;
     padding-bottom: 3.5rem;
@@ -87,9 +84,6 @@ div.container h2 {
 
 }
 
-/* #booking-form-container {
-
-} */
 
 .booking-form {
     padding: 1.5rem;

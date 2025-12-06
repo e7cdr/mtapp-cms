@@ -14,9 +14,9 @@
   </h1>
 
   <div class="separator">
-   <span aria-label="decorator"></span>
-   <span aria-label="decorator"></span>
-   <span aria-label="decorator"></span>
+   <span aria-label="hidden"></span>
+   <span aria-label="hidden"></span>
+   <span aria-label="hidden"></span>
   </div>
 
   <div class="explore-content">
@@ -24,28 +24,28 @@
     {% for item in block.value.body %}
     <div class="explore-content-item">
      <span>
-      {% image item.icon_1 fill-100x100 format-gif class="w-8 h-8" alt="{{ item.icon_alt_text }}" %}
+      {% image item.icon_1 width-50 height-50 format-gif class="w-8 h-8" alt="{{ item.icon_alt_text }}" %}
      </span>
      <h1> {{ item.subtitle_1 }}</h1>
      {{ item.text_1 }}
     </div>
     <div class="explore-content-item">
      <span>
-      {% image item.icon_2 fill-100x100 class="w-8 h-8" alt="{{ item.icon_alt_text }}" %}
+      {% image item.icon_2 width-50 height-50 format-gif class="w-8 h-8" alt="{{ item.icon_alt_text }}" %}
      </span>
      <h1>{{ item.subtitle_2 }}</h1>
      {{ item.text_2 }}
     </div>
     <div class="explore-content-item">
      <span>
-      {% image item.icon_3 fill-100x100 class="w-8 h-8" alt="{{ item.icon_alt_text }}" %}
+      {% image item.icon_3 width-50 height-50 format-gif class="w-8 h-8" alt="{{ item.icon_alt_text }}" %}
      </span>
      <h1>{{ item.subtitle_3 }}</h1>
      {{ item.text_3 }}
     </div>
     <div class="explore-content-item">
      <span>
-      {% image item.icon_4 fill-100x100 class="w-8 h-8" alt="{{ item.icon_alt_text }}" %}
+      {% image item.icon_4 width-50 height-50 format-gif class="w-8 h-8" alt="{{ item.icon_alt_text }}" %}
      </span>
      <h1>{{ item.subtitle_4 }}</h1>
      {{ item.text_4 }}
@@ -53,7 +53,7 @@
     {% endfor %}
     <div>
     <a href="{% if self.image_link %} {{ self.image_link }} {% else %} {% url 'wagtail_serve' '' %} {% endif %}">
-     {% image self.image fill-1400x1400 alt="{{ self.image_alt_text }}" %}
+     {% image self.image fill-312x312 format-webp webpquality-80 class="explore-image" alt="{{ self.image_alt_text }}" %}
      </a>
     </div>
    </div>
@@ -67,7 +67,7 @@
         let tl = gsap.timeline({
             scrollTrigger: ".explore-content-item",
             scrub: 1,
-            start: "top top",
+            start: "top 80%",
         });
 
         tl.fromTo('.explore-content-grid div:nth-child(5) img', {
@@ -75,7 +75,7 @@
             y: -300,
             borderRadius: 0,
         }, {
-            borderRadius: 300,
+            borderRadius: 999,
             opacity: 1,
             duration: 3,
             boxShadow: '0 0 0.3rem black',
@@ -107,9 +107,9 @@
                             from: 'center',
                             amount: 1.4,
                         },
-                        duration: 0.7,
+                        duration: 0.9,
                         ease: "power1.inOut",
-                    }, 1.3
+                    }, 0.8
                     ).to(self.chars, {color: "rgba(49, 75, 205, 1)", x: -3, 
                                     stagger: { grid: 'auto', axis: "x", from: 'end', each: 0.2, ease: "power3.inOut" }, 
                                     repeat: -1, yoyo: true, repeatDelay: 2,

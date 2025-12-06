@@ -59,7 +59,7 @@ document.addEventListener("DOMContentLoaded", function () {
 <!-- STABLE HERO – Your original design, now bulletproof -->
 <section class="blog-detail-hero">
   {% if page.banner_image %}
-    {% image page.banner_image original as banner %}
+    {% image page.banner_image fill-1920x1080 format-webp as banner %}
     <div class="hero-bg" style="background-image: url('{{ banner.url }}')"></div>
   {% else %}
     <div class="hero-bg" style="background-image: url('{% static 'images/blog-fallback.jpg' %}')"></div>

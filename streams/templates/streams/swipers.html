@@ -1,48 +1,43 @@
 {% load static wagtailimages_tags custom_filters wagtailcore_tags %}
 {% block extra_css %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.css" />
 <style>
-    .youtube-lazy {
-        background: #000 url('https://img.youtube.com/vi/{{ item.yt_vid }}/maxresdefault.jpg') center center no-repeat;
-        background-size: cover;
-        cursor: pointer;
-    }
-    .play-button {
-        position: absolute;
-        top: 50%; left: 50%;
-        width: 68px; height: 48px;
-        margin-left: -34px; margin-top: -24px;
-        background: rgba(0,0,0,0.7) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="68" height="48" viewBox="0 0 68 48"><path d="M66.52 7.74c-.78-2.93-3.09-5.24-6.02-6.02C55.79 0 34 0 34 0S12.21 0 7.49 1.72c-2.93.78-5.24 3.09-6.02 6.02C0 12.21 0 24 0 24s0 11.79 1.72 17.49c.78 2.93 3.09 5.24 6.02 6.02C12.21 48 34 48 34 48s21.79 0 26.51-1.72c2.93-.78 5.24-3.09 6.02-6.02C68 34.79 68 24 68 24s0-11.79-1.48-17.26z" fill="%23f00"/><path d="M45 24l-18-12v24z" fill="%23fff"/></svg>') center center no-repeat;
-        background-size: 100%;
-        border-radius: 50%;
-        pointer-events: none;
-    }
+.youtube-lazy {
+    background: #000 url('https://img.youtube.com/vi/{{ item.yt_vid }}/maxresdefault.jpg') center center no-repeat;
+    background-size: cover;
+    cursor: pointer;
+}
+.play-button {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 68px; height: 48px;
+    margin-left: -34px; margin-top: -24px;
+    background: rgba(0,0,0,0.7) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="68" height="48" viewBox="0 0 68 48"><path d="M66.52 7.74c-.78-2.93-3.09-5.24-6.02-6.02C55.79 0 34 0 34 0S12.21 0 7.49 1.72c-2.93.78-5.24 3.09-6.02 6.02C0 12.21 0 24 0 24s0 11.79 1.72 17.49c.78 2.93 3.09 5.24 6.02 6.02C12.21 48 34 48 34 48s21.79 0 26.51-1.72c2.93-.78 5.24-3.09 6.02-6.02C68 34.79 68 24 68 24s0-11.79-1.48-17.26z" fill="%23f00"/><path d="M45 24l-18-12v24z" fill="%23fff"/></svg>') center center no-repeat;
+    background-size: 100%;
+    border-radius: 50%;
+    pointer-events: none;
+}
 
-    .youtube-thumb {
-        cursor: pointer;
-    }
-    .thumb-play-icon {
-        position: absolute;
-        top: 50%; left: 50%;
-        width: 68px; height: 48px;
-        margin-left: -34px; margin-top: -24px;
-        background: rgba(0,0,0,0.7) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 68 48"><path d="M66.52 7.74c-.78-2.93-3.09-5.24-6.02-6.02C55.79 0 34 0 34 0S12.21 0 7.49 1.72c-2.93.78-5.24 3.09-6.02 6.02C0 12.21 0 24 0 24s0 11.79 1.72 17.49c.78 2.93 3.09 5.24 6.02 6.02C12.21 48 34 48 34 48s21.79 0 26.51-1.72c2.93-.78 5.24-3.09 6.02-6.02C68 34.79 68 24 68 24s0-11.79-1.48-17.26z" fill="%23f00"/><path d="M45 24l-18-12v24z" fill="%23fff"/></svg>') center center no-repeat;
-        background-size: 100%;
-        border-radius: 50%;
-        pointer-events: none;
-        transition: transform 0.2s;
-    }
-    .youtube-thumb:hover .thumb-play-icon {
-        transform: scale(1.1);
-    }
+.youtube-thumb {
+    cursor: pointer;
+}
+.thumb-play-icon {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 68px; height: 48px;
+    margin-left: -34px; margin-top: -24px;
+    background: rgba(0,0,0,0.7) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 68 48"><path d="M66.52 7.74c-.78-2.93-3.09-5.24-6.02-6.02C55.79 0 34 0 34 0S12.21 0 7.49 1.72c-2.93.78-5.24 3.09-6.02 6.02C0 12.21 0 24 0 24s0 11.79 1.72 17.49c.78 2.93 3.09 5.24 6.02 6.02C12.21 48 34 48 34 48s21.79 0 26.51-1.72c2.93-.78 5.24-3.09 6.02-6.02C68 34.79 68 24 68 24s0-11.79-1.48-17.26z" fill="%23f00"/><path d="M45 24l-18-12v24z" fill="%23fff"/></svg>') center center no-repeat;
+    background-size: 100%;
+    border-radius: 50%;
+    pointer-events: none;
+    transition: transform 0.2s;
+}
+.youtube-thumb:hover .thumb-play-icon {
+    transform: scale(1.1);
+}
 </style>
 {% endblock extra_css %}
-{% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.js"></script>
-{% endblock extra_js %}
 
 {% if self.variations == 'thumbnail' %}
-<link rel="stylesheet" href="{% static 'css/swipers/thumb_swiper.css' %}"/>
 <section>
     <div class="swiper thumb-swiper1-container">
         {% if self.swiper_title %}
@@ -52,7 +47,7 @@
             {% for item in value.images %}
             <div class="swiper-slide">
                 {% if item.image %}
-                {% image item.image original as img %}
+                {% image item.image fill-1920x1080 format-webp webpquality-80 as img %}
                    {% if item.link %}
                     <a href="{{ item.link.url }}"></a>
                 {% endif %}
@@ -85,7 +80,7 @@
             {% for item in value.images %}
             <div class="swiper-slide">
                 {% if item.image %}
-                {% image item.image original as img %}
+                {% image item.image fill-1920x1080 format-webp webpquality-80 as img %}
                    {% if item.link %}
                     <a href="{{ item.link.url }}"></a>
                 {% endif %}
@@ -116,10 +111,8 @@
             {% endfor %}
         </div>            
     </div>
-    <script src="{% static 'js/swipers/thumb_swiper.js' %}"></script>
 </section>
 {% elif self.variations == 'basic' %}
-<link rel="stylesheet" href="{% static 'css/swipers/basic_swiper.css' %}"/>
 <section>
     <div class="basic-swiper-container swiper">
         {% if self.swiper_title %}
@@ -129,7 +122,7 @@
             {% for item in value.images %}
             <div class="swiper-slide">
                 {% if item.image %}
-                {% image item.image original as img %}
+                {% image item.image fill-1920x1080 format-webp webpquality-80 as img %}
                    {% if item.link %}
                     <a href="{{ item.link.url }}"></a>
                 {% endif %}
@@ -154,7 +147,6 @@
 <script src="{% static 'js/swipers/basic_swiper.js' %}"></script>
 </section>
 {% elif self.variations == 'framed' %}
-<link rel="stylesheet" href="{% static 'css/swipers/framed_swiper.css' %}"/>
  <section>
     <div class="framed-swiper-container">
         {% if self.swiper_title %}
@@ -164,13 +156,13 @@
             {% for item in value.images %}
             <div class="swiper-slide">
                 {% if item.image %}
-                {% image item.image original as img %}
+                {% image item.image fill-370x315 format-webp webpquality-80 as img %}
                    {% if item.link %}
                     <a href="{{ item.link.url }}"></a>
                 {% endif %}
                 <img
-                height=""
-                width=""
+                height="370"
+                width="315"
                 src="{{ img.url }}"
                 alt="{{ item.caption|default:'Swiper images' }}"
                 id="slide-{{ forloop.counter }}"
@@ -192,10 +184,8 @@
             </filter>
         </svg>
         </div>
-<script src="{% static 'js/swipers/framed_swiper.js' %}"></script>
 </section>
 {% elif self.variations == 'collage' %}
-<link rel="stylesheet" href="{% static 'css/swipers/collage_swiper.css' %}">
 <!--Collage Swiper-->
 <section class="collage-grid-container">
     <div class="swiper collage-swiper1-container">
@@ -206,7 +196,7 @@
             {% for item in value.images %}
             <div class="swiper-slide">
                 {% if item.image %}
-                {% image item.image original as img %}
+                {% image item.image fill-1920x1080 format-webp webpquality-80 as img %}
                    {% if item.link %}
                     <a href="{{ item.link.url }}"></a>
                 {% endif %}
@@ -244,7 +234,7 @@
             {% for item in value.images %}
             <div class="swiper-slide">
                 {% if item.image %}
-                {% image item.image original as img %}
+                {% image item.image fill-1920x1080 format-webp webpquality-80 as img %}
                    {% if item.link %}
                     <a href="{{ item.link.url }}"></a>
                 {% endif %}
@@ -269,15 +259,13 @@
         </div>
     </div>
 </section>
-<script src="{% static 'js/swipers/collage_swiper.js' %}"></script>
 {% elif self.variations == 'coverflow' %}
-<link rel="stylesheet" href="{% static 'css/swipers/coverflow_swiper.css' %}">
 <section class="coverflow-swiper-container swiper">
     <div class="swiper-wrapper">
             {% for item in value.images %}
             <div class="swiper-slide">
                 {% if item.image %}
-                {% image item.image original as img %}
+                {% image item.image fill-1920x1080 format-webp webpquality-80 as img %}
                 {% if item.link %}
                 <a href="{{ item.link.url }}"></a>
                 {% endif %}
@@ -300,16 +288,14 @@
         <div class="swiper-button-prev"></div>
     </div>
 </section>
-<script src="{% static 'js/swipers/coverflow_swiper.js' %}"></script>
 {% elif self.variations == 'fade' %}
-<link rel="stylesheet" href="{% static 'css/swipers/fade_swiper.css' %}">
 <section>
 <div class="fade-swiper-container swiper">
     <div class="swiper-wrapper">
         {% for item in value.images %}
         <div class="swiper-slide">
             {% if item.image %}
-            {% image item.image original as img %}
+            {% image item.image fill-1920x1080 format-webp webpquality-80 as img %}
             {% if item.link %}
             <a href="{{ item.link.url }}"></a>
             {% endif %}
@@ -337,8 +323,7 @@
         </div>
         {% endfor %}
     </div>
-    <div class="swiper-pagination"></div>
+<div class="swiper-pagination"></div>
 </div>
 </section>
-<script src="{% static 'js/swipers/fade_swiper.js' %}"></script>
 {% endif %}

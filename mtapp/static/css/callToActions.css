@@ -1,6 +1,3 @@
-@import url('variables.css');
-
-
 .cta-section {
     width: auto;
     color: white;
@@ -9,7 +6,7 @@
     box-shadow: 0 0 4px black;
     /* transition: 0.3s ease-in-out; */
     margin: 1rem;
-    transform: translateX(-200px);
+    /* transform: translateX(-200px) !important; */
     opacity: 0.1;
 }
 
@@ -102,9 +99,8 @@
 
 .cta-image-container img {
     border-radius: 1rem 1rem 1rem 1rem;
-    width: 100%;
-    height: 100%;
     object-fit: cover;
+    width: 100%;
 }
 
 .caption-zoom {

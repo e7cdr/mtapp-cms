@@ -4,6 +4,7 @@
 <link rel="stylesheet" href="{% static 'css/pricing_options.css' %}">
 {% endblock extra_css %}
 
+{% block content %}
 <div class="pricing-table" data-configurations="{{ configurations|json_escape }}" data-pricing-type="{{ tour.pricing_type }}" data-current-page="1">
     <div class="title">{% trans "Pricing Options" %}</div>
     {% if tour.pricing_type == 'Combined' %}
@@ -141,3 +142,4 @@
             <span id="total-results">{% if configurations|length == 1 %}{% trans "1 result" %}{% else %}{{ configurations|length }} {% trans "results" %}{% endif %}</span>
         </div>
     {% endif %}
+{% endblock content %}

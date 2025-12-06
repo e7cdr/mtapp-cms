@@ -2,7 +2,7 @@
 /*                  NAVBAR – FULL FIXED VERSION              */
 /* ========================================================= */
 
-@import url('variables.css');
+/*  */
 
 /* Reset */
 ul {
@@ -62,11 +62,10 @@ ul {
     display: flex;
     align-items: center;
     gap: 0.4rem;
-    padding: 0.35rem 0.75rem;
     border-radius: 8px;
-    color: #e5e7eb;
     font-size: 0.95rem;
     transition: all 0.2s ease;
+    background-color: none;
 }
 
 #languageToggle:hover {
@@ -258,8 +257,7 @@ ul {
     }
     
     #languageToggle {
-        font-size: 0.85rem;
-        padding: 0.25rem 0.5rem;
+        font-size: 0.6rem;
     }
     .navbar-menu > li > a {
         color: white;
@@ -280,8 +278,7 @@ ul {
     }
     
     #languageToggle {
-        font-size: 0.6rem;
-        padding: 0.1rem 0.1rem;
+        font-size: 0.4rem;
         scale: 0.7;
     }
     .navbar-menu > li > a {

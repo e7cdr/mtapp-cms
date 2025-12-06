@@ -13,7 +13,7 @@
                     {{ item.caption }}
                 </h1>
                 <a href="">
-            {% image item.image original as img %}
+            {% image item.image fill-1920x1080 format-webp webpquality-80  as img %}
                 <img src="{{ img.url }}" 
                 alt="{{ item.caption }}"
                 height=""

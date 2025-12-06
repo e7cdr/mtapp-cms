@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% load static i18n wagtailimages_tags wagtailcore_tags custom_filters model_extras %}
 
-{% block title %}Booking Form{% endblock title %}
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/booking_form.css' %}">
+<link rel="stylesheet" href="{% static 'vendor/css/flatpickr.min.css' %}">
 {% endblock extra_css %}
+<link rel="stylesheet" href="{% static 'css/booking_form.css' %}">
+{% block title %}Booking Form{% endblock title %}
 {% block content %}
-
 <section class="booking-section">
     <div class="container">
         <h2>{% trans "Request Your Tour" %}</h2>
@@ -89,7 +89,7 @@
                                 <div class="tour-display">
                                     <div class="tour-image mb-3">
                                         {% if tour.cover_image %}
-                                            {% image tour.cover_image fill-300x200 as tour_img %}
+                                            {% image tour.cover_image fill-300x200 format-webp as tour_img %}
                                             <img src="{{ tour_img.url }}" 
                                             class="tour-card-img" 
                                             alt="{{ tour.name|default:'Tour Image' }}" 
@@ -272,26 +272,23 @@
         </div>
     </div>
 </section>
-
-<!-- JSON data for JavaScript -->
-<script id="booking-data" type="application/json">
-{
-    "tourType": "{{ tour_type|escapejs }}",
-    "tourId": {{ tour.id|escapejs }},
-    "tourName": "{{ tour.name|escapejs }}",
-    "collect_price": {{ tour.collect_price|yesno:"true,false"|lower }},
-    "languagePrefix": "{{ LANGUAGE_CODE|escapejs }}",
-    "cancellationPolicy": "{{ tour.general_info|escapejs|truncatewords:20 }}",
-    "tour_start_date": "{{ tour_start_date|escapejs }}",
-    "tour_end_date": "{{ tour_end_date|escapejs }}",
-    "available_days": "{{ available_days|escapejs }}",
-    "blackout_dates": {{ blackout_dates_json|safe }}
-}
-</script>
-<!-- Flatpickr CSS/JS (kept for date picker) -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="{% static 'js/booking_form.js'%}"></script>
-
+    <script id="booking-data" type="application/json">
+    {
+        "tourType": "{{ tour_type|escapejs }}",
+        "tourId": {{ tour.id|escapejs }},
+        "tourName": "{{ tour.name|escapejs }}",
+        "collect_price": {{ tour.collect_price|yesno:"true,false"|lower }},
+        "languagePrefix": "{{ LANGUAGE_CODE|escapejs }}",
+        "cancellationPolicy": "{{ tour.general_info|escapejs|truncatewords:20 }}",
+        "tour_start_date": "{{ tour_start_date|escapejs }}",
+        "tour_end_date": "{{ tour_end_date|escapejs }}",
+        "available_days": "{{ available_days|escapejs }}",
+        "blackout_dates": {{ blackout_dates_json|safe }}
+    }
+    </script>
+    {% block extra_js %}
+    <!-- JSON data for JavaScript -->
+    <script src="{% static 'js/booking_form.js'%}"></script>
+    <script src="{% static 'vendor/js/flatpickr.js'%}"></script>
+    {% endblock extra_js %}
 {% endblock content %}

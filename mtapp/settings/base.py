@@ -9,7 +9,8 @@ from django.conf import settings
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE_DIR = os.path.dirname(PROJECT_DIR)
 
-SITE_URL = 'www.milanotravel.com.ec'
+# SITE_URL = 'www.milanotravel.com.ec'
+SITE_URL = '127.0.0.1:8000'
 
 # Sensitive keys from environment variables
 SECRET_KEY = config('SECRET_KEY')
@@ -87,8 +88,11 @@ INSTALLED_APPS = [
     # "staff_tools",
 ]
 
+
+
 MIDDLEWARE = [  # Order matters
     "django.middleware.security.SecurityMiddleware",
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -225,6 +229,7 @@ WAGTAIL_CONTENT_LANGUAGES = LANGUAGES
 STATICFILES_FINDERS = [
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
+    'compressor.finders.CompressorFinder',
 ]
 
 STATICFILES_DIRS = [
@@ -248,6 +253,7 @@ STORAGES = {
     },
 }
 
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Django sets a maximum of 1000 fields per form by default, but particularly complex page models
 # can exceed this limit within Wagtail's page editor.
@@ -268,7 +274,8 @@ WAGTAILSEARCH_BACKENDS = {
 
 # Base URL to use when referring to full URLs within the Wagtail admin backend -
 # e.g. in notification emails. Don't include '/admin' or a trailing slash
-WAGTAILADMIN_BASE_URL = "https://www.milanotravel.com.ec"
+# WAGTAILADMIN_BASE_URL = "https://www.milanotravel.com.ec"
+WAGTAILADMIN_BASE_URL = "127.0.0.1:8000"
 
 # Allowed file extensions for documents in the document library.
 # This can be omitted to allow all files, but note that this may present a security risk
@@ -352,6 +359,7 @@ WAGTAILIMAGES_FORMAT_CONVERSIONS = {
     'webp': 'webp',
     'ico': 'ico',
     'jpg': 'jpg',
+    'png': 'png',
 }
 
 WAGTAILIMAGES_EXTENSIONS = ['gif', 'ico', 'jpeg', 'png', 'svg', 'jpg']
@@ -408,3 +416,24 @@ WAGTAILAPI_LIMIT_TO_REGISTERED_USERS = True
 WAGTAIL_API_TOKEN = "e721f0ae2b34243f890464bb23978fe639bb78e4"
 
 
+INSTALLED_APPS += ['compressor']
+STATICFILES_FINDERS += ['compressor.finders.CompressorFinder']
+
+# django-compressor settings — MUST be like this
+COMPRESS_ENABLED = True
+COMPRESS_OFFLINE = True   
+COMPRESS_URL = STATIC_URL
+COMPRESS_ROOT = STATIC_ROOT
+
+# This makes the filename change when content changes
+COMPRESS_OUTPUT_DIR = 'CACHE'
+COMPRESS_TEMPLATE_FILTER = True
+COMPRESS_PRECOMPILERS = ()
+
+
+from django.views.static import serve as static_serve
+from django.views.decorators.cache import cache_control
+
+@cache_control(max_age=31536000, immutable=True)
+def media_serve(request, path, document_root=None):
+    return static_serve(request, path, document_root)

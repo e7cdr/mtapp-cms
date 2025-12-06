@@ -20,7 +20,7 @@
     place-self: anchor-center;
 }
 
-.swiper-slide {
+.basic-slide {
     text-align: center;
     font-size: 2rem;
     display: flex;
@@ -30,7 +30,7 @@
     height: auto !important;
 }
 
-.swiper-slide img {
+.basic-swipe-img {
     width: 95%;
     height: 100%;
     object-fit: cover;
@@ -38,7 +38,7 @@
     
 }
 
-.swiper-wrapper {
+.basic-wrapper{
     height: 30rem;
 }
 

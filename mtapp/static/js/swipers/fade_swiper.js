@@ -1,26 +1,11 @@
-document.addEventListener('DOMContentLoaded', function () {
-    // Fix loop warning if not enough slides
-    const totalSlides = document.querySelectorAll('.fade-swiper-container .swiper-slide').length;
 
-    var fadeSwiper = new Swiper('.fade-swiper-container', {
-        slidesPerView: 1,                         // Fade effect only works with 1 slide visible
-        spaceBetween: 0,
-        loop: totalSlides > 2,                    // Auto-disable loop if ≤2 items
-        pagination: {
-            el: '.swiper-pagination',
-        },
-        effect: 'fade',
-        fadeEffect: {
-            crossFade: true
-        },
-        autoplay: false,                          // We control timing manually
-        speed: 2000,
-        lazy: true,
-        keyboard: true,
-        grabCursor: true,
-        allowTouchMove: true                      // Optional: allow swipe on mobile
-    });
+document.addEventListener('DOMContentLoaded', () => {
+    const fadeContainer = document.querySelector('.fade-swiper-container');
+    if (!fadeContainer) return;
 
+    const totalSlides = fadeContainer.querySelectorAll('.swiper-slide').length;
+
+    // === 1. SWIPER + YOUTUBE LOGIC ===
     const players = {};
 
     function loadAndPlayYouTubeVideo(container) {
@@ -41,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function () {
             events: {
                 onReady: (e) => {
                     const iframe = e.target.getIframe();
-                    iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; passive-touch');
+                    iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
                     iframe.setAttribute('loading', 'lazy');
                     e.target.playVideo();
                 }
@@ -50,12 +35,26 @@ document.addEventListener('DOMContentLoaded', function () {
         return player;
     }
 
-    // Main magic: runs on every slide change
+    const fadeSwiper = new Swiper(fadeContainer, {
+        slidesPerView: 1,
+        spaceBetween: 0,
+        loop: totalSlides > 2,
+        pagination: { el: '.swiper-pagination' },
+        effect: 'fade',
+        fadeEffect: { crossFade: true },
+        autoplay: false,
+        speed: 2000,
+        lazy: true,
+        keyboard: true,
+        grabCursor: true,
+        allowTouchMove: true
+    });
+
     fadeSwiper.on('slideChange transitionEnd', function () {
         const prevIndex = this.previousRealIndex !== undefined ? this.previousRealIndex : this.realIndex;
         const activeIndex = this.realIndex;
 
-        // Pause & clean previous video
+        // Stop previous video
         if (players[prevIndex]) {
             players[prevIndex].pauseVideo();
             if (players[prevIndex]._onEnded) {
@@ -67,14 +66,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const youtubeContainer = activeSlide.querySelector('.youtube-lazy');
 
         if (youtubeContainer) {
-            // YouTube slide
             if (!players[activeIndex]) {
                 players[activeIndex] = loadAndPlayYouTubeVideo(youtubeContainer);
             } else {
                 players[activeIndex].playVideo();
             }
 
-            // Auto-next when video ends
             const player = players[activeIndex];
             const onEnded = (event) => {
                 if (event.data === YT.PlayerState.ENDED) {
@@ -83,18 +80,17 @@ document.addEventListener('DOMContentLoaded', function () {
             };
             player._onEnded = onEnded;
             player.addEventListener('onStateChange', onEnded);
-
         } else {
-            // Image slide → auto-advance after delay
+            // Image slide → auto-advance after 6 seconds
             setTimeout(() => {
                 if (fadeSwiper.realIndex === activeIndex) {
                     fadeSwiper.slideNext();
                 }
-            }, 6000); // 6 seconds for images
+            }, 6000);
         }
     });
 
-    // Start the show
+    // Kickstart first slide
     fadeSwiper.on('init', function () {
         setTimeout(() => this.emit('slideChange'), 400);
     });
@@ -106,5 +102,46 @@ document.addEventListener('DOMContentLoaded', function () {
         tag.src = "https://www.youtube.com/iframe_api";
         const firstScript = document.getElementsByTagName('script')[0];
         firstScript.parentNode.insertBefore(tag, firstScript);
+    }
+
+    // === 2. GSAP TITLE ANIMATION (zero forced reflows) ===
+    const titleEl = document.querySelector('.fade-title h1');
+    const section = document.querySelector('.fade-swiper-section');
+
+    if (titleEl && section) {
+        document.fonts.ready.then(() => {
+            gsap.registerPlugin(ScrollTrigger, SplitText);
+
+            // THIS LINE KILLS ALL FORCED REFLOWS
+            gsap.context(() => {
+                const split = new SplitText(titleEl, { type: "chars" });
+
+                const tl = gsap.timeline({
+                    scrollTrigger: {
+                        trigger: section,
+                        start: "top 80%",
+                        toggleActions: "play none none reverse"
+                    }
+                });
+
+                tl.fromTo(fadeContainer,
+                    { opacity: 0, y: 60 },
+                    { opacity: 1, y: 0, duration: 1.4, ease: "power3.out" }
+                );
+
+                tl.to(split.chars, {
+                    color: "#ffe66cff",
+                    x: -3,
+                    scale: 1.01,
+                    duration: 0.9,
+                    stagger: { from: "random", each: 0.04 },
+                    repeat: -1,
+                    yoyo: true,
+                    repeatDelay: 3,
+                    ease: "sine.inOut"
+                }, "-=0.8");
+
+            }, section); // ← scoped = no layout thrashing
+        });
     }
 });

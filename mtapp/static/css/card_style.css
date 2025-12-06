@@ -1,5 +1,5 @@
 
-@import url('variables.css');
+/*  */
 
 .card-container {
     display: grid;  /* To make a grid, first call it in display then  add grid-templates*/
@@ -163,6 +163,11 @@
     font-size: large;
     font-weight: 700;
     margin-bottom: 0;
+}
+
+.text-zone a {
+    color: inherit;
+    text-decoration: none;
 }
 
 

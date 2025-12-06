@@ -1,7 +1,7 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% load static %}
 
-{% block title %}Rate Limit Exceeded{% endblock %}
+{% block title %}Rate Limit Exceeded{% endblock title %}
 
 {% block content %}
 <div class="container mx-auto p-8 text-center max-w-md">
@@ -14,4 +14,4 @@
         <p class="text-sm text-gray-500">Need help? <a href="{% url 'contact' %}" class="text-blue-500">Contact us</a>.</p>
     </div>
 </div>
-{% endblock %}
+{% endblock content %}

@@ -2,10 +2,11 @@
 {% load static i18n wagtailcore_tags wagtailimages_tags wagtailroutablepage_tags tour_filters %}
 
 {% block title %} {{ self.title }} {% endblock title %}
-
-{% block content %}
-<link rel="stylesheet" href="{% static 'css/card_style.css' %}"/>
+{% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/layout.css' %}"/>
+<link rel="stylesheet" href="{% static 'css/card_style.css' %}"/>
+{% endblock extra_css %}
+{% block content %}
 
 {% block body_content %}
 {% for block in page.body_content %}
@@ -220,7 +221,6 @@
 </div>
 </section>
 {% block extra_js %}
-
 <script src="{% static 'js/tours_index.js' %}"></script>
 {% endblock extra_js %}
 

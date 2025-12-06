@@ -1,13 +1,12 @@
-
 * {
     box-sizing: border-box;
 }
-.fade-swiper-section .swiper{
+
+.fade-swiper-section .swiper {
     width: 100%;
     overflow: hidden;
     position: relative;
     max-height: 50rem;
-    height: auto;
     border-radius: 0;
 
 }
@@ -33,7 +32,7 @@
     border-radius: 0;
 }
 
-.fade-swiper-container .swiper-wrapper .swiper-slide img {
+.fade-image {
     width: 100%;
     height: auto;
     opacity: 0.6;
@@ -42,7 +41,7 @@
 }
 
 .fade-swiper-container .swiper-wrapper {
-    /* height: 100% !important; */
+    height: 100% !important;
     max-height: 100%;
     translate: 0;
 }
@@ -53,9 +52,9 @@
 
 @media (max-width:600px) {
     .swiper-pagination {
-    bottom: 36% !important;
-}
-    
+        bottom: 36% !important;
+    }
+
 }
 
 
@@ -68,7 +67,7 @@
     justify-self: center;
     font-variant: small-caps;
     animation: blur-fadein ease-in 1s;
-    
+
 
 }
 
@@ -78,7 +77,8 @@
     text-align: center;
     opacity: 0;
     filter: blur(20px);
-    animation: blur-fadein 2s ease-in forwards 1;  /* animation: animation name, time, effect, how many times*/
+    animation: blur-fadein 2s ease-in forwards 1;
+    /* animation: animation name, time, effect, how many times*/
     color: white;
     place-self: anchor-center;
     width: 100%;
@@ -97,19 +97,21 @@
     margin-top: 2rem;
 
 }
+
 @keyframes blur-fadein {
     from {
         opacity: 0;
         filter: blur(20px);
 
     }
-    to{
+
+    to {
         opacity: 1;
         filter: blur(0);
     }
 }
 
-@media (max-width:510px){
+@media (max-width:510px) {
     .fade-title h1 {
         font-size: 2.3rem
     }

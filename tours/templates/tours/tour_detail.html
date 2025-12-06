@@ -1,83 +1,12 @@
 {% extends "base.html" %} {% load static i18n tour_filters custom_filters wagtailcore_tags wagtailimages_tags %}
 {% block title %}{{ self.title }}
 {% endblock title %}
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/detail_page.css' %}" />
-<style>
-    .video-modal {
-    display: none;
-    position: fixed;
-    z-index: 10000;
-    left: 0; top: 0;
-    width: 100%; height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.85);
-    animation: fadeIn 0.3s;
-    }
-
-    .video-modal-content {
-    position: relative;
-    margin: 5% auto;
-    padding: 20px;
-    width: 90%;
-    max-width: 900px;
-    background: #000;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-    }
-
-    .video-wrapper {
-    position: relative;
-    padding-bottom: 56.25%; /* 16:9 aspect ratio */
-    height: 0;
-    overflow: hidden;
-    }
-
-    .video-wrapper iframe {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    border-radius: 8px;
-    }
-
-    .video-modal-close {
-    position: absolute;
-    top: -10px;
-    right: 10px;
-    color: #fff;
-    font-size: 40px;
-    font-weight: bold;
-    cursor: pointer;
-    z-index: 10001;
-    text-shadow: 0 0 10px rgba(0,0,0,0.8);
-    }
-
-    .video-modal-close:hover {
-    color: #ff5a5a;
-    }
-
-    /* Optional fade animations */
-    @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-    }
-
-    .bi-sun-fill {
-        color: #f59e0b;
-        filter: drop-shadow(0 0 4px rgba(251, 146, 60, 0.4));
-    }
-    .bi-moon-stars-fill {
-        color: #4f46e5;
-        filter: drop-shadow(0 0 4px rgba(99, 102, 241, 0.4));
-    }
-</style>
-{% endblock extra_css %}
 {% block content %}
 
  <div class="detail-container">
   <div class="cover-image-container">
    <div class="cover-image">
-    {% image self.cover_image original as img %}
+    {% image self.cover_image fill-1920x1080 format-webp webpquality-80 as img %}
     <img src="{{ img.url }}" alt="Tour cover image" loading="lazy" height="" width="" />
    </div>
    <div class="cover-text">
@@ -488,7 +417,6 @@
  </div>
 {% endblock content %}
 {% block extra_js %}
-<script src="{% static 'js/tour_detail.js' %}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const videoId = "{{ self.yt_vid|escapejs }}".trim();

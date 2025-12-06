@@ -1,9 +1,8 @@
 {% load static i18n dict_tags navbar_tags wagtailcore_tags wagtailimages_tags %}
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/swipers/fade_swiper.css' %}">
 <style>
-  .fade-swiper-container .swiper-wrapper .swiper-slide img {
-    height: {{ self.height }}rem;
+  .fade-image, .fade-swiper-section .swiper {
+    height: {{ self.height }}rem !important;
 }
 </style>
 {% endblock extra_css %}
@@ -23,18 +22,10 @@
     <div class="swiper-wrapper">
         {% for item in value.images %}
         <div class="swiper-slide">
-            {% image item.image original as img %}
+            {% image item.image fill-1920x1080 format-webp webpquality-80 fetchpriority="high" loading=lazy alt="{{ item.caption }}" class="fade-image" %}
             {% if item.link %}
             <a href="{{ item.link.url }}"></a>
             {% endif %}
-            <img
-            height=""
-            width=""
-            src="{{ img.url }}"
-            alt="{{ item.caption|default:'Swiper images' }}"
-            id="slide-{{ forloop.counter }}"
-            loading="lazy"
-            />
             {% if item.caption %}
             <p class="caption">{{ item.caption }}</p>
             {% endif %}
@@ -44,37 +35,4 @@
 <div class="swiper-pagination"></div>
 </div>
 </section>
-{% block extra_js %}
-<script src="{% static 'js/swipers/fade_swiper.js' %}"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        gsap.registerPlugin(ScrollTrigger, SplitText);
-        let tl = gsap.timeline({
-            scrollTrigger: ".fade-swiper-section",
-            scrub: 1,
-            start: "top top",
-        });
-
-        tl.fromTo('.fade-swiper-container', {
-            opacity: 0,
-        }, {
-            opacity: 1,
-            duration: 2,
-            ease: "sine.out",
-        });
-        document.fonts.ready.then(() => {
-            SplitText.create(".fade-title h1", 
-                {type: "chars",
-                onSplit(self) {
-                    tl.to(self.chars, {color: "#ffe66cff", x: -2, scale: 1.005,
-                                    stagger: { grid: 'auto', from: 'random', each: 0.5, }, 
-                                    repeat: -1, delay: 2, repeatDelay: 2, yoyo: true,
-                        onComplete: () => self.revert()
-                    });
-                },
-                });
-            });
-    });
-</script>
-{% endblock extra_js %}
 {% endblock content %}

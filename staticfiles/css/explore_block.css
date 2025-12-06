@@ -1,5 +1,5 @@
 
-@import url('variables.css');
+/*  */
 
 
 @keyframes scale-in {
@@ -92,7 +92,7 @@
 
 .explore-content-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: 1fr 1fr 1fr;
     width: auto;
     gap: 1rem;
     text-align: justify;
@@ -129,7 +129,6 @@
 .explore-content-grid div:nth-child(5) {
 
     grid-row: 1 / span 2;
-    width: auto;
     object-fit: cover;
     flex-shrink: 0;
     width: auto;
@@ -138,12 +137,21 @@
     border-radius: 999px;
 }
 
-.explore-content-grid div:nth-child(5) img {
+.explore-image {
 
     animation: 800ms linear scale-in;
     animation-range: entry 0% cover 30%;
     animation-timeline: view();
     border-radius: 999px;
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+}
+
+.explore-image:hover {
+
+    scale: 1.05;
+    box-shadow: 0 0 1rem black;
 }
 
 .explore-content-item span {
@@ -182,13 +190,11 @@
     .explore-content-item h1 {
         font-size: medium;
     }
-}
-
-@media (max-width:500px) {
     .explore-content-grid {
         display: block;
     }
-
 }
+
+
 
 

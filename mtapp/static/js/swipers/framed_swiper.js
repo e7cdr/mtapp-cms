@@ -22,8 +22,9 @@ document.addEventListener('DOMContentLoaded', function(){
             },
             autoplay: {
                 delay: 2000,
-            },        
-            speed: 2000,
+                pauseOnMouseEnter: true,     
+            },   
+            speed: 3000,
         lazy: true,
         // lazyPreloaderClass:"swiper-lazy-preloader",
         // lazyPreloadPrevNext: 1,

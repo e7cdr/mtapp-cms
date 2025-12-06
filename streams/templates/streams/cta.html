@@ -1,18 +1,15 @@
 
 {% load static wagtailimages_tags custom_filters wagtailcore_tags %}
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/callToActions.css' %}">
-{% endblock extra_css %}
 {% block content %}
 <section class="cta-section" style="background-color: var({{ self.background_color }});">
     {% if self.image_position == "top" %}
         {% if self.image %}
         <div class="cta-image-container">
-            {% image self.image original as img %}
+            {% image self.image original format-webp webpquality-80 as img %}
             <img src="{{ img.url }}" 
             alt="{{ self.caption }}"
-            height=""
-            width=""
+            height="480"
+            width="100%"
             >
             <p class="caption-zoom">{{ self.caption }}</p>
         </div>
@@ -41,12 +38,7 @@
     {% if self.image_position == "bottom" %}
         {% if self.image %}
         <div class="cta-image-container">
-            {% image self.image original as img %}
-            <img src="{{ img.url }}" 
-            alt="{{ self.caption }}"
-            height=""
-            width=""
-            >
+            {% image self.image fill-1373x480 format-webp webpquality-80 loading="lazy" alt="{{ self.caption }}" %}
             <p class="caption-zoom">{{ self.caption }}</p>
         </div>
         {% endif %}
@@ -54,7 +46,7 @@
 </section>
 {% endblock content %}
 {% block extra_js %}
-<script>
+{% comment %} <script>
     document.addEventListener("DOMContentLoaded", () => {
 
         gsap.registerPlugin(ScrollTrigger, SplitText);
@@ -63,7 +55,7 @@
             scrub: 1,
             start: "top top",
         });
-        tl.fromTo('.cta-section', {backgroundColor: "red", scale: 0}, { x: 0, opacity: 1, duration: 1, ease: "power1.inOut", scale: 1, backgroundColor: "#282828"},
+        tl.fromTo('.cta-section', {backgroundColor: "red", scale: 0, x: -200}, { x: 0, opacity: 1, duration: 1, ease: "power1.inOut", scale: 1, backgroundColor: "#282828"},
         ).fromTo('.action-button', { y: "random(-500, 900)", opacity: 0 }, { y: 0, opacity: 1, duration: 0.2, ease: "power1.inOut", },
         ).fromTo('.action-button-2', { x: "random(-800, 400)", opacity: 0 }, { x: 0, opacity: 1, duration: 0.1, ease: "power1.inOut", }
         ).fromTo('.top-text-side', { x: "random(-900, 500)", opacity: 0 }, { x: 0, opacity: 1, duration: 0.3, ease: "power1.inOut", }
@@ -128,6 +120,7 @@
         });
 
         })
-</script>
+</script> {% endcomment %}
+<script src="{% static 'js/gsap/cta.js' %}"></script>
 {% endblock extra_js %}
 

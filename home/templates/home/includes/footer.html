@@ -11,10 +11,10 @@
             <div class="badge">
                 {% if logo.url %}
                     <a href="{{ logo.url }}" target="_blank" rel="noopener sponsored">
-                        {% image logo.image original loading="lazy" alt=logo.caption|default:"Sponsor logo" %}
+                        {% image logo.image original format-webp webpquality-80 loading="lazy" alt=logo.caption|default:"Sponsor logo" %}
                     </a>
                 {% else %}
-                    {% image logo.image original loading="lazy" alt=logo.caption|default:"Badge" %}
+                    {% image logo.image original format-webp webpquality-80 loading="lazy" alt=logo.caption|default:"Badge" %}
                 {% endif %}
             </div>
         {% endfor %}
@@ -41,8 +41,8 @@
         <div class="brand-wrap">
             <a href="{% url 'wagtail_serve' '' %}">
             <img src="{% static 'default_media/logo.png' %}" alt="Milano Travel Logo" 
-            height=""
-            width=""
+            width="53"
+            height="44"
             loading="lazy"
             />
             </a>
