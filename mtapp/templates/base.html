@@ -1,7 +1,7 @@
 {% load static wagtailcore_tags wagtailuserbar i18n dict_tags compress %}
 
 <!DOCTYPE html>
-<html lang="{% get_current_language as LANGUAGE_CODE %}{{ LANGUAGE_CODE }}">
+<html style="scroll-behavior: smooth;" lang="{% get_current_language as LANGUAGE_CODE %}{{ LANGUAGE_CODE }}">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -84,7 +84,7 @@
 </style>
 </head>
 
-<body class="{% block body_class %}{% endblock body_class %}">
+<body>
     {% wagtailuserbar %}
 
     {% block navigation %}
