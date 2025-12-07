@@ -65,7 +65,8 @@ ul {
     border-radius: 8px;
     font-size: 0.95rem;
     transition: all 0.2s ease;
-    background-color: none;
+    background-color: unset;
+    border: unset;
 }
 
 #languageToggle:hover {
@@ -257,8 +258,8 @@ ul {
     }
     
     #languageToggle {
-        font-size: 0.6rem;
-    }
+    scale: 0.5;    
+}
     .navbar-menu > li > a {
         color: white;
         text-decoration: none;

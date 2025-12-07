@@ -1,11 +1,17 @@
-{% extends "base.html" %}
-
-{% block title %}Page not found{% endblock %}
-
-{% block body_class %}template-404{% endblock %}
-
-{% block content %}
-<h1>Page not found</h1>
-
-<h2>Sorry, this page could not be found.</h2>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Page not found – Milanotravel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {% load static %}
+    <link href="{% static 'css/main.css' %}" rel="stylesheet">
+</head>
+<body>
+    <div style="text-align:center; padding:60px; font-family:sans-serif;">
+        <h1>404 – Page not found</h1>
+        <p>Sorry, we couldn't find the page you're looking for.</p>
+        <p><a href="/">← Go to homepage</a></p>
+    </div>
+</body>
+</html>

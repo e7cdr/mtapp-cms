@@ -3,9 +3,13 @@ from decouple import config
 
 
 DEBUG = False
-LOGGING['loggers']['django.request']['level'] = 'DEBUG'
-ALLOWED_HOSTS = [config('ALLOWED_HOSTS')]
-STORAGES["staticfiles"]["BACKEND"] = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
+ALLOWED_HOSTS = [
+    'milanotravel.com.ec',
+    'www.milanotravel.com.ec',
+    'milanotravel.pythonanywhere.com',
+    # Optional: catch any subdomains
+    '.milanotravel.com.ec',
+]
 
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -56,3 +60,4 @@ try:
     from .local import *
 except ImportError:
     pass
+

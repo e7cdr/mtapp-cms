@@ -9,8 +9,8 @@ from django.conf import settings
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE_DIR = os.path.dirname(PROJECT_DIR)
 
-# SITE_URL = 'www.milanotravel.com.ec'
-SITE_URL = '127.0.0.1:8000'
+SITE_URL = 'www.milanotravel.com.ec'
+# SITE_URL = '127.0.0.1:8000'
 
 # Sensitive keys from environment variables
 SECRET_KEY = config('SECRET_KEY')
@@ -253,6 +253,8 @@ STORAGES = {
     },
 }
 
+ADMINS = [('e7c', 'evc1893@gmail.com')]
+
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Django sets a maximum of 1000 fields per form by default, but particularly complex page models
@@ -274,8 +276,8 @@ WAGTAILSEARCH_BACKENDS = {
 
 # Base URL to use when referring to full URLs within the Wagtail admin backend -
 # e.g. in notification emails. Don't include '/admin' or a trailing slash
-# WAGTAILADMIN_BASE_URL = "https://www.milanotravel.com.ec"
-WAGTAILADMIN_BASE_URL = "127.0.0.1:8000"
+WAGTAILADMIN_BASE_URL = "https://www.milanotravel.com.ec"
+# WAGTAILADMIN_BASE_URL = "127.0.0.1:8000"
 
 # Allowed file extensions for documents in the document library.
 # This can be omitted to allow all files, but note that this may present a security risk
@@ -284,75 +286,51 @@ WAGTAILADMIN_BASE_URL = "127.0.0.1:8000"
 WAGTAILDOCS_EXTENSIONS = ['csv', 'docx', 'key', 'odt', 'pdf', 'pptx', 'rtf', 'txt', 'xlsx', 'zip']
 WAGTAILDOCS_DOCUMENT_MODEL = 'documents.CustomDocument'
 
-logs_dir = Path(BASE_DIR) / 'logs'
-logs_dir.mkdir(exist_ok=True)
+
 
 # Logging.debugger configuration
+
+logs_dir = Path(BASE_DIR) / 'logs'
+logs_dir.mkdir(exist_ok=True)
 
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'format': '{levelname} {asctime} {name} {module} {message}',
             'style': '{',
         },
     },
     'handlers': {
         'console': {
-            'level': 'DEBUG',  # Low for full errors
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
-    },
-    'root': {
-        'handlers': ['console'],
-        'level': 'INFO',
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'full_error.log'),
+            'formatter': 'verbose',
+        },
     },
     'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': 'ERROR',
+        'django.server': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',          # This is the missing piece
             'propagate': False,
         },
-        'django.request': {  # For 500s
-            'handlers': ['console'],
-            'level': 'DEBUG',  # Temp DEBUG for tracebacks
-            'propagate': True,
-        },
-        'django.template': {  # For static/template errors
-            'handlers': ['console'],
-            'level': 'ERROR',
-            'propagate': False,
-        },
-        'mtapp.tours.models': {
-            'handlers': ['console'],
+        'django.request': {
+            'handlers': ['console', 'file'],
             'level': 'DEBUG',
             'propagate': False,
         },
-        'wagtail_localize': {
-            'handlers': ['console'],
+        'django.template': {
+            'handlers': ['console', 'file'],
             'level': 'DEBUG',
             'propagate': False,
-        },
-        'wagtail': {
-            'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'django.core.mail': {  # NEW: Catches SMTP connect/send details
-            'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
-        'smtplib': {  # NEW: Low-level SMTP server responses
-            'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': True,
         },
     },
 }
-
 
 WAGTAILIMAGES_FORMAT_CONVERSIONS = {
     'gif': 'gif',
@@ -421,7 +399,7 @@ STATICFILES_FINDERS += ['compressor.finders.CompressorFinder']
 
 # django-compressor settings — MUST be like this
 COMPRESS_ENABLED = True
-COMPRESS_OFFLINE = True   
+COMPRESS_OFFLINE = True
 COMPRESS_URL = STATIC_URL
 COMPRESS_ROOT = STATIC_ROOT
 
@@ -429,6 +407,8 @@ COMPRESS_ROOT = STATIC_ROOT
 COMPRESS_OUTPUT_DIR = 'CACHE'
 COMPRESS_TEMPLATE_FILTER = True
 COMPRESS_PRECOMPILERS = ()
+
+
 
 
 from django.views.static import serve as static_serve
