@@ -95,14 +95,14 @@ footer {
 
 .social-media-wrap button {
     background-color: white;
-    width: 2rem;
+    width: 1.8rem;
     color: #38bdf8;
     text-align-last: center;
     box-shadow: 0 3px 3px 1px rgba(0, 0, 0, 0.15);
     outline: 2px solid transparent;
     outline-offset: 2px;
     margin-right: 0.5rem;
-    height: 2rem;
+    height: 1.8rem;
     font-weight: 400;
     align-items: center;
     border-radius: 9999px;
