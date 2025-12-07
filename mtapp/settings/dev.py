@@ -13,6 +13,7 @@ ALLOWED_HOSTS = ["*"]
 SITE_URL = 'http://127.0.0.1:8000'
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+WAGTAILADMIN_BASE_URL = "127.0.0.1:8000"
 
 DATABASES = {
     'default': {
@@ -51,6 +52,13 @@ CSRF_COOKIE_SECURE = False
 SECURE_HSTS_SECONDS = 0  # Disables HSTS
 SECURE_HSTS_INCLUDE_SUBDOMAINS = False
 SECURE_HSTS_PRELOAD = False
+
+WAGTAIL_CACHE_BACKEND = 'default'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+DEFAULT_FILE_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+WHITENOISE_MAX_AGE = 60 * 60 
+WHITENOISE_IMMUTABLE_FILE_TEST = lambda path, url: True  # Treat all static/media as immutable
 
 
 CACHES = {

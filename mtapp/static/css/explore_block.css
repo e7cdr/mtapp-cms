@@ -1,9 +1,5 @@
-
-/*  */
-
-
 @keyframes scale-in {
-    from{
+    from {
         scale: 0.7;
         filter: blur(10px);
     }
@@ -15,7 +11,7 @@
 }
 
 
-.explore-section{
+.explore-section {
     background-color: white;
     box-shadow: 0px 2px 7px black;
     border-radius: 1rem;
@@ -43,10 +39,6 @@
     animation-timeline: view();
 }
 
-.highlight {
-    color: #2b7fff;
-}
-
 .separator {
     margin-top: .5rem !important;
     animation: 800ms linear scale-in;
@@ -58,8 +50,7 @@
     width: calc(var(--spacing) * 40);
 }
 
-.separator span:nth-child(2)
- {
+.separator span:nth-child(2) {
     width: calc(var(--spacing) * 4);
     margin-left: 0.25rem;
 
@@ -71,11 +62,12 @@
     margin-left: 0.25rem;
 
 }
+
 .separator span:nth-child(1),
 .separator span:nth-child(2),
 .separator span:nth-child(3) {
     display: inline-block;
-    background-color:#2b7fff;
+    background-color: #2b7fff;
     border-radius: 9999px;
     height: calc(var(--spacing) * 1);
     animation: 800ms linear scale-in;
@@ -96,10 +88,8 @@
     width: auto;
     gap: 1rem;
     text-align: justify;
-    
 
 }
-
 
 .explore-content-item {
     margin-top: 0.5rem;
@@ -107,16 +97,6 @@
     animation-range: entry 0% cover 30%;
     animation-timeline: view();
 }
-
-
-/* .explore-content-grid div:nth-child(1) {
-    border: 2px solid blue;
-}
-
-.explore-content-grid div:nth-child(2) {
-    
-    border: 2px solid rgb(255, 64, 0);
-} */
 
 .explore-content-grid div:nth-child(3) {
     grid-row: 2;
@@ -148,12 +128,6 @@
     object-fit: cover;
 }
 
-.explore-image:hover {
-
-    scale: 1.05;
-    box-shadow: 0 0 1rem black;
-}
-
 .explore-content-item span {
     padding: 0.5rem;
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
@@ -169,20 +143,11 @@
     font-weight: 600;
 }
 
+.highlight {
+    color: #2b7fff;
+}
 
- .highlight {
-  color: #2b7fff; /* Red color for the styled word */
- }
-
- /* Adjust for dark mode readability */
- @media (prefers-color-scheme: dark) {
-  .highlight {
-   color: #2b7fff; /* Lighter red for dark mode */
-  }
- }
-
- @media (max-width: 700px) {
-    
+@media (max-width: 700px) {
     .explore-content-item p {
         font-size: small;
     }
@@ -190,11 +155,8 @@
     .explore-content-item h1 {
         font-size: medium;
     }
+
     .explore-content-grid {
         display: block;
     }
 }
-
-
-
-

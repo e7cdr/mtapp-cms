@@ -1,21 +1,8 @@
-
-
-
 .post-container {
     width: auto;
     padding: 1rem;
     text-align: center;
 
-}
-
-
-
-.post-container h1 {
-    font-family: math;
-    box-shadow: 0 0 3px black;
-    display: inline;
-    padding-inline: 1rem;
-    border-radius: 1rem;
 }
 
 .post-wrapper {
@@ -26,8 +13,6 @@
     height: auto;
     grid-template-columns: 1fr 1fr 1fr;
 }
-
-
 
 @property --angle {
     syntax: '<angle>';
@@ -72,11 +57,6 @@
             --angle: 360deg;
         }
     }
-    
-
-.post-card:hover {
-    scale: 1.05;
-}
 
 .post-desc {
     position: absolute;

@@ -6,11 +6,11 @@ document.addEventListener("DOMContentLoaded", () => {
         scrub: 1,
         start: "top top",
     });
-    tl.fromTo('.cta-section', {backgroundColor: "red", x: -200}, { x: 0, opacity: 1, duration: 1, ease: "power1.inOut", backgroundColor: "#282828"},
-    ).fromTo('.action-button', { y: "random(-500, 900)", opacity: 0 }, { y: 0, opacity: 1, duration: 0.2, ease: "power1.inOut", },
-    ).fromTo('.action-button-2', { x: "random(-800, 400)", opacity: 0 }, { x: 0, opacity: 1, duration: 0.1, ease: "power1.inOut", }
-    ).fromTo('.top-text-side', { x: "random(-900, 500)", opacity: 0 }, { x: 0, opacity: 1, duration: 0.3, ease: "power1.inOut", }
-    ).fromTo('.cta-image-container', { x: "random(-100, 200)", scale: 0, opacity: 0 }, { x: 0, opacity: 1, scale: 1, duration: 0.6 }
+    tl.fromTo('.cta-section', {backgroundColor: "red", x: -20}, { x: 0, opacity: 1, duration: 1, ease: "power1.inOut", backgroundColor: "#282828"},
+    ).fromTo('.action-button', { y: "random(-50, 90)", opacity: 0 }, { y: 0, opacity: 1, duration: 0.2, ease: "power1.inOut", },
+    ).fromTo('.action-button-2', { x: "random(-80, 40)", opacity: 0 }, { x: 0, opacity: 1, duration: 0.1, ease: "power1.inOut", }
+    ).fromTo('.top-text-side', { x: "random(-90, 50)", opacity: 0 }, { x: 0, opacity: 1, duration: 0.3, ease: "power1.inOut", }
+    ).fromTo('.cta-image-container', { x: "random(-10, 30)", scale: 0, opacity: 0 }, { x: 0, opacity: 1, scale: 1, duration: 0.6 }
     ).to('.cta-section', { scale: 1.01, repeat: -1, yoyo: true, duration: 2, ease: "power1.inOut"});
     document.fonts.ready.then(() => {
         
@@ -20,8 +20,8 @@ document.addEventListener("DOMContentLoaded", () => {
             tl.from(self.words, {
                 autoAlpha: 0,
                 scale: 5,
-                x: "random(-220, 600)",
-                y: "random(-420, 100)",
+                x: "random(-22, 30)",
+                y: "random(-10, 20)",
                 stagger: 0.05,
                 duration: 0.6,
                 ease: "power1.inOut",
@@ -38,8 +38,8 @@ document.addEventListener("DOMContentLoaded", () => {
             tl.from(self.words, {
                 autoAlpha: 0,
                 scale: 5,
-                x: "random(-220, 600)",
-                y: "random(-420, 100)",
+                x: "random(-20, 10)",
+                y: "random(-22, 10)",
                 stagger: 0.05,
                 duration: 0.6,
                 ease: "power1.inOut",
@@ -50,24 +50,6 @@ document.addEventListener("DOMContentLoaded", () => {
         },
         
         });
-        // SplitText.create(".caption-zoom", 
-        // {type: "chars",
-        // onSplit(self) {
-        //     tl.from(self.chars, {
-        //         autoAlpha: 0,
-        //         scale: 5,
-        //         x: "random(-220, 600)",
-        //         y: "random(-420, 100)",
-        //         stagger: 0.05,
-        //         duration: 0.6,
-        //         ease: "power1.inOut",
-        //     }, 0.9
-        //     ).to(self.chars, {color: "rgba(0, 0, 0, 1)", scale: 1.15, textShadow: "0 0 0.2rem white", y: -5, stagger: 0.51, delay: 1, repeatDelay: 2, repeat: -1, yoyo: true,
-        //         onComplete: () => self.revert()
-        //     });
-        // },
-        
-        // });
     });
 
     })

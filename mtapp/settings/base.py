@@ -9,9 +9,6 @@ from django.conf import settings
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE_DIR = os.path.dirname(PROJECT_DIR)
 
-SITE_URL = 'www.milanotravel.com.ec'
-# SITE_URL = '127.0.0.1:8000'
-
 # Sensitive keys from environment variables
 SECRET_KEY = config('SECRET_KEY')
 OPEN_EXCHANGE_RATES_API_KEY = config('OPEN_EXCHANGE_RATES_API_KEY')
@@ -167,21 +164,6 @@ CAPTCHA_OUTPUT_FORMAT = '<div class="captcha-wrapper">%(image)s <input type="tex
 
 WSGI_APPLICATION = "mtapp.wsgi.application"
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST', default='www.milanotravel.com.ec'),
-        'PORT': config('DB_PORT', default='3306'),
-        'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            'charset': 'utf8mb4',
-        },
-    }
-}
-
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
@@ -279,8 +261,6 @@ WAGTAILSEARCH_BACKENDS = {
 
 # Base URL to use when referring to full URLs within the Wagtail admin backend -
 # e.g. in notification emails. Don't include '/admin' or a trailing slash
-WAGTAILADMIN_BASE_URL = "https://www.milanotravel.com.ec"
-# WAGTAILADMIN_BASE_URL = "127.0.0.1:8000"
 
 # Allowed file extensions for documents in the document library.
 # This can be omitted to allow all files, but note that this may present a security risk
@@ -363,19 +343,6 @@ WAGTAILADMIN_RICH_TEXT_EDITORS = {
     }
 }
 
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
-        'LOCATION': 'default',  # Uses your main DB
-        'TIMEOUT': 300,  # 5 min default; tune for ratelimit
-        'OPTIONS': {
-            'MAX_ENTRIES': 1000,  # Soft limit; evict old if full
-            'CULL_FREQUENCY': 3,  # Check for eviction 1/3 of time
-        },
-    }
-}
-
-
 # API
 
 REST_FRAMEWORK = {
@@ -410,9 +377,6 @@ COMPRESS_ROOT = STATIC_ROOT
 COMPRESS_OUTPUT_DIR = 'CACHE'
 COMPRESS_TEMPLATE_FILTER = True
 COMPRESS_PRECOMPILERS = ()
-
-
-
 
 from django.views.static import serve as static_serve
 from django.views.decorators.cache import cache_control

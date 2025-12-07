@@ -11,6 +11,21 @@ ALLOWED_HOSTS = [
     '.milanotravel.com.ec',
 ]
 
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST', default='www.milanotravel.com.ec'),
+        'PORT': config('DB_PORT', default='3306'),
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            'charset': 'utf8mb4',
+        },
+    }
+}
+SITE_URL = 'www.milanotravel.com.ec'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = config('EMAIL_HOST', default='mail.milanotravel.com.ec')
@@ -75,6 +90,8 @@ CACHES = {
         },
     }
 }
+
+WAGTAILADMIN_BASE_URL = "https://www.milanotravel.com.ec"
 
 # wagtail-cache specific (uses the 'default' cache)
 WAGTAIL_CACHE_BACKEND = 'default'

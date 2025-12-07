@@ -52,13 +52,13 @@
 
         tl.from('.post-wrapper', {
             opacity: 0,
-            scale: 0,
+            scale: 0.5,
             duration: 0.6,
             ease: "power1.inOut",
         }).fromTo('.post-card', {
             opacity: 0,
-            scale: 3,
-            y: 300,
+            scale: 2,
+            y: -20,
          }, {
             opacity: 1,
             scale: 1,
@@ -83,9 +83,8 @@
                 onSplit(self) {
                     tl.from(self.words, {
                         autoAlpha: 0,
-                        scale: 5,
-                        x: "random(-220, 600)",
-                        y: "random(-420, 100)",
+                        scale: 2,
+                        y: "random(-10, 30)",
                         stagger: 0.05,
                         duration: 0.3,
                         ease: "power1.inOut",
