@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'wagtail_localize',
     'wagtail_localize.locales',
     'wagtailseo',
+    'wagtailcache',
     # 'wagtail.contrib.sitemaps',
 
     # Other third-party
@@ -91,6 +92,7 @@ INSTALLED_APPS = [
 
 
 MIDDLEWARE = [  # Order matters
+    'wagtailcache.cache.UpdateCacheMiddleware',
     "django.middleware.security.SecurityMiddleware",
     'whitenoise.middleware.WhiteNoiseMiddleware',
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -104,6 +106,7 @@ MIDDLEWARE = [  # Order matters
     "allauth.account.middleware.AccountMiddleware",
     "axes.middleware.AxesMiddleware",
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
+    'wagtailcache.cache.FetchFromCacheMiddleware',
 ]
 
 ROOT_URLCONF = "mtapp.urls"

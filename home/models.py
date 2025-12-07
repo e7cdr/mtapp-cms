@@ -6,8 +6,9 @@ from wagtailseo.models import SeoMixin
 from wagtail.models import Page, Site
 from wagtail.fields import RichTextField, StreamField
 from wagtail.admin.panels import FieldPanel, PageChooserPanel
+from wagtailcache.cache import WagtailCacheMixin
 
-class HomePage(SeoMixin, Page):
+class HomePage(WagtailCacheMixin, SeoMixin, Page):
     """Home page model."""
     templates = "home/home_page.html"
 
@@ -90,7 +91,7 @@ class HomePage(SeoMixin, Page):
 
     def get_context(self, request):
         context = super().get_context(request)
-        
+
         context['carousel'] = self.carousel
         try:
                 context['blog_page'] = BlogIndexPage.objects.live().first()

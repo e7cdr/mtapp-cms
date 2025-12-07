@@ -45,7 +45,7 @@ SILENCED_SYSTEM_CHECKS = [
 
 # Google Cloud Storage (appears in your Google Drive if you want)
 DEFAULT_FILE_STORAGE = 'storages.backends.googlecloud.GoogleCloudStorage'
-STATICFILES_STORAGE = 'storages.backends.googlecloud.GoogleCloudStorage'
+# STATICFILES_STORAGE = 'storages.backends.googlecloud.GoogleCloudStorage'
 GS_BUCKET_NAME = 'your-project-backups-and-media'
 GS_PROJECT_ID = 'your-gcp-project-id'
 
@@ -61,3 +61,25 @@ try:
 except ImportError:
     pass
 
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',  # Fast in-memory for PA
+        'LOCATION': 'wagtailcache',  # Prefix for keys
+        'TIMEOUT': 300,  # 5 minutes — adjust based on content freshness
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,  # Limit to avoid memory bloat
+            'CULL_FREQUENCY': 3,
+        },
+    }
+}
+
+# wagtail-cache specific (uses the 'default' cache)
+WAGTAIL_CACHE_BACKEND = 'default'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+DEFAULT_FILE_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+WHITENOISE_MAX_AGE = 60 * 60 * 24 * 30  # 30 days for immutable files (CSS, JS, images, fonts)
+WHITENOISE_IMMUTABLE_FILE_TEST = lambda path, url: True  # Treat all static/media as immutable
