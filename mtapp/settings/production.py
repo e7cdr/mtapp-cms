@@ -2,7 +2,7 @@ from .base import *
 from decouple import config
 
 
-DEBUG = True
+DEBUG = False
 LOGGING['loggers']['django.request']['level'] = 'DEBUG'
 ALLOWED_HOSTS = [config('ALLOWED_HOSTS')]
 STORAGES["staticfiles"]["BACKEND"] = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
