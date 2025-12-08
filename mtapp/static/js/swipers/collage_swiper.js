@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function () {
     // Thumbnail swiper (bottom)
     var collageSwiper2 = new Swiper('.collage-swiper2-container', {
         slidesPerView: "auto",
