@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+{% load static i18n wagtailcore_tags wagtailimages_tags accommodation_filters %}
+
+{% block title %}{{ page.name }} – {{ page.location }}, {{ page.destination }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/detail_page.css' %}"/>
+{% endblock %}
+
+{% block content %}
+
+<div class="detail-container">
+
+    <!-- COVER + HERO -->
+    <div class="cover-image-container">
+        <div class="cover-image">
+            {% if page.cover_image %}
+                {% image page.cover_image fill-1920x1080 format-webp quality=85 alt="{{ page.name }} – {{ page.location }}" loading="lazy" %}
+            {% else %}
+                <img src="{% static 'images/placeholder-cover.jpg' %}" alt="Cover">
+            {% endif %}
+        </div>
+
+        <div class="cover-text">
+            <h1>{{ page.name }}</h1>
+            <h2 class="cover-text-duration">
+                {{ page.location }}, {{ page.destination }}
+            </h2>
+
+            <!-- Badges -->
+            <div class="flex-container">
+                {% if page.is_sold_out %}
+                    <div class="stickers sticker-1">SOLD OUT</div>
+                {% endif %}
+                {% if page.is_special_offer %}
+                    <div class="stickers sticker-2">Special Offer</div>
+                {% endif %}
+                {% if page.is_on_discount %}
+                    <div class="stickers sticker-2">On Discount</div>
+                {% endif %}
+                {% if page.is_all_inclusive %}
+                    <div class="stickers sticker-1">All Inclusive</div>
+                {% endif %}
+                <div class="stickers tour-itinerary">{{ page|model_name|capfirst }}</div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="booking-actions">
+                {% if page.yt_vid %}
+                    <a href="javascript:void(0)" onclick="openVideoModal()" class="book-button conic-gradient-animation tour-video">
+                        Watch Video
+                    </a>
+                {% endif %}
+                {% if page.pdf_file %}
+                    <a href="{{ page.pdf_file.url }}" target="_blank" class="book-button conic-gradient-animation">
+                        View Brochure
+                    </a>
+                {% endif %}
+
+                {% if not page.is_sold_out %}
+                    <a href="{% url 'bookings:booking_start' page.id %}" class="book-button conic-gradient-animation">
+                        Book Now
+                    </a>
+                    <a href="https://api.whatsapp.com/send/?phone=593967359549&text=Hi! I'm interested in {{ page.name }} (Ref: {{ page.code_id }})&app_absent=0"
+                       target="_blank" class="book-button secondary">
+                        WhatsApp
+                    </a>
+                {% else %}
+                    <button class="book-button disabled">Sold Out</button>
+                {% endif %}
+            </div>
+
+            {% if page.disclaimer %}
+                <p class="disclaimer text-white mt-3">{{ page.disclaimer|richtext }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="data-container">
+        <div class="tab-section">
+            <div class="tab-card">
+
+                <!-- Tabs -->
+                <nav class="section-nav">
+                    <ul id="tourTabs" role="tablist">
+                        <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#description">Description</a></li>
+                        {% if page.itinerary %}
+                            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#itinerary">Stay Details</a></li>
+                        {% endif %}
+                        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#amenities">Amenities</a></li>
+                        {% if page.collect_price or page.show_prices_in_table %}
+                            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#pricing">Pricing</a></li>
+                        {% endif %}
+                        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#policies">Policies & Notes</a></li>
+                    </ul>
+                </nav>
+                <hr>
+
+                <div class="tab-content">
+
+                    <!-- DESCRIPTION -->
+                    <div class="tab-pane fade show active" id="description">
+                        {{ page.description|richtext }}
+                        {% for block in page.description_content %}
+                            {% include_block block %}
+                        {% endfor %}
+                        <p><strong>Dates Available:</strong> {{ page.start_date }} → {{ page.end_date }}</p>
+                    </div>
+
+                    <!-- STAY DETAILS (formerly itinerary) -->
+                    {% if page.itinerary %}
+                    <div class="tab-pane fade hidden" id="itinerary">
+                        {% for block in page.itinerary %}
+                        <div class="mb-5 pb-4 border-bottom">
+                            <h3>Day {{ block.value.day }}</h3>
+                            {{ block.value.description|richtext }}
+                            {% if block.value.highlight %}
+                                <div class="highlight mt-3 p-3 bg-light rounded">
+                                    <strong>Highlight:</strong> {{ block.value.highlight|richtext }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <!-- AMENITIES -->
+                    <div class="tab-pane fade hidden" id="amenities">
+                        <h2>Included Amenities</h2>
+                        {% if page.amenity_labels %}
+                        <div class="card-amenities grid-7-c">
+                            {% for label in page.amenity_labels %}
+                                <i class="card-icon {{ label }}" title="{{ label|get_choice_label:GLOBAL_ICON_CHOICES }}"></i>
+                            {% endfor %}
+                        </div>
+                        <p class="mt-3"><strong>{{ page.amenity_labels|length }} amenities included</strong></p>
+                        {% else %}
+                        <p>No amenities listed.</p>
+                        {% endif %}
+
+                        {% if page.courtesies %}
+                        <h4 class="mt-5">What’s Included</h4>
+                        {{ page.courtesies|richtext }}
+                        {% endif %}
+
+                        {% if page.no_inclusions %}
+                        <h4 class="mt-4">Not Included</h4>
+                        {{ page.no_inclusions|richtext }}
+                        {% endif %}
+                    </div>
+
+                    <!-- PRICING -->
+                    {% if page.collect_price or page.show_prices_in_table %}
+                    <div class="tab-pane fade hidden" id="pricing">
+                        {% if page.show_prices_in_table %}
+                            <div class="text-center p-5 bg-light rounded">
+                                {{ page.show_prices_in_table|richtext }}
+                                {% if page.button_text and page.button_link %}
+                                <div class="mt-4">
+                                    <a href="{{ page.button_link }}" class="book-button conic-gradient-animation">
+                                        {{ page.button_text }}
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <!-- Dynamic Pricing Table -->
+                            <table class="pricing-table w-full">
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th>Price</th>
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if page.pricing_type == "Combined" and page.combined_pricing_tiers %}
+                                        {% include "accommodations/includes/combined_pricing.html" %}
+                                    {% elif page.pricing_type == "Per_person" %}
+                                        {% include "accommodations/includes/per_person_pricing.html" %}
+                                    {% elif page.pricing_type == "Per_room" %}
+                                        {% include "accommodations/includes/per_room_pricing.html" %}
+                                    {% else %}
+                                        <tr><td colspan="3">Contact us for pricing</td></tr>
+                                    {% endif %}
+                                    <tr class="bg-gray-50">
+                                        <td colspan="3" class="text-center font-bold">
+                                            {{ page.price_subtext|default:"Subject to availability" }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <!-- POLICIES & NOTES -->
+                    <div class="tab-pane fade hidden" id="policies">
+                        {% if page.cxl_policies %}
+                            <h4>Cancellation Policy</h4>
+                            {{ page.cxl_policies|richtext }}
+                        {% endif %}
+
+                        {% if page.additional_notes %}
+                            <h4 class="mt-5">Additional Information</h4>
+                            {{ page.additional_notes|richtext }}
+                        {% endif %}
+
+                        <p class="mt-4 small text-muted">
+                            Ref Code: <strong>{{ page.code_id }}</strong>
+                            {% if page.ref_code %} • Partner Ref: {{ page.ref_code }}{% endif %}
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- VIDEO MODAL (reuses your exact modal CSS) -->
+{% if page.yt_vid %}
+<div id="videoModal" class="video-modal">
+    <div class="video-modal-content">
+        <span class="video-modal-close" onclick="closeVideoModal()">×</span>
+        <div class="video-wrapper">
+            <iframe id="youtubeIframe" src="" frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen loading="lazy"></iframe>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const videoId = "{{ page.yt_vid|escapejs }}".trim();
+window.openVideoModal = function() {
+    if (!videoId) return;
+    document.getElementById('youtubeIframe').src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+    document.getElementById('videoModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+};
+
+window.closeVideoModal = function() {
+    document.getElementById('videoModal').style.display = 'none';
+    document.getElementById('youtubeIframe').src = '';
+    document.body.style.overflow = 'auto';
+};
+
+// Close on backdrop or ESC
+document.getElementById('videoModal')?.addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeVideoModal();
+});
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeVideoModal();
+});
+</script>
+{% endblock %}

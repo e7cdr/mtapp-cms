@@ -1,0 +1,19 @@
+<div class="pricing-table-container">
+    <table class="table table-modern">
+        <tbody>
+            {% if page.pricing_type == "Combined" and page.combined_pricing_tiers %}
+                {% include "accommodations/includes/combined_pricing.html" %}
+            {% elif page.pricing_type == "Per_person" %}
+                {% include "accommodations/includes/per_person_pricing.html" %}
+            {% elif page.pricing_type == "Per_room" %}
+                {% include "accommodations/includes/per_room_pricing.html" %}
+            {% endif %}
+
+            <tr class="highlight">
+                <td colspan="2" class="text-center text-muted small">
+                    All prices in USD • {{ page.price_subtext|default:"Subject to availability" }}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>

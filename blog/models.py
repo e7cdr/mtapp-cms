@@ -223,9 +223,6 @@ class BlogIndexPage(RoutablePageMixin, SeoMixin, Page):
         )
 
 
-# ------------------------------------------------------------------
-# Individual blog post
-# ------------------------------------------------------------------
 class BlogDetailPage(SeoMixin, Page):
     intro = RichTextField(help_text="150–200 word teaser")
     body = StreamField([
@@ -324,7 +321,6 @@ class BlogDetailPage(SeoMixin, Page):
             "description": description,
         }
     
-    # blog/models.py — add this method to BlogDetailPage class
 
     def get_faq_schema(self):
         """

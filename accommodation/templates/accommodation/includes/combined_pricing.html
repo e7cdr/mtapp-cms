@@ -1,0 +1,75 @@
+{% load accommodation_filters %}
+
+<div class="combined-pricing">
+    <h4 class="text-primary mb-4">Price per Person (Group Size Discount)</h4>
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Group Size</th>
+                    <th>Price per Adult</th>
+                    <th>Child Rate</th>
+                    <th>Infant</th>
+                    <th>You Save (vs single)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for block in page.combined_pricing_tiers %}
+                    {% with tier=block.value %}
+                    <tr class="{% if forloop.first %}table-success fw-bold{% endif %}">
+                        <td>
+                            {% if forloop.first %}
+                                <span class="badge bg-primary">Base Rate</span><br>
+                                1 Adult
+                            {% else %}
+                                <strong>{{ tier.min_pax }}{% if tier.max_pax %}–{{ tier.max_pax }}{% else %}+{% endif %}</strong> Adults
+                            {% endif %}
+                        </td>
+                        <td class="price-highlight">
+                            <strong>${{ tier.price_adult|floatformat:0 }}</strong>
+                            {% if not forloop.first and tier.price_dbl_discount > 0 %}
+                                <br><small class="text-success">Save ${{ tier.price_dbl_discount|floatformat:0 }} in double!</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if tier.child_price_percent %}
+                                {{ tier.child_price_percent }}% of adult
+                            {% else %}
+                                Contact us
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if tier.infant_price_type == 'free' %}
+                                <span class="text-success fw-bold">FREE</span>
+                            {% elif tier.infant_price_type == 'percent' %}
+                                {{ tier.infant_percent_of_adult }}% of adult
+                            {% elif tier.infant_price_type == 'fixed' %}
+                                ${{ tier.infant_fixed_amount }}
+                            {% else %}
+                                Contact us
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if forloop.first %}
+                                —
+                            {% else %}
+                                {% with savings=page.combined_pricing_tiers.0.value.price_adult|sub:tier.price_adult %}
+                                    {% if savings > 0 %}
+                                        <span class="text-success fw-bold">${{ savings|floatformat:0 }} pp</span>
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                {% endwith %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endwith %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="alert alert-info mt-4">
+        <strong>Best Value:</strong> Book with friends or family — the more people, the lower the price per person!
+    </div>
+</div>

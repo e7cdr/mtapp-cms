@@ -13,7 +13,7 @@ from django.contrib.auth.models import User  # or CustomUser if used
 
 from wagtail.snippets.models import register_snippet
 from wagtail.admin.panels import FieldPanel
-from rest_framework.fields import ReadOnlyField, Field
+from rest_framework.fields import ReadOnlyField
 from wagtail.api import APIField
 
 from bookings.serializer import TourFieldSerializer
@@ -239,8 +239,8 @@ class Booking(models.Model):
     content_type = models.ForeignKey(
         ContentType,
         on_delete=models.CASCADE,
-        limit_choices_to={'model__in': ('fulltourpage', 'landtourpage', 'daytourpage')},
-        help_text=_("Type of tour (Full, Land, or Day).")
+        limit_choices_to={'model__in': ('fulltourpage', 'landtourpage', 'daytourpage', '')},
+        help_text=_("Type of tour (Full, Land, or Day) or Accommodation.")
     )
     object_id = models.PositiveIntegerField()
     tour = GenericForeignKey('content_type', 'object_id')

@@ -1,198 +1,244 @@
-// Mobile/Dropdown Overlay
-const mediaQuerymobile = window.matchMedia("(max-width: 768.98px)");
-if (mediaQuerymobile.matches) {
-  $(".sort-drop").on("show.bs.dropdown", function () {
-    $(".overlay").show();
-  });
-  $(".sort-drop").on("hide.bs.dropdown", function () {
-    $(".overlay").hide();
-  });
-}
+// static/js/tours_index.js
 
-$(".filter-btn").click(function () {
-  $(".sidebar").addClass("open");
-  $("body").addClass("overflow-hidden vh-100");
-});
-$(".filter-close-btn").click(function () {
-  $(".sidebar").removeClass("open");
-  $("body").removeClass("overflow-hidden vh-100");
-});
+document.addEventListener('DOMContentLoaded', function () {
+    console.log('Tours index JS loaded (vanilla JS)');
 
-// Sidebar Sticky
-const mediaQuerySM = window.matchMedia('(min-width: 768px)');
-if (mediaQuerySM.matches) {
-  if (typeof StickySidebar !== 'undefined') {
-    var sidebar = new StickySidebar('.sidebar', {
-      topSpacing: 80,
-      bottomSpacing: 20,
-      containerSelector: '.main-content',
-      innerWrapperSelector: '.sidebar__inner'
-    });
-  }
-}
+    // Elements
+    const form = document.getElementById('filterForm');
+    const resultsContainer = document.getElementById('resultsContainer');
+    const clearBtn = document.getElementById('clearFilters');
+    const paginator = document.querySelector('.pagination-nav');
+    const basePath = window.location.pathname.replace(/\/+$/, '') || '/';
 
-// Enhanced Dynamic Filtering
-$(document).ready(function() {
-    console.log('JS loaded: jQuery version', $.fn.jquery);  // TEMP
-    const $form = $('#filterForm');
-    const $results = $('#resultsContainer');
-    const $clearBtn = $('#clearFilters');
-    let $paginator = $('.pagination-nav');  // let for re-assign
-    const currentFullUrl = new URL(window.location.href);
-    let basePath = currentFullUrl.pathname.replace(/^\/+/, '/');  // Strip leading /
-    console.log('Normalized base path:', basePath);
     let isLoading = false;
-    let liveFilterEnabled = true;
+    let currentPage = 1;
 
-    // Custom Debounce
-    function debounce(func, wait) {
+    // Debounce utility
+    const debounce = (func, wait) => {
         let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
+        return (...args) => {
             clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
+            timeout = setTimeout(() => func.apply(this, args), wait);
         };
-    }
+    };
 
-    // Loading State
-    function showLoading() {
-        $results.addClass('loading').html(`
-            <div class="text-center p-4">
-                <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
-                    <span class="visually-hidden">Loading tours...</span>
+    // Loading state
+    const showLoading = () => {
+        if (!resultsContainer.classList.contains('loading')) {
+            resultsContainer.classList.add('loading');
+            resultsContainer.innerHTML = `
+                <div class="text-center p-5">
+                    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="visually-hidden">Loading tours...</span>
+                    </div>
+                    <p class="mt-3 text-muted">Updating results...</p>
                 </div>
-                <p class="mt-2">Updating results...</p>
-            </div>
-        `);
-    }
+            `;
+        }
+    };
 
-    function hideLoading() {
-        $results.removeClass('loading');
-    }
+    const hideLoading = () => {
+        resultsContainer.classList.remove('loading');
+    };
 
-    const debouncedUpdate = debounce(function(queryString) {
+    // Fetch and update results
+    const updateResults = (queryString = '') => {
         if (isLoading) return;
         isLoading = true;
         showLoading();
-        updateResults(queryString);
+
+        const url = queryString ? `${basePath}?${queryString}` : basePath;
+        console.log('Fetching:', url);
+
+        fetch(url, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => response.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+
+            const newResults = doc.querySelector('#resultsContainer');
+            const newPaginator = doc.querySelector('.pagination-nav');
+
+            if (newResults) {
+                resultsContainer.innerHTML = newResults.innerHTML;
+            }
+
+            if (newPaginator && paginator) {
+                paginator.outerHTML = newPaginator.outerHTML;
+            }
+
+            initAmenitiesCount();
+            hideLoading();
+            isLoading = false;
+
+            // Scroll to results
+            if (currentPage === 1) {
+                resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        })
+        .catch(err => {
+            console.error('AJAX failed:', err);
+            resultsContainer.innerHTML = `
+                <div class="alert alert-danger text-center p-5">
+                    <h5>Error loading tours</h5>
+                    <button class="btn btn-primary" onclick="location.reload()">Retry</button>
+                </div>
+            `;
+            hideLoading();
+            isLoading = false;
+        });
+    };
+
+    // Serialize form
+    const getQueryString = () => {
+        const formData = new FormData(form);
+        const params = new URLSearchParams();
+
+        for (const [key, value] of formData.entries()) {
+            if (value !== '' && value !== null) {
+                params.append(key, value);
+            }
+        }
+
+        if (currentPage > 1) {
+            params.set('page', currentPage);
+        }
+
+        return params.toString();
+    };
+
+    // Update URL
+    const updateURL = (qs) => {
+        const newURL = qs ? `${basePath}?${qs}` : basePath;
+        history.pushState({ filters: qs }, '', newURL);
+    };
+
+    // Debounced filter update
+    const debouncedUpdate = debounce(() => {
+        currentPage = 1;
+        const qs = getQueryString();
+        updateResults(qs);
+        updateURL(qs);
     }, 300);
 
-    // Helper: Build query string from form
-    function getQueryString() {
-        return $form.serialize();
-    }
-
-    // Live Filtering on Changes
-    if (liveFilterEnabled && $form.length) {
-        $form.find('input, select').on('change', handleInputChange);
-        $form.find('input[type="text"], input[type="number"], input[type="email"], textarea').on('input', handleInputChange);
-
-        function handleInputChange() {
-            const queryString = getQueryString();
-            console.log('Form query string:', queryString);  // TEMP
-            debouncedUpdate(queryString);
-            const newFullUrl = new URL(currentFullUrl);
-            newFullUrl.search = queryString ? '?' + queryString : '';
-            history.pushState({ filters: queryString }, '', newFullUrl.toString());
+    // Listen to form changes
+    form.addEventListener('change', debouncedUpdate);
+    form.addEventListener('input', (e) => {
+        if (e.target.matches('input[type="text"], input[type="number"], textarea')) {
+            debouncedUpdate();
         }
-    } else if ($form.length) {
-        $form.on('submit', function(e) {
+    });
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        debouncedUpdate();
+    });
+
+    // Clear filters
+    if (clearBtn) {
+        clearBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            const queryString = getQueryString();
-            debouncedUpdate(queryString);
-            const newFullUrl = new URL(currentFullUrl);
-            newFullUrl.search = queryString ? '?' + queryString : '';
-            history.pushState({ filters: queryString }, '', newFullUrl.toString());
+            form.reset();
+            currentPage = 1;
+            updateResults('');
+            history.pushState({}, '', basePath);
         });
     }
 
-    // Clear Filters
-    if ($clearBtn.length) {
-        $clearBtn.on('click', function(e) {
-            e.preventDefault();
-            $form[0].reset();
-            debouncedUpdate('');
-            const newFullUrl = new URL(currentFullUrl);
-            newFullUrl.search = '';
-            history.pushState({}, '', newFullUrl.toString());
-        });
-    }
-
-    // Infinite Scroll
-    let currentPage = 1;
-    $(window).on('scroll', function() {
-        if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100 &&
-            $paginator.data('has-next') === true && !isLoading) {
+    // Infinite scroll
+    window.addEventListener('scroll', () => {
+        if (
+            !isLoading &&
+            paginator?.dataset.hasNext === 'true' &&
+            window.innerHeight + window.scrollY >= document.body.offsetHeight - 100
+        ) {
             currentPage++;
-            const currentQuery = getQueryString();
-            const urlParams = new URLSearchParams(currentQuery);
-            urlParams.set('page', currentPage);
-            const queryString = urlParams.toString();
-            debouncedUpdate(queryString);
+            const qs = getQueryString();
+            updateResults(qs);
         }
     });
 
-    // Popstate
-    $(window).on('popstate', function(e) {
-        const state = e.originalEvent.state;
-        const queryString = state && state.filters || '';
-        debouncedUpdate(queryString);
-        const newFullUrl = new URL(currentFullUrl);
-        newFullUrl.search = queryString ? '?' + queryString : '';
-    });
+    // Back/forward navigation
+    window.addEventListener('popstate', () => {
+        const params = new URLSearchParams(window.location.search);
+        const qs = params.toString();
 
-    // Core Update Function
-    function updateResults(queryString) {
-        const ajaxUrl = queryString ? basePath + '?' + queryString : basePath;
-        console.log('AJAX URL (relative):', ajaxUrl);  // TEMP
-        $.get(ajaxUrl)
-            .done(function(response) {
-                console.log('AJAX success: Response length', response.length);  // TEMP
-                const $doc = $(response);
-                const $newResults = $doc.find('#resultsContainer');
-                console.log('New results found:', $newResults.length, 'HTML snippet length:', $newResults.html().length);  // TEMP
-                if ($newResults.length) {
-                    $results.html($newResults.html());
-                    console.log('HTML swapped, new card count:', $('.card').length);  // TEMP
+        // Restore form state
+        params.forEach((value, key) => {
+            const field = form.elements[key];
+            if (field) {
+                if (field.type === 'checkbox' || field.type === 'radio') {
+                    field.checked = field.value === value;
+                } else {
+                    field.value = value;
                 }
-                hideLoading();
-                isLoading = false;
-
-                // Update paginator
-                const $newPaginator = $doc.find('.pagination-nav');
-                if ($newPaginator.length && $paginator.length) {
-                    $paginator.replaceWith($newPaginator);
-                }
-                $paginator = $('.pagination-nav');  // Re-select
-
-                // Re-init
-                initAmenitiesCount();
-            })
-            .fail(function(jqXHR, textStatus, errorThrown) {
-                console.error('AJAX fail:', { status: jqXHR.status, textStatus, errorThrown, url: ajaxUrl });
-                $results.html(`
-                    <div class="alert alert-danger text-center">
-                        Error loading tours. <button class="btn btn-sm btn-primary" onclick="location.reload()">Retry</button>
-                    </div>
-                `);
-                hideLoading();
-                isLoading = false;
-            });
-    }
-
-    // Amenities Count
-    function initAmenitiesCount() {
-        $('.card').each(function() {
-            const $card = $(this);
-            const $countEl = $card.find('.tour-am-count');
-            if ($countEl.length) {
-                const iconCount = $card.find('.card-icon').length;
-                $countEl.text(iconCount || 0);
             }
         });
+
+        currentPage = parseInt(params.get('page') || '1', 10);
+        updateResults(qs);
+    });
+
+    // Amenity counter
+    const initAmenitiesCount = () => {
+        document.querySelectorAll('.card').forEach(card => {
+            const countEl = card.querySelector('.tour-am-count');
+            if (countEl) {
+                const iconCount = card.querySelectorAll('.card-icon').length;
+                countEl.textContent = iconCount || 0;
+            }
+        });
+    };
+
+    // Mobile sidebar toggle
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelector('.sidebar')?.classList.add('open');
+            document.body.classList.add('overflow-hidden', 'vh-100');
+        });
+    });
+
+    document.querySelectorAll('.filter-close-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelector('.sidebar')?.classList.remove('open');
+            document.body.classList.remove('overflow-hidden', 'vh-100');
+        });
+    });
+
+    // Dropdown overlay on mobile
+    const mobileMedia = window.matchMedia('(max-width: 768.98px)');
+    const overlay = document.querySelector('.overlay');
+    const dropdown = document.querySelector('.sort-drop');
+
+    const handleMobileDropdown = () => {
+        if (mobileMedia.matches && dropdown && overlay) {
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach(mutation => {
+                    if (mutation.attributeName === 'class') {
+                        const isOpen = dropdown.classList.contains('show');
+                        overlay.style.display = isOpen ? 'block' : 'none';
+                    }
+                });
+            });
+            observer.observe(dropdown, { attributes: true });
+        }
+    };
+
+    if (mobileMedia.matches) handleMobileDropdown();
+    mobileMedia.addEventListener('change', handleMobileDropdown);
+
+    // Sticky sidebar (only if library exists)
+    if (window.StickySidebar && window.matchMedia('(min-width: 768px)').matches) {
+        new StickySidebar('.sidebar', {
+            topSpacing: 80,
+            bottomSpacing: 20,
+            containerSelector: '.main-content',
+            innerWrapperSelector: '.sidebar__inner'
+        });
     }
+
+    // Initial load
     initAmenitiesCount();
 });

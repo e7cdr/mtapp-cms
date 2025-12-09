@@ -137,10 +137,7 @@
             <a href="{{ tour.url }}">{{ tour.name }}</a>
         </div>
         {% endif %}
-        {% comment %} <div class="card-description">
-        {{tour.description|richtext}}
-        </div> {% endcomment %}
-        <p class="am">Amenities: <b><span class="tour-am-count"></span></b></p>  <!-- Generic class; use data-id in JS -->        <div class="card-amenities grid-7-c">
+        <p class="am">Amenities: <b><span class="am-count"></span></b></p>  <!-- Generic class; use data-id in JS -->        <div class="card-amenities grid-7-c">
             {% if tour.amenity %}
                 {% for block in tour.amenity %}
                     {% if block.block_type == 'include' %}
@@ -221,7 +218,7 @@
 </div>
 </section>
 {% block extra_js %}
-<script src="{% static 'js/tours_index.js' %}"></script>
+<script src="{% static 'js/filtering_index.js' %}"></script>
 {% endblock extra_js %}
 
 {% endblock content %}

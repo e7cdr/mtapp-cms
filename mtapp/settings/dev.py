@@ -56,7 +56,7 @@ SECURE_HSTS_PRELOAD = False
 WAGTAIL_CACHE_BACKEND = 'default'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_FILE_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
+COMPRESS_OFFLINE = False
 WHITENOISE_MAX_AGE = 60 * 60 
 WHITENOISE_IMMUTABLE_FILE_TEST = lambda path, url: True  # Treat all static/media as immutable
 

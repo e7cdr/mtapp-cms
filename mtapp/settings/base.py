@@ -28,7 +28,7 @@ INSTALLED_APPS = [
     'django.contrib.sitemaps',
 
     # Third-party – put these early
-    'import_export',                  # ← regular django-import-export
+    # 'import_export',                  # ← regular django-import-export
 
     # Wagtail core apps (order matters!)
     'wagtail.contrib.forms',
@@ -83,6 +83,7 @@ INSTALLED_APPS = [
     "profiles",
     'revenue_management',
     'captcha',
+    'accommodation',
     # "staff_tools",
 ]
 
@@ -369,16 +370,17 @@ WAGTAIL_API_TOKEN = "e721f0ae2b34243f890464bb23978fe639bb78e4"
 INSTALLED_APPS += ['compressor']
 STATICFILES_FINDERS += ['compressor.finders.CompressorFinder']
 
-# django-compressor settings — MUST be like this
 COMPRESS_ENABLED = True
 COMPRESS_OFFLINE = True
 COMPRESS_URL = STATIC_URL
 COMPRESS_ROOT = STATIC_ROOT
 
-# This makes the filename change when content changes
 COMPRESS_OUTPUT_DIR = 'CACHE'
 COMPRESS_TEMPLATE_FILTER = True
 COMPRESS_PRECOMPILERS = ()
+COMPRESS_OFFLINE_CONTEXT = {
+    'STATIC_URL': '/static/',
+}
 
 from django.views.static import serve as static_serve
 from django.views.decorators.cache import cache_control

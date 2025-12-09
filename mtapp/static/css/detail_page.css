@@ -490,3 +490,15 @@ to { opacity: 1; }
     filter: drop-shadow(0 0 4px rgba(99, 102, 241, 0.4));
 }
 
+.sidebar.open { transform: translateX(0); }
+.overlay { 
+    display: none; 
+    position: fixed; 
+    inset: 0; 
+    background: rgba(0,0,0,0.5); 
+    z-index: 1040; 
+}
+#resultsContainer.loading { 
+    min-height: 300px; 
+    position: relative; 
+}

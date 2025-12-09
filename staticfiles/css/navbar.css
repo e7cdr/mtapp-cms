@@ -1,16 +1,3 @@
-/* ========================================================= */
-/*                  NAVBAR – FULL FIXED VERSION              */
-/* ========================================================= */
-
-/*  */
-
-/* Reset */
-ul {
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-}
-
 /* Main Navbar */
 .navbar {
     background: rgba(0, 0, 0, 0.36);
@@ -84,6 +71,7 @@ ul {
 
 .navbar-menu > li {
     position: relative;
+    list-style: none;
 }
 
 .navbar-menu > li > a {

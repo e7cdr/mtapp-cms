@@ -13,7 +13,16 @@ footer {
     color: white;
     text-align: center;
 }
-
+.footer-background {
+    position: absolute;
+    object-fit: cover;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    opacity: 0.2;
+    border-radius: inherit;
+}
 .contact-info-block {
     flex-basis: 35%;
 }   
@@ -41,6 +50,10 @@ footer {
 
 }
 
+.footer-container div a:hover {
+    color: rgb(0, 145, 255)
+}
+
 .footer-links {
     flex-basis: 40%;
 }
@@ -61,6 +74,7 @@ footer {
 
 .footer-container div a img:hover{
     scale: 1.1;
+
 }
 
 .address {
@@ -81,14 +95,14 @@ footer {
 
 .social-media-wrap button {
     background-color: white;
-    width: 1.5rem;
+    width: 1.8rem;
     color: #38bdf8;
     text-align-last: center;
     box-shadow: 0 3px 3px 1px rgba(0, 0, 0, 0.15);
     outline: 2px solid transparent;
     outline-offset: 2px;
     margin-right: 0.5rem;
-    height: 1.5rem;
+    height: 1.8rem;
     font-weight: 400;
     align-items: center;
     border-radius: 9999px;
@@ -103,6 +117,14 @@ footer {
 .social-media-wrap button:focus {
     outline-style: none;
 
+}
+
+.footer hr {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem; 
+    margin-block: calc(var(--spacing) * 6);
+    border-top-width: 2px;
+    border-color: rgba(228, 228, 231, 1);
 }
 
 .footer-copyright {
@@ -176,7 +198,7 @@ footer {
 
 @media (max-width: 640px) {
     .footer-container {
-        font-size: 0.6rem;
+        font-size: 0.8rem;
     }
 
     .footer-copyright p {

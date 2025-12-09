@@ -1,10 +1,11 @@
 from datetime import timedelta
 from decimal import Decimal
-import fitz  # PyMuPDF
 import os
 import logging
 
-from mtapp.utils import generate_code_id  # Generic JSONField
+from wagtail_localize.fields import TranslatableField, SynchronizedField
+
+from mtapp.utils import convert_pdf_to_images, generate_code_id  # Generic JSONField
 from mtapp.choices import DESTINATION_CHOICES, GLOBAL_ICON_CHOICES
 
 from django.db import models
@@ -22,71 +23,26 @@ from wagtail.fields import StreamField, RichTextField
 from wagtail.images.models import Image
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel
 from wagtail.blocks import (
-    CharBlock,
     StructBlock,
     RichTextBlock,
     ListBlock,
     ChoiceBlock,
     IntegerBlock,
     DateBlock,
-    DecimalBlock,
-    FloatBlock,
 
 )
+
+from wagtailseo.models import SeoMixin
+
 from django.utils.translation import gettext_lazy as _
 from wagtail.contrib.routable_page.models import RoutablePageMixin, path
 
+from mtapp.utils_blocks import PricingTierBlock
 from streams import blocks
 
 logger = logging.getLogger(__name__)
 
-ITINERARY_BLOCKS = [
-    ('day', StructBlock([
-        ('day_number', CharBlock(label="Day Number", help_text="e.g., 'Day 1'")),
-        ('description', RichTextBlock(label="Description")),
-    ]))
-]
-
-class PricingTierBlock(StructBlock):
-    min_pax = IntegerBlock(required=True)
-    max_pax = IntegerBlock(required=True, help_text="Do not leave it empty")
-
-    price_adult = DecimalBlock(required=True, decimal_places=2)
-    price_sgl_supplement = DecimalBlock(default=0, decimal_places=2)
-    price_dbl_discount = DecimalBlock(default=0, decimal_places=2)
-    price_tpl_discount = DecimalBlock(default=0, decimal_places=2)
-
-    child_price_percent = FloatBlock(default=60.0, min_value=0, max_value=100)
-
-    # INFANT FLEXIBILITY
-    infant_price_type = ChoiceBlock(
-        choices=[
-            ('free', 'Free'),
-            ('percent', 'Percentage of adult price'),
-            ('fixed', 'Fixed amount per infant'),
-        ],
-        default='free',
-    )
-    infant_percent_of_adult = FloatBlock(
-        default=10.0,
-        min_value=0,
-        max_value=100,
-        required=False,
-    )
-    infant_fixed_amount = DecimalBlock(
-        default=0,
-        decimal_places=2,
-        required=False,
-    )
-
-    class Meta:
-        icon = 'currency'
-        label = "Pricing Tier"
-        # This makes the JS work on add/remove
-        form_classname = 'pricing-tier-block'
-
-
-class AbstractTourPage(Page):
+class AbstractTourPage(SeoMixin, Page):
     # Common content fields
     name = models.CharField(max_length=200, help_text=_("e.g., 'Cuenca Cultural Getaway'"))
     destination = models.CharField(
@@ -121,7 +77,6 @@ class AbstractTourPage(Page):
     is_all_inclusive = models.BooleanField(default=False)
 
     price_subtext = models.CharField(default="Estimated", help_text="Estimated. IVA not included", max_length=30)
-
 
     # Codes
     ref_code = models.CharField(
@@ -365,6 +320,42 @@ class AbstractTourPage(Page):
         abstract = True  # Key: No DB table
         unique_together = [('locale', 'code_id', 'ref_code')]
 
+    translated_fields = [
+        TranslatableField('title'),
+        TranslatableField('name'),
+        TranslatableField('description'),
+        TranslatableField('intro'),
+        TranslatableField('itinerary'),
+        TranslatableField('courtesies'),
+        TranslatableField('cxl_policies'),
+        TranslatableField('disclaimer'),
+        TranslatableField('seo_title'),
+        TranslatableField('search_description'),
+        TranslatableField('slug'),  # Optional: pretty URLs per language
+    ]
+
+    synchronized_fields = [
+        SynchronizedField('cover_image'),
+        SynchronizedField('image'),
+        SynchronizedField('logo_image'),
+        SynchronizedField('pdf_file'),
+        SynchronizedField('start_date'),
+        SynchronizedField('end_date'),
+        SynchronizedField('duration'),
+        SynchronizedField('pricing_type'),
+        SynchronizedField('price_sgl'),
+        SynchronizedField('price_dbl'),
+        SynchronizedField('price_tpl'),
+        SynchronizedField('price_adult'),
+        SynchronizedField('price_chd'),
+        SynchronizedField('price_inf'),
+        SynchronizedField('is_on_discount'),
+        SynchronizedField('is_special_offer'),
+        SynchronizedField('is_sold_out'),
+        SynchronizedField('is_all_inclusive'),
+        # ... any other non-translatable field ...
+    ]
+
     @property
     def active_prices(self):
         """Returns dict of prices based on pricing_type."""
@@ -573,8 +564,6 @@ class AbstractTourPage(Page):
         """Override in children for 'LT', 'FT', 'DT'."""
         raise NotImplementedError("Subclasses must define get_code_prefix()")
     
-    # tours/models.py — add inside AbstractTourPage class (near the bottom)
-
     def get_jsonld_schema(self):
         """
         100% safe TouristTrip JSON-LD — works on ALL tour types
@@ -680,8 +669,7 @@ class AbstractTourPage(Page):
     def __str__(self):
         return self.title or self.name or 'Untitled Tour'
 
-
-class ToursIndexPage(RoutablePageMixin, Page):
+class ToursIndexPage(SeoMixin, RoutablePageMixin, Page):
     intro = RichTextField(blank=True, null=True, help_text="Text describing what the user can find on the Tours Index", verbose_name="Explanatory Text")
     max_count = 1
 
@@ -711,6 +699,18 @@ class ToursIndexPage(RoutablePageMixin, Page):
 
     search_fields = Page.search_fields + [  # For future search
         index.SearchField('intro'),
+    ]
+
+    translated_fields = [
+        TranslatableField('title'),
+        TranslatableField('intro'),
+        TranslatableField('seo_title'),
+        TranslatableField('search_description'),
+    ]
+
+    # These stay the same across languages
+    synchronized_fields = [
+        SynchronizedField('body_content'),  # Usually same layout
     ]
 
     class Meta:
@@ -840,8 +840,6 @@ class ToursIndexPage(RoutablePageMixin, Page):
         context = self.get_context(request)
         return self.render(request, context_overrides=context)
 
-
-
 class LandTourPage(AbstractTourPage): # Land Tour Details
     # Land-specific (e.g., duration_days, nights)
     duration_days = models.PositiveIntegerField(default=3)
@@ -942,9 +940,6 @@ Block representation
     def get_code_prefix(self):
         return "LT"
 
-# ──────────────────────────────────────────────────────────────
-# 1. FULL TOUR PAGE → LandTour + Air Tickets included
-# ──────────────────────────────────────────────────────────────
 class FullTourPage(AbstractTourPage):
     """
     Exactly like LandTourPage but includes international/domestic air tickets.
@@ -994,9 +989,6 @@ class FullTourPage(AbstractTourPage):
         verbose_name = "Full Tour (with flights)"
         verbose_name_plural = "Full Tours"
 
-# ──────────────────────────────────────────────────────────────
-# 2. DAY TOUR PAGE → One-day excursion (no hotel, no flights)
-# ──────────────────────────────────────────────────────────────
 class DayTourPage(AbstractTourPage):
     """
     Single-day or max 2-day tours from Cuenca.
@@ -1047,46 +1039,3 @@ class DayTourPage(AbstractTourPage):
     class Meta:
         verbose_name = "Day Tour"
         verbose_name_plural = "Day Tours"
-
-
-def convert_pdf_to_images(pdf_path, output_dir, tour_id):
-    """Convert PDF pages to PNG images for carousel display."""
-    try:
-        logger.debug(f"Converting PDF: {pdf_path}, Output: {output_dir}, Tour ID: {tour_id}")
-        # Check PDF accessibility
-        if not os.path.exists(pdf_path):
-            logger.error(f"PDF file does not exist: {pdf_path}")
-            return []
-        if not os.access(pdf_path, os.R_OK):
-            logger.error(f"No read permission for PDF: {pdf_path}")
-            return []
-        # Check output directory
-        os.makedirs(output_dir, exist_ok=True)
-        if not os.access(output_dir, os.W_OK):
-            logger.error(f"No write permission for output dir: {output_dir}")
-            return []
-        # Open PDF
-        pdf_document = fitz.open(pdf_path)
-        if pdf_document.page_count == 0:
-            logger.error(f"PDF has no pages: {pdf_path}")
-            pdf_document.close()
-            return []
-        image_paths = []
-        for page_num in range(min(pdf_document.page_count, 5)):  # Limit to 5 pages
-            page = pdf_document[page_num]
-            pix = page.get_pixmap(matrix=fitz.Matrix(1, 1))  # 1x zoom
-            image_path = os.path.join(output_dir, f'page_{page_num + 1}.png')
-            pix.save(image_path)
-            relative_path = os.path.join(f'tour_{tour_id}_pdf_images', f'page_{page_num + 1}.png')
-            media_url_path = f'{settings.MEDIA_URL}{relative_path}'
-            if not os.path.exists(image_path):
-                logger.error(f"Failed to create image: {image_path}")
-                continue
-            image_paths.append(media_url_path)
-            logger.debug(f"Generated image: {image_path}, URL: {media_url_path}")
-        pdf_document.close()
-        logger.info(f"Successfully converted PDF to {len(image_paths)} images for tour {tour_id}")
-        return image_paths
-    except Exception as e:
-        logger.error(f"Error converting PDF to images for tour {tour_id}: {str(e)}")
-        return []
