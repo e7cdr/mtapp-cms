@@ -2,7 +2,7 @@ from .base import *
 from decouple import config
 
 
-DEBUG = False
+DEBUG = True
 ALLOWED_HOSTS = [
     'milanotravel.com.ec',
     'www.milanotravel.com.ec',
@@ -36,7 +36,7 @@ EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = 'reservations@milanotravel.com.ec'
 
 # Optional: Sessions on cache too (frees DB)
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_CACHE_ALIAS = 'default'
 
 
@@ -71,23 +71,14 @@ DBBACKUP_STORAGE_OPTIONS = {
     'location': 'backups/',   # optional subfolder
 }
 
-try:
-    from .local import *
-except ImportError:
-    pass
-
-from pathlib import Path
-BASE_DIR = Path(__file__).resolve().parent.parent
-
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',  # Fast in-memory for PA
-        'LOCATION': 'wagtailcache',  # Prefix for keys
-        'TIMEOUT': 300,  # 5 minutes — adjust based on content freshness
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+        'TIMEOUT': 300,
         'OPTIONS': {
-            'MAX_ENTRIES': 1000,  # Limit to avoid memory bloat
-            'CULL_FREQUENCY': 3,
-        },
+            'MAX_ENTRIES': 2000,
+        }
     }
 }
 
@@ -95,8 +86,23 @@ WAGTAILADMIN_BASE_URL = "https://www.milanotravel.com.ec"
 
 # wagtail-cache specific (uses the 'default' cache)
 WAGTAIL_CACHE_BACKEND = 'default'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-DEFAULT_FILE_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 WHITENOISE_MAX_AGE = 60 * 60 * 24 * 30  # 30 days for immutable files (CSS, JS, images, fonts)
-WHITENOISE_IMMUTABLE_FILE_TEST = lambda path, url: True  # Treat all static/media as immutable
+WHITENOISE_IMMUTABLE_FILE_TEST = r'\.[0-9a-f]{8,}\.'
+
+COMPRESS_CSS_FILTERS = [
+    'compressor.filters.css_default.CssAbsoluteFilter',
+    'compressor.filters.cssmin.rCSSMinFilter',
+]
+COMPRESS_JS_FILTERS = [
+    'compressor.filters.jsmin.rJSMinFilter',
+]
+
+
+try:
+    from .local import *
+except ImportError:
+    pass
+
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent.parent
