@@ -18,10 +18,11 @@
     width: 90%;
     text-shadow: 1px 0px 1px black;
     border: 1px groove white;
+    color: white;
 }
 
 .search-bar input::placeholder {
-color: rgba(255, 249, 205, 0.655);}
+color: rgba(255, 255, 255, 0.884);}
 
 @media (max-width:480px ) {
     .search-bar input {

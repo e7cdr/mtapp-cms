@@ -22,7 +22,7 @@
     <div class="swiper-wrapper">
         {% for item in value.images %}
         <div class="swiper-slide">
-            {% image item.image fill-1920x1080 format-webp webpquality-60 fetchpriority="high" loading=lazy alt="{{ item.caption }}" class="fade-image" %}
+            {% image item.image fill-1920x1080 format-webp webpquality-60 fetchpriority="high" loading="lazy" alt="{{ item.caption }}" class="fade-image" %}
             {% if item.link %}
             <a href="{{ item.link.url }}"></a>
             {% endif %}

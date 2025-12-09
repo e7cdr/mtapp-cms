@@ -91,8 +91,8 @@ INSTALLED_APPS = [
 MIDDLEWARE = [  # Order matters
     'wagtailcache.cache.UpdateCacheMiddleware',
     "django.middleware.security.SecurityMiddleware",
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     "django.contrib.sessions.middleware.SessionMiddleware",
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -142,9 +142,17 @@ ACCOUNT_EMAIL_VERIFICATION = 'mandatory'  # Users verify email before login
 ACCOUNT_LOGIN_METHODS = {'email'}  # Login with email
 SITE_ID = 1  # Required for allauth
 
-# Axes settings (lock after 5 failed attempts for 15 mins; customize per your risk level)
+# Make Axes much friendlier for admins
 AXES_FAILURE_LIMIT = 5
 AXES_COOLOFF_TIME = timedelta(minutes=15)
+AXES_LOCKOUT_PARAMETERS = ["username", "ip_address"]  # replaces the old combo setting
+AXES_LOCK_OUT_AT_FAILURE = True
+AXES_RESET_ON_SUCCESS = True
+
+# Don’t lock superusers ever (very handy)
+AXES_ENABLE_ADMIN = True
+def axes_skip_user(user):
+    return user.is_superuser
 
 # Ratelimit
 RATELIMIT_ENABLE = True
@@ -234,13 +242,12 @@ STORAGES = {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
 
 ADMINS = [('e7c', 'evc1893@gmail.com')]
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Django sets a maximum of 1000 fields per form by default, but particularly complex page models
 # can exceed this limit within Wagtail's page editor.
@@ -358,7 +365,7 @@ REST_FRAMEWORK = {
 
 }
 
-SESSION_COOKIE_AGE = 30 * 60 
+SESSION_COOKIE_AGE = 30 * 60
 
 WAGTAILAPI_LIMIT_TO_REGISTERED_USERS = True
 
@@ -371,7 +378,7 @@ STATICFILES_FINDERS += ['compressor.finders.CompressorFinder']
 
 # django-compressor settings — MUST be like this
 COMPRESS_ENABLED = True
-COMPRESS_OFFLINE = True
+COMPRESS_OFFLINE = False
 COMPRESS_URL = STATIC_URL
 COMPRESS_ROOT = STATIC_ROOT
 
