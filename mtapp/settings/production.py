@@ -98,6 +98,16 @@ COMPRESS_JS_FILTERS = [
     'compressor.filters.jsmin.rJSMinFilter',
 ]
 
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",  # ← Only in prod
+    },
+}
+
+
 
 try:
     from .local import *

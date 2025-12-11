@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<body style="font-family: Arial, sans-serif;">
+  <h2>New Booking Received & Paid</h2>
+  <p>A client has booked and paid for your accommodation:</p>
+
+  <h3>{{ accommodation.name }}</h3>
+  <ul>
+    <li><strong>Guest:</strong> {{ booking.customer_name }}</li>
+    <li><strong>Email:</strong> {{ booking.customer_email }}</li>
+    <li><strong>Phone:</strong> {{ booking.customer_phone|default:"Not provided" }}</li>
+    <li><strong>Dates:</strong> {{ booking.check_in }} → {{ booking.check_out }} ({{ nights }} night{{ nights|pluralize }})</li>
+    <li><strong>Guests:</strong> {{ booking.adults }} adult{{ booking.adults|pluralize }}, {{ booking.children }} child{{ booking.children|pluralize }}</li>
+    <li><strong>Amount Paid:</strong> ${{ booking.total_price }}</li>
+    <li><strong>Notes:</strong> {{ booking.notes|default:"None" }}</li>
+  </ul>
+
+  <p><strong>No action required.</strong> The booking is confirmed and paid.</p>
+  <p>Thank you for your partnership!</p>
+
+  <small>Milano Travel</small>
+</body>
+</html>

@@ -1,93 +1,72 @@
 {% extends "base.html" %}
-{% load static i18n %}
+{% load i18n humanize %}
 
-{% block title %}{% trans "Payment Successful" %} Payment Successful!! {% endblock title %}
+{% block title %}{% trans "Payment Successful" %} - Milano Travel{% endblock title %}
+
 {% block content %}
-<section class="py-5 bg-light">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-8 text-center mb-4">
-                <h2>{% trans "Payment Successful!" %}</h2>
-                <div class="alert alert-success">
-                    {% trans "Your booking is confirmed. Thank you for choosing Milano Travel!" %}
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="mt-2">{{ message }}</div>
-                        {% endfor %}
-                    {% endif %}
-                </div>
-                <p class="lead">{% trans "Booking ID: " %}{{ booking.book_id|default:booking.id }}</p>
-            </div>
-        </div>
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h1 class="display-4 text-success">
+            Payment Successful!
+        </h1>
+        <p class="lead">
+            {% if type == 'tour' %}
+                {% blocktrans with name=tour.name %}
+                Your tour <strong>{{ name }}</strong> is confirmed!
+                {% endblocktrans %}
+            {% else %}
+                {% blocktrans with name=accommodation.name %}
+                Your stay at <strong>{{ name }}</strong> is confirmed!
+                {% endblocktrans %}
+            {% endif %}
+        </p>
+    </div>
 
-        <div class="row">
-            <div class="col-md-6">
-                <h4>{% trans "Customer Information" %}</h4>
-                <table class="table table-borderless">
-                    <tr><th>{% trans "Name" %}</th><td>{{ booking.customer_name }}</td></tr>
-                    <tr><th>{% trans "Email" %}</th><td>{{ booking.customer_email }}</td></tr>
-                    <tr><th>{% trans "Phone" %}</th><td>{{ booking.customer_phone|default:"N/A" }}</td></tr>
-                    <tr><th>{% trans "Address" %}</th><td>{{ booking.customer_address|default:"N/A" }}</td></tr>
-                    <tr><th>{% trans "Nationality" %}</th><td>{{ booking.nationality|default:"N/A" }}</td></tr>
+    <div class="card shadow">
+        <div class="card-header bg-success text-white">
+            <h4 class="mb-0">Booking Details</h4>
+        </div>
+        <div class="card-body">
+            {% if type == 'tour' %}
+                <table class="table table-sm">
+                    <tr><th>Proposal ID</th><td>{{ proposal.prop_id }}</td></tr>
+                    <tr><th>Tour</th><td>{{ tour.name }}</td></tr>
+                    <tr><th>Date</th><td>{{ booking.travel_date|date:"F j, Y" }}</td></tr>
+                    <tr><th>Guests</th>
+                        <td>
+                            {{ booking.number_of_adults }} Adult{{ booking.number_of_adults|plural }} 
+                            {% if booking.number_of_children %} + {{ booking.number_of_children }} Child{{ booking.number_of_children|pluralize }}{% endif %}
+                        </td>
+                    </tr>
+                    <tr><th>Total Paid</th><td><strong>USD {{ booking.total_price|floatformat:2 }}</strong></td></tr>
                 </table>
-            </div>
-            <div class="col-md-6">
-                <h4>{% trans "Tour Information" %}</h4>
-                <table class="table table-borderless">
-                    <tr><th>{% trans "Tour" %}</th><td>{{ tour|default:"N/A" }}</td></tr>
-                    <tr><th>{% trans "Travel Date" %}</th><td>{{ booking.travel_date|date:"F j, Y" }}</td></tr>
-                    <tr><th>{% trans "End Date" %}</th><td>{{ end_date|date:"F j, Y"|default:"N/A" }}</td></tr>
-                    <tr><th>{% trans "Status" %}</th><td><span class="badge bg-success">{% trans "Confirmed & Paid" %}</span></td></tr>
-                    <tr><th>{% trans "Total Price" %}</th><td>{{ booking.currency }} {{ booking.total_price|floatformat:2 }}</td></tr>
+            {% else %}
+                <table class="table table-sm">
+                    <tr><th>Booking ID</th><td>ACC-{{ booking.id }}</td></tr>
+                    <tr><th>Accommodation</th><td>{{ accommodation.name }}</td></tr>
+                    <tr><th>Check-in</th><td>{{ booking.check_in|date:"M j, Y" }}</td></tr>
+                    <tr><th>Check-out</th><td>{{ booking.check_out|date:"M j, Y" }}</td></tr>
+                    <tr><th>Nights</th><td>{{ nights }}</td></tr>
+                    <tr><th>Guests</th>
+                        <td>
+                            {{ booking.adults }} Adult{{ booking.adults|plural }} 
+                            {% if booking.children %} + {{ booking.children }} Child{{ booking.children|pluralize }}{% endif %}
+                        </td>
+                    </tr>
+                    <tr><th>Total Paid</th><td><strong>USD {{ booking.total_price|floatformat:2 }}</strong></td></tr>
                 </table>
-            </div>
-        </div>
-
-        <div class="row mt-4">
-            <div class="col-md-6">
-                <h4>{% trans "Party Size" %}</h4>
-                <ul class="list-unstyled">
-                    <li>{% trans "Adults" %}: {{ booking.number_of_adults }}</li>
-                    {% if booking.number_of_children > 0 %}
-                        <li>{% trans "Children" %}: {{ booking.number_of_children }} (Ages: {{ booking.children_ages|join:", "|default:"N/A" }})</li>
-                    {% endif %}
-                    {% if booking.number_of_infants > 0 %}
-                        <li>{% trans "Infants" %}: {{ booking.number_of_infants }}</li>
-                    {% endif %}
-                </ul>
-            </div>
-            <div class="col-md-6">
-                <h4>{% trans "Configuration" %}</h4>
-                {% if configuration_details %}
-                    <ul class="list-unstyled">
-                        <li>{% trans "Singles" %}: {{ configuration_details.singles|default:0 }}</li>
-                        <li>{% trans "Doubles" %}: {{ configuration_details.doubles|default:0 }}</li>
-                        <li>{% trans "Triples" %}: {{ configuration_details.triples|default:0 }}</li>
-                        <li>{% trans "Children" %}: {{ configuration_details.children|default:0 }}</li>
-                        <li>{% trans "Infants" %}: {{ configuration_details.infants|default:0 }}</li>
-                        <li><strong>{% trans "Total" %}: {{ configuration_details.total|default:0 }}</strong></li>
-                    </ul>
-                {% else %}
-                    <p>{% trans "No configuration details." %}</p>
-                {% endif %}
-            </div>
-        </div>
-
-        {% if notes %}
-        <div class="row mt-4">
-            <div class="col-12">
-                <h4>{% trans "Notes" %}</h4>
-                <p class="border p-3 bg-light">{{ notes }}</p>
-            </div>
-        </div>
-        {% endif %}
-
-        <div class="row mt-4">
-            <div class="col-12 text-center">
-                <a href="{{ site_url }}/bookings/customer-portal/" class="btn btn-primary">{% trans "View My Portal" %}</a>
-                <a href="{{ site_url }}" class="btn btn-secondary">{% trans "Back to Home" %}</a>
-            </div>
+            {% endif %}
         </div>
     </div>
-</section>
-{% endblock content %}
+
+    <div class="text-center mt-5">
+        <p>A confirmation email has been sent to <strong>{{ booking.customer_email }}</strong></p>
+        <a href="{% url 'bookings:customer_portal' %}" class="btn btn-primary btn-lg">
+            View My Bookings
+        </a>
+        <a href="/" class="btn btn-outline-secondary btn-lg ms-3">
+            Back to Home
+        </a>
+    </div>
+</div>
+{% endblock %}

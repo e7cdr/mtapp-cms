@@ -1,254 +1,66 @@
-{% extends "base.html" %}
-{% load static i18n wagtailcore_tags wagtailimages_tags wagtailroutablepage_tags accommodation_filters %}
+{# accommodation/accommodation_index_page.html #}
 
-{% block title %}{{ page.title }}{% endblock title %}
-{% block meta_description %}{{ page.intro|striptags|truncatewords:25 }}{% endblock meta_description %}
+{% extends "base.html" %}
+{% load static i18n wagtailcore_tags %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/layout.css' %}"/>
 <link rel="stylesheet" href="{% static 'css/card_style.css' %}"/>
-<link rel="stylesheet" href="{% static 'css/accommodation.css' %}"/>
 {% endblock extra_css %}
 
 {% block content %}
-
 {% block body_content %}
-    {% for block in page.body_content %}
-        {% include_block block %}
-    {% endfor %}
+{% for block in page.body_content %}
+{% include_block block %}
+{% endfor %}
 {% endblock body_content %}
 
-<section class="accommodations-section">
-    <div class="layout">
+<div class="layout">
+    <div class="area-2">
+        <!-- Filter Form -->
+        <form id="filterForm" method="get">
+            <select name="type">
+                <option value="">All Types</option>
+                <option value="glamping" {% if request.GET.type == 'glamping' %}selected{% endif %}>Glamping</option>
+                <option value="cabin" {% if request.GET.type == 'cabin' %}selected{% endif %}>Cabins</option>
+                <option value="hostel" {% if request.GET.type == 'hostel' %}selected{% endif %}>Hostels</option>
+                <option value="campsite" {% if request.GET.type == 'campsite' %}selected{% endif %}>Campsites</option>
+                <option value="hotel" {% if request.GET.type == 'hotel' %}selected{% endif %}>Hotels</option>
+            </select>
 
-        <!-- LEFT SIDEBAR: Filters -->
-        <div class="area-2">
-            <div id="filterCollapse">
-                <div class="filter-card card-body">
-                    <h2>{% trans "Filter Accommodations" %}</h2>
+            <select name="destination">
+                <option value="">All Destinations</option>
+                {% for dest in unique_destinations %}
+                    <option value="{{ dest }}" {% if request.GET.destination == dest %}selected{% endif %}>{{ dest }}</option>
+                {% endfor %}
+            </select>
 
-                    <form id="filterForm" method="get" action="{% pageurl page %}">
-                        <div class="filter-options">
-
-                            <!-- Accommodation Type -->
-                            <div>
-                                <label for="type" class="form-label">{% trans "Accommodation Type" %}</label>
-                                <select name="type" id="type" class="form-select">
-                                    <option value="/">{% trans "All Types" %}</option>
-                                    <option value="glamping" {% if request.GET.type == "glamping" %}selected{% endif %}>{% trans "Glamping" %}</option>
-                                    <option value="cabin" {% if request.GET.type == 'cabin' %}selected{% endif %}>{% trans "Cabins" %}</option>
-                                    <option value="hostel" {% if request.GET.type == 'hostel' %}selected{% endif %}>{% trans "Hostels" %}</option>
-                                    <option value="campsite" {% if request.GET.type == 'campsite' %}selected{% endif %}>{% trans "Campsites" %}</option>
-                                    <option value="hotel" {% if request.GET.type == 'hotel' %}selected{% endif %}>{% trans "Hotels" %}</option>
-                                </select>
-                            </div>
-
-                            <!-- Destination -->
-                            <div>
-                                <label for="destination" class="form-label">{% trans "Destination" %}</label>
-                                <select name="destination" id="destination" class="form-select">
-                                    <option value="">{% trans "All Destinations" %}</option>
-                                    {% for dest in unique_destinations %}
-                                        <option value="{{ dest }}" {% if request.GET.destination == dest %}selected{% endif %}>
-                                            {{ dest }}
-                                        </option>
-                                    {% empty %}
-                                        <option value="Ecuador">Ecuador</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                            <!-- Status -->
-                            <div>
-                                <label for="status" class="form-label">{% trans "Status" %}</label>
-                                <select name="status" id="status" class="form-select">
-                                    <option value="">{% trans "Any Status" %}</option>
-                                    <option value="discount" {% if request.GET.status == 'discount' %}selected{% endif %}>{% trans "On Discount" %}</option>
-                                    <option value="special" {% if request.GET.status == 'special' %}selected{% endif %}>{% trans "Special Offer" %}</option>
-                                    <option value="soldout" {% if request.GET.status == 'soldout' %}selected{% endif %}>{% trans "Sold Out" %}</option>
-                                </select>
-                            </div>
-
-                            <!-- Pricing Type -->
-                            <div>
-                                <label for="pricing_type" class="form-label">{% trans "Pricing Model" %}</label>
-                                <select name="pricing_type" id="pricing_type" class="form-select">
-                                    <option value="">{% trans "Any" %}</option>
-                                    <option value="Per_room" {% if request.GET.pricing_type == 'Per_room' %}selected{% endif %}>{% trans "Per Room" %}</option>
-                                    <option value="Per_person" {% if request.GET.pricing_type == 'Per_person' %}selected{% endif %}>{% trans "Per Person" %}</option>
-                                    <option value="Combined" {% if request.GET.pricing_type == 'Combined' %}selected{% endif %}>{% trans "Combined (Tiered)" %}</option>
-                                </select>
-                            </div>
-
-                            <!-- Price Range -->
-                            <div>
-                                <label for="min_price" class="form-label">{% trans "Min Price (USD)" %}</label>
-                                <input type="number" name="min_price" id="min_price" class="form-control"
-                                       value="{{ request.GET.min_price }}" min="0" step="5">
-                            </div>
-
-                            <div>
-                                <label for="max_price" class="form-label">{% trans "Max Price (USD)" %}</label>
-                                <input type="number" name="max_price" id="max_price" class="form-control"
-                                       value="{{ request.GET.max_price }}" min="0" step="5">
-                            </div>
-
-                            <!-- Buttons -->
-                            <div class="submit-button mt-3">
-                                <button type="submit" class="btn btn-primary w-100">{% trans "Apply Filters" %}</button>
-                                {% if request.GET %}
-                                    <a href="{% pageurl page %}" class="btn btn-outline-secondary w-100 mt-2">{% trans "Clear All" %}</a>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- MAIN CONTENT -->
-        <div class="area-3">
-            <div class="result-container" id="resultsContainer">
-                {% if accommodations_pag %}
-                    {% for acc in accommodations_pag %}
-                        <div class="card accommodation-card" data-acc-id="{{ acc.id }}">
-
-                            <!-- Badges -->
-                            {% if acc.is_on_discount %}
-                                <div class="sticker new-sticker">{% trans "Discount" %}</div>
-                            {% endif %}
-                            {% if acc.is_special_offer %}
-                                <div class="sticker special-offer-sticker">{% trans "Special Offer" %}</div>
-                            {% endif %}
-                            {% if acc.is_all_inclusive %}
-                                <div class="sticker new-sticker">{% trans "All Inclusive" %}</div>
-                            {% endif %}
-                            {% if acc.is_sold_out %}
-                                <div class="sticker special-offer-sticker">{% trans "Sold Out" %}</div>
-                            {% endif %}
-
-                            <!-- Image -->
-                            <div class="image-zone">
-                                <a href="{{ acc.url }}">
-                                    {% if acc.cover_image %}
-                                        {% image acc.cover_image fill-400x260 format-webp webpquality-70 loading="lazy" alt="{{ acc.name }} - {{ acc.location }}" %}
-                                    {% else %}
-                                        <img src="{% static 'images/placeholder.jpg' %}" height="100%" width="100%" alt="No image" loading="lazy">
-                                    {% endif %}
-                                    <div class="card-country">{{ acc.destination }}</div>
-                                    <div class="card-location">{{ acc.location }}</div>
-                                </a>
-                            </div>
-
-                            <!-- Content -->
-                            <div class="text-zone">
-                                <div class="card-type">
-                                    {{ acc|model_name|capfirst }} <!-- e.g. Glamping, Cabin -->
-                                </div>
-
-                                <h3 class="card-title">
-                                    <a href="{{ acc.url }}">{{ acc.name }}</a>
-                                </h3>
-
-                                <!-- Amenities Icons -->
-                                <div class="card-amenities grid-7-c mt-2">
-                                    {% for label in acc.amenity_labels %}
-                                        <i class="card-icon {{ label }}" title="{{ label|get_choice_label:GLOBAL_ICON_CHOICES }}"></i>
-                                    {% empty %}
-                                        <i class="card-icon fa-question" title="No amenities listed"></i>
-                                    {% endfor %}
-                                </div>
-
-                                <!-- Price & CTA -->
-                                <div class="flex-box mt-3">
-                                    {% if acc.is_sold_out %}
-                                        <div class="card-price soldout">{% trans "Sold Out" %}</div>
-                                    {% elif acc.collect_price and acc.active_prices %}
-                                        {% with price=acc.active_prices.dbl|default:acc.active_prices.adult %}
-                                            <div class="card-price">
-                                                {% if price %}
-                                                    From <strong>${{ price|floatformat:0 }}</strong>
-                                                {% else %}
-                                                    {% trans "Ask for Price" %}
-                                                {% endif %}
-                                            </div>
-                                        {% endwith %}
-                                    {% else %}
-                                        <div class="card-price">{% trans "Contact for Price" %}</div>
-                                    {% endif %}
-
-                                    <div class="cta-zone">
-                                        {% if not acc.is_sold_out %}
-                                            <button class="card-button conic-gradient-animation">
-                                                <a href="{{ acc.url }}">{% trans "View Details" %}</a>
-                                            </button>
-                                        {% else %}
-                                            <button class="card-button disabled">{% trans "Sold Out" %}</button>
-                                        {% endif %}
-                                    </div>
-                                </div>
-
-                                <p class="estimated-text small text-muted mt-2">
-                                    {{ acc.get_pricing_type_display }} • {{ acc.price_subtext }}
-                                </p>
-                            </div>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="text-center py-5">
-                        <p class="text-muted lead">{% trans "No accommodations match your filters." %}</p>
-                        <a href="{% pageurl page %}" class="btn btn-primary">{% trans "Show All" %}</a>
-                    </div>
-                {% endif %}
-            </div>
-
-            <!-- Pagination -->
-            {% if accommodations_pag.has_other_pages %}
-                <nav aria-label="{% trans "Accommodation pagination" %}" class="pagination-nav mt-5"
-                     data-has-next="{% if accommodations_pag.has_next %}true{% else %}false{% endif %}">
-                    <ul class="pagination justify-content-center">
-                        {% if accommodations_pag.has_previous %}
-                            <li class="page-item">
-                                <a class="page-link" href="?{% querystring request.GET page=1 %}">{% trans "First" %}</a>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="?{% querystring request.GET page=accommodations_pag.previous_page_number %}">{% trans "Previous" %}</a>
-                            </li>
-                        {% endif %}
-
-                        {% for num in accommodations_pag.paginator.page_range %}
-                            {% if accommodations_pag.number == num %}
-                                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                            {% else %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?{% querystring request.GET page=num %}">{{ num }}</a>
-                                </li>
-                            {% endif %}
-                        {% endfor %}
-
-                        {% if accommodations_pag.has_next %}
-                            <li class="page-item">
-                                <a class="page-link" href="?{% querystring request.GET page=accommodations_pag.next_page_number %}">{% trans "Next" %}</a>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="?{% querystring request.GET page=accommodations_pag.paginator.num_pages %}">{% trans "Last" %}</a>
-                            </li>
-                        {% endif %}
-                    </ul>
-                </nav>
-            {% endif %}
-        </div>
-        <div class="area-1">
-            {% if page.intro %}
-                <div class="intro lead">{{ page.intro|richtext }}</div>
-            {% endif %}
-            <h1 class="page-title">{% trans "Available Accommodations" %}</h1>
-        </div>
+            <button type="submit">Filter</button>
+            <a href="{% pageurl page %}" id="clearFilters">Clear</a>
+        </form>
     </div>
-</section>
 
-{% block extra_js %}
-<script src="{% static 'js/filtering_index.js' %}"></script>
-{% endblock extra_js %}
+    <div class="area-3">
+        <div id="resultsContainer">
+            {% for acc in accommodations_pag %}
+            <div class="card">
+                <h3>{{ acc.name }}</h3>
+                <p>{{ acc.destination }} • {{ acc.specific|capfirst }}</p>
+            </div>
+            {% endfor %}
+        </div>
 
+        <nav class="pagination-nav" data-has-next="{% if accommodations_pag.has_next %}true{% else %}false{% endif %}">
+            {% if accommodations_pag.has_previous %}
+                <a href="?page={{ accommodations_pag.previous_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">Previous</a>
+            {% endif %}
+            Page {{ accommodations_pag.number }} of {{ accommodations_pag.paginator.num_pages }}
+            {% if accommodations_pag.has_next %}
+                <a href="?page={{ accommodations_pag.next_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">Next</a>
+            {% endif %}
+        </nav>
+    </div>
+</div>
 {% endblock content %}
+
+<script src="{% static 'js/filtering_index.js' %}"></script>

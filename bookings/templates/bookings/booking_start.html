@@ -1,10 +1,6 @@
 {% extends "base.html" %}
 {% load static i18n wagtailimages_tags wagtailcore_tags custom_filters model_extras %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'vendor/css/flatpickr.min.css' %}">
-{% endblock extra_css %}
-<link rel="stylesheet" href="{% static 'css/booking_form.css' %}">
 {% block title %}Booking Form{% endblock title %}
 {% block content %}
 <section class="booking-section">
@@ -272,6 +268,9 @@
         </div>
     </div>
 </section>
+{% endblock content %}
+{% block extra_js %}
+<script src="{% static 'js/booking_form.js'%}"></script>
     <script id="booking-data" type="application/json">
     {
         "tourType": "{{ tour_type|escapejs }}",
@@ -286,9 +285,4 @@
         "blackout_dates": {{ blackout_dates_json|safe }}
     }
     </script>
-    {% block extra_js %}
-    <!-- JSON data for JavaScript -->
-    <script src="{% static 'js/booking_form.js'%}"></script>
-    <script src="{% static 'vendor/js/flatpickr.js'%}"></script>
-    {% endblock extra_js %}
-{% endblock content %}
+{% endblock extra_js %}

@@ -2,8 +2,8 @@
 {% load static i18n wagtailcore_tags wagtailimages_tags wagtailroutablepage_tags tour_filters %}
 
 {% block title %} {{ self.title }} {% endblock title %}
+
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/layout.css' %}"/>
 <link rel="stylesheet" href="{% static 'css/card_style.css' %}"/>
 {% endblock extra_css %}
 {% block content %}

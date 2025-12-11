@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% load static i18n wagtailcore_tags wagtailimages_tags accommodation_filters %}
 
-{% block title %}{{ page.name }} – {{ page.location }}, {{ page.destination }}{% endblock %}
+{% block title %}{{ page.name }} – {{ page.location }}, {{ page.destination }}{% endblock title %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/detail_page.css' %}"/>
-{% endblock %}
+{% endblock extra_css %}
 
 {% block content %}
 
@@ -17,7 +17,7 @@
             {% if page.cover_image %}
                 {% image page.cover_image fill-1920x1080 format-webp quality=85 alt="{{ page.name }} – {{ page.location }}" loading="lazy" %}
             {% else %}
-                <img src="{% static 'images/placeholder-cover.jpg' %}" alt="Cover">
+                <img src="{% static 'images/placeholder-cover.jpg' %}" height="auto" width="auto" alt="Cover">
             {% endif %}
         </div>
 
@@ -26,23 +26,6 @@
             <h2 class="cover-text-duration">
                 {{ page.location }}, {{ page.destination }}
             </h2>
-
-            <!-- Badges -->
-            <div class="flex-container">
-                {% if page.is_sold_out %}
-                    <div class="stickers sticker-1">SOLD OUT</div>
-                {% endif %}
-                {% if page.is_special_offer %}
-                    <div class="stickers sticker-2">Special Offer</div>
-                {% endif %}
-                {% if page.is_on_discount %}
-                    <div class="stickers sticker-2">On Discount</div>
-                {% endif %}
-                {% if page.is_all_inclusive %}
-                    <div class="stickers sticker-1">All Inclusive</div>
-                {% endif %}
-                <div class="stickers tour-itinerary">{{ page|model_name|capfirst }}</div>
-            </div>
 
             <!-- Action Buttons -->
             <div class="booking-actions">
@@ -58,8 +41,8 @@
                 {% endif %}
 
                 {% if not page.is_sold_out %}
-                    <a href="{% url 'bookings:booking_start' page.id %}" class="book-button conic-gradient-animation">
-                        Book Now
+                    <a href="#" data-open-booking-modal class="book-button conic-gradient-animation">
+                    Book Now
                     </a>
                     <a href="https://api.whatsapp.com/send/?phone=593967359549&text=Hi! I'm interested in {{ page.name }} (Ref: {{ page.code_id }})&app_absent=0"
                        target="_blank" class="book-button secondary">
@@ -74,6 +57,21 @@
                 <p class="disclaimer text-white mt-3">{{ page.disclaimer|richtext }}</p>
             {% endif %}
         </div>
+                    <div class="flex-container">
+                {% if page.is_sold_out %}
+                    <div class="stickers sticker-1">SOLD OUT</div>
+                {% endif %}
+                {% if page.is_special_offer %}
+                    <div class="stickers sticker-2">Special Offer</div>
+                {% endif %}
+                {% if page.is_on_discount %}
+                    <div class="stickers sticker-2">On Discount</div>
+                {% endif %}
+                {% if page.is_all_inclusive %}
+                    <div class="stickers sticker-1">All Inclusive</div>
+                {% endif %}
+                <div class="stickers tour-itinerary">{{ page|model_name|capfirst }}</div>
+            </div>
     </div>
 
     <!-- MAIN CONTENT -->
@@ -232,8 +230,8 @@
     </div>
 </div>
 {% endif %}
-
-{% endblock %}
+{% include "accommodation/includes/booking_modal.html" %}
+{% endblock content %}
 
 {% block extra_js %}
 <script>
@@ -259,4 +257,4 @@ document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeVideoModal();
 });
 </script>
-{% endblock %}
+{% endblock extra_js %}

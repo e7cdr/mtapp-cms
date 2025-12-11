@@ -1,7 +1,7 @@
 import requests
 from venv import logger
 from datetime import date, timedelta
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import Decimal, InvalidOperation
 
 from django.urls import reverse
 from django.conf import settings
@@ -20,6 +20,15 @@ from django.shortcuts import get_object_or_404, redirect, render
 from bookings.models import Booking, ExchangeRate, Proposal, ProposalConfirmationToken
 
 from .pdf_gen import generate_itinerary_pdf
+
+def safe_decimal(value, default='0'):
+    """Convert any value to Decimal safely"""
+    if value in (None, '', 'None'):
+        return Decimal(default)
+    try:
+        return Decimal(str(value))
+    except (InvalidOperation, TypeError, ValueError):
+        return Decimal(default)
 
 def send_supplier_email(proposal: Proposal, token: ProposalConfirmationToken = None, tour=None, end_date=None) -> bool:
     try:
@@ -54,27 +63,31 @@ def send_supplier_email(proposal: Proposal, token: ProposalConfirmationToken = N
         logger.error(f"Failed to send supplier email for proposal {proposal.id}: {e}")
         return False
 
-def send_preconfirmation_email(proposal: Proposal) -> None:
-    subject = "Confirm Your Tour Proposal"
-    duration = proposal.tour.duration_days if proposal.tour else 0
+def send_preconfirmation_email(proposal):
+    if not proposal.tour:
+        logger.warning("No tour attached to proposal — skipping email")
+        return
+
+    tour = proposal.tour
+    duration = tour.duration_days or 0
     end_date = proposal.travel_date + timedelta(days=duration)
 
-    # NEW: Extract pricing details for context
-    tour = proposal.tour
-    pricing_type = getattr(tour, 'pricing_type', 'Per_room') if tour else 'Per_room'
-    price_adult = getattr(tour, 'price_adult', 0) if tour else 0
-    price_child = getattr(tour, 'price_child', 0) if tour else 0
-    price_infant = getattr(tour, 'price_inf', 0) if tour else 0  # Adjust field names if different
+    # BULLETPROOF PRICE EXTRACTION
+    price_adult = safe_decimal(getattr(tour, 'price_adult', 0))
+    price_child_raw = getattr(tour, 'price_child', None) or getattr(tour, 'price_chd', None)
+    price_child = safe_decimal(price_child_raw)
+    price_infant = safe_decimal(getattr(tour, 'price_inf', 0))
 
     # Subtotals
     adult_subtotal = proposal.number_of_adults * price_adult
     child_subtotal = proposal.number_of_children * price_child
     infant_subtotal = proposal.number_of_infants * price_infant
+
     per_person_details = {
         'adult_subtotal': adult_subtotal,
         'child_subtotal': child_subtotal,
         'infant_subtotal': infant_subtotal,
-        'total_breakdown': adult_subtotal + child_subtotal + infant_subtotal,
+        'total_breakdown': (adult_subtotal + child_subtotal + infant_subtotal).quantize(Decimal('0.01')),
     }
 
     message = render_to_string('bookings/emails/preconfirmation.html', {
@@ -83,19 +96,21 @@ def send_preconfirmation_email(proposal: Proposal) -> None:
         'end_date': end_date,
         'payment_link': proposal.payment_link,
         'site_url': settings.SITE_URL,
-        'configuration_details': proposal.room_config if proposal.room_config else [],
-        'pricing_type': pricing_type,
+        'configuration_details': proposal.room_config or [],
+        'pricing_type': getattr(tour, 'pricing_type', 'Per_room'),
         'per_person_details': per_person_details,
         'price_adult': price_adult,
         'price_child': price_child,
         'price_infant': price_infant,
     })
+
     send_mail(
-        subject,
-        message,
-        settings.DEFAULT_FROM_EMAIL,
-        [proposal.customer_email],
+        subject="Confirm Your Tour Proposal",
+        message="",  # plain text empty — we use HTML only
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[proposal.customer_email],
         html_message=message,
+        fail_silently=False,
     )
     logger.info(f"Preconfirmation email sent to {proposal.customer_email} for proposal {proposal.id}")
 
@@ -244,8 +259,7 @@ def reject_proposal(request, proposal_id: int) -> HttpResponse:
 
 # @login_required  # Uncomment for login enforcement
 # @user_passes_test(lambda u: u.is_staff)  # Or staff-only
-def proposal_detail(request, proposal_id: int) -> HttpResponse:
-
+def proposal_detail(request, proposal_id: int):
     proposal = get_object_or_404(
         Proposal.objects.select_related('content_type', 'user').prefetch_related('confirmation_tokens'),
         id=proposal_id
@@ -255,82 +269,61 @@ def proposal_detail(request, proposal_id: int) -> HttpResponse:
         raise Http404("Tour not found for this proposal.")
 
     tour = proposal.tour
-    # Calculate end_date
     duration = getattr(tour, 'duration_days', 0)
     end_date = proposal.travel_date + timedelta(days=duration)
 
-    # Effective children/infants from ages (mirror compute_pricing)
-    child_age_min = getattr(tour, 'child_age_min', 0)  # Assume 2 or model default
+    # Effective children/infants
+    child_age_min = getattr(tour, 'child_age_min', 0)
     effective_children_ages = [age for age in proposal.children_ages if age >= child_age_min]
     effective_infants_ages = [age for age in proposal.children_ages if age < child_age_min]
     effective_children = len(effective_children_ages)
     effective_infants = len(effective_infants_ages)
 
-    # FIXED: Determine tour_type for accurate price_adult in per_person
-    tour_class_name = tour.__class__.__name__.lower()
-    is_full_or_land = any(t in tour_class_name for t in ['fulltourpage', 'landtourpage'])
+    # SAFELY GET ALL PRICES
+    price_adult = safe_decimal(getattr(tour, 'price_adult', 0))
+    price_child_raw = getattr(tour, 'price_child', None) or getattr(tour, 'price_chd', None)
+    price_child = safe_decimal(price_child_raw)
+    price_infant = safe_decimal(getattr(tour, 'price_inf', 0))
 
-    # Extract pricing details (mirror compute_pricing logic)
+    price_sgl = safe_decimal(getattr(tour, 'price_sgl', 0))
+    price_dbl = safe_decimal(getattr(tour, 'price_dbl', 0))
+    price_tpl = safe_decimal(getattr(tour, 'price_tpl', 0))
+
+    # Determine if full/land tour
+    is_full_or_land = any(t in tour.__class__.__name__.lower() for t in ['fulltourpage', 'landtourpage'])
+    if is_full_or_land:
+        price_adult = price_sgl  # Full/Land tours use SGL as adult price
+
     pricing_type = getattr(tour, 'pricing_type', 'Per_room')
 
-    # Base prices (universal)
-    price_child = Decimal(str(getattr(tour, 'price_child', getattr(tour, 'price_chd', '0'))))
-    price_infant = Decimal(str(getattr(tour, 'price_inf', '0')))
-
-    # Room prices (if Per_room)
-    price_sgl = Decimal(str(getattr(tour, 'price_sgl', '0')))
-    price_dbl = Decimal(str(getattr(tour, 'price_dbl', '0')))
-    price_tpl = Decimal(str(getattr(tour, 'price_tpl', '0')))
-
-    # FIXED: Set price_adult based on tour_type for per_person consistency
-    if is_full_or_land:
-        price_adult = price_sgl
-    else:
-        price_adult = Decimal(str(getattr(tour, 'price_adult', '0')))
-
-    # FIXED: Compute actual factors to match compute_pricing (for accurate subtotals summing to estimated_price)
-    seasonal_factor = Decimal(str(getattr(tour, 'seasonal_factor', '1.0')))
+    # Factors
+    seasonal_factor = safe_decimal(getattr(tour, 'seasonal_factor', '1.0'))
     demand_factor = Decimal('0')
 
-    # Capacity-based demand (fallback, overridden below)
     if proposal.travel_date:
         try:
-            travel_date = date.fromisoformat(str(proposal.travel_date)) if hasattr(proposal.travel_date, 'isoformat') else proposal.travel_date
+            travel_date = proposal.travel_date.date() if hasattr(proposal.travel_date, 'date') else proposal.travel_date
             capacity = get_remaining_capacity(proposal.object_id, travel_date, tour.__class__, duration)
             if 'total_remaining' in capacity:
                 demand_factor = calculate_demand_factor(capacity['total_remaining'], sum(d['total_daily'] for d in capacity['per_day']))
-            else:
-                demand_factor = Decimal('0')
-                logger.warning("No capacity data—default demand_factor=0")
-        except (ValueError, Exception) as e:
-            demand_factor = Decimal('0')
-            logger.warning(f"Error computing capacity demand_factor: {e}—default demand_factor=0")
-    price_adjustment = Decimal('1') + Decimal('0.2') * demand_factor
+        except Exception as e:
+            logger.warning(f"Capacity demand error: {e}")
 
-    # Override with 30-day demand
     try:
         demand_info = get_30_day_used_slots(proposal.object_id, tour.__class__)
-        full_percent = demand_info['full_percent']
-        if isinstance(full_percent, (int, float)):
-            full_percent = Decimal(str(full_percent))
-        model_demand_factor = Decimal(str(getattr(tour, 'demand_factor', '0')))
+        full_percent = Decimal(str(demand_info['full_percent'])) if demand_info.get('full_percent') else Decimal('0')
+        model_demand_factor = safe_decimal(getattr(tour, 'demand_factor', '0'))
         demand_factor = model_demand_factor * full_percent
-        price_adjustment = Decimal('1') + demand_factor
-        logger.debug(f"Computed 30-day demand_factor={demand_factor}, price_adjustment={price_adjustment}")
     except Exception as e:
-        logger.warning(f"Error computing 30-day demand_factor: {e}—using fallback adjustment {price_adjustment}")
+        logger.warning(f"30-day demand error: {e}")
 
-    # Exchange rate
-    currency = request.session.get('currency', 'USD')
-    exchange_rate = get_exchange_rate(currency)
-    if exchange_rate <= Decimal('0'):
-        logger.warning(f"Invalid exchange rate for {currency}: {exchange_rate}, falling back to USD")
-        currency = 'USD'
-        request.session['currency'] = currency
+    price_adjustment = Decimal('1') + demand_factor
+    exchange_rate = get_exchange_rate(request.session.get('currency', 'USD'))
+    if exchange_rate <= 0:
         exchange_rate = Decimal('1.0')
     factor = seasonal_factor * price_adjustment * exchange_rate
 
-    # Adjusted rates (for "Qty x Rate")
+    # Adjusted prices
     adjusted_price_adult = price_adult * factor
     adjusted_price_child = price_child * factor
     adjusted_price_infant = price_infant * factor
@@ -338,27 +331,24 @@ def proposal_detail(request, proposal_id: int) -> HttpResponse:
     adjusted_price_dbl = price_dbl * factor
     adjusted_price_tpl = price_tpl * factor
 
-    # FIXED: Use selected_config for configuration_details to match qty with subtotals
-    configuration_details = proposal.selected_config if proposal.selected_config else {}
-
-    # Subtotals (qty * adjusted_rate—use effective for children/infants)
+    # Subtotals
     adult_subtotal = proposal.number_of_adults * adjusted_price_adult
     child_subtotal = effective_children * adjusted_price_child
     infant_subtotal = effective_infants * adjusted_price_infant
+
     per_person_details = {
         'adult_subtotal': adult_subtotal,
         'child_subtotal': child_subtotal,
         'infant_subtotal': infant_subtotal,
-        'total_breakdown': (adult_subtotal + child_subtotal + infant_subtotal).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),  # FIXED: Quantize for precision
+        'total_breakdown': (adult_subtotal + child_subtotal + infant_subtotal).quantize(Decimal('0.01')),
     }
 
-    # Per_room subtotals (if config—apply factor if base)
     room_subtotals = {}
     if pricing_type == 'Per_room' and proposal.selected_config:
-        selected_config = proposal.selected_config
-        singles_sub = selected_config.get('singles', 0) * adjusted_price_sgl
-        doubles_sub = selected_config.get('doubles', 0) * adjusted_price_dbl
-        triples_sub = selected_config.get('triples', 0) * adjusted_price_tpl
+        cfg = proposal.selected_config
+        singles_sub = cfg.get('singles', 0) * adjusted_price_sgl
+        doubles_sub = cfg.get('doubles', 0) * adjusted_price_dbl
+        triples_sub = cfg.get('triples', 0) * adjusted_price_tpl
         children_sub = effective_children * adjusted_price_child
         infants_sub = effective_infants * adjusted_price_infant
         room_subtotals = {
@@ -367,14 +357,14 @@ def proposal_detail(request, proposal_id: int) -> HttpResponse:
             'triples_subtotal': triples_sub,
             'children_subtotal': children_sub,
             'infants_subtotal': infants_sub,
-            'total_breakdown': (singles_sub + doubles_sub + triples_sub + children_sub + infants_sub).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),  # FIXED: Quantize for precision
+            'total_breakdown': (singles_sub + doubles_sub + triples_sub + children_sub + infants_sub).quantize(Decimal('0.01')),
         }
 
     context = {
         'proposal': proposal,
         'tour': tour,
         'end_date': end_date,
-        'configuration_details': configuration_details,  # FIXED: Use selected_config for consistent qty/subtotal
+        'configuration_details': proposal.selected_config or {},
         'is_company_tour': getattr(tour, 'is_company_tour', False),
         'site_url': settings.SITE_URL,
         'pricing_type': pricing_type,
@@ -387,7 +377,7 @@ def proposal_detail(request, proposal_id: int) -> HttpResponse:
         'adjusted_price_dbl': adjusted_price_dbl,
         'adjusted_price_tpl': adjusted_price_tpl,
         'factor': factor,
-        'effective_children': effective_children,  # NEW: For template
+        'effective_children': effective_children,
         'effective_infants': effective_infants,
     }
 

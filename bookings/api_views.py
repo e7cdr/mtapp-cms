@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 
-from .utils import calculate_demand_factor, get_remaining_capacity
+from .tours_utils import calculate_demand_factor, get_remaining_capacity
 
 
 class AvailableDatesView(APIView):

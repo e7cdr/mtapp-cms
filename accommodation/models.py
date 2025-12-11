@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 from decimal import Decimal
 import os
 from venv import logger
@@ -18,7 +18,7 @@ from wagtail.images.models import Image
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel
 from django.db import models
 from django.http import HttpRequest
-from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.core.paginator import Paginator
 from wagtail.contrib.routable_page.models import RoutablePageMixin, route
 from wagtail.fields import RichTextField, StreamField
 from wagtail.search import index
@@ -119,7 +119,7 @@ class AbstractAccommodationPage(SeoMixin, Page):
     supplier_email = models.EmailField(blank=True, help_text=_("Supplier contact email. If This is a in House/company accommodation, check the next box and skip this email field."))
     is_company_accom = models.BooleanField(
         default=False,
-        help_text=_("If True, skip supplier confirmation and go direct to payment (company-run accommodation).")
+        help_text=_("If True, skip supplier  and go direct to payment (company-run accommodation).")
     )
     collect_price = models.BooleanField(default=True, help_text="If unchecked, the pricing options won't be available in the Booking Form. Basically, a proposal form without price")
     inquiry_message = RichTextField(verbose_name="Inquiry Message", max_length=300, null=True, blank=True, help_text="If Collect Price is unchecked, or more specifically, if no prices to be collected, please write a message to show instead.")
@@ -327,24 +327,92 @@ class AbstractAccommodationPage(SeoMixin, Page):
             base['max_children_per_room'] = self.max_children_per_room
         return base
 
+    # @property
+    # def blackout_dates_list(self):
+    #     """Flatten blackout_entries to list of 'YYYY-MM-DD' strings (expands ranges)."""
+    #     if not self.blackout_entries:
+    #         return []
+    #     dates = []
+    #     for block in self.blackout_entries:
+    #         if block.block_type == 'single_date':
+    #             dates.append(block.value.strftime('%Y-%m-%d'))
+    #         elif block.block_type == 'date_range':
+    #             start = block.value['start_date']
+    #             end = block.value['end_date']
+    #             current = start
+    #             while current <= end:
+    #                 dates.append(current.strftime('%Y-%m-%d'))
+    #                 current += timedelta(days=1)
+    #     return dates  # JSON-safe list
+
+    def get_blocked_dates(self, start_date=None, end_date=None):
+        from bookings.models import AccommodationBooking
+        from django.contrib.contenttypes.models import ContentType
+        from datetime import date, timedelta
+
+        if start_date is None:
+            start_date = date.today()
+        if end_date is None:
+            end_date = start_date + timedelta(days=365)
+
+        content_type = ContentType.objects.get_for_model(self)
+
+        bookings = AccommodationBooking.objects.filter(
+            content_type=content_type,
+            object_id=self.id,
+            check_in__lte=end_date,
+            check_out__gte=start_date,
+            status__in=['PENDING_PAYMENT', 'PAID']
+        )
+
+        blocked = set()
+        current_date = start_date
+        while current_date <= end_date:
+            guests_on_date = sum(
+                b.adults + b.children
+                for b in bookings
+                if b.check_in <= current_date < b.check_out
+            )
+
+            if guests_on_date >= self.max_capacity:
+                blocked.add(current_date.isoformat())
+
+            current_date += timedelta(days=1)
+
+        return sorted(blocked)
+    
     @property
-    def blackout_dates_list(self):
-        """Flatten blackout_entries to list of 'YYYY-MM-DD' strings (expands ranges)."""
-        if not self.blackout_entries:
-            return []
-        dates = []
+    def manual_blackout_dates_list(self):
+        """Returns list of 'YYYY-MM-DD' strings from manual blackout field"""
+        dates = set()
         for block in self.blackout_entries:
             if block.block_type == 'single_date':
-                dates.append(block.value.strftime('%Y-%m-%d'))
+                dates.add(block.value.isoformat())
             elif block.block_type == 'date_range':
                 start = block.value['start_date']
                 end = block.value['end_date']
                 current = start
                 while current <= end:
-                    dates.append(current.strftime('%Y-%m-%d'))
+                    dates.add(current.isoformat())
                     current += timedelta(days=1)
-        return dates  # JSON-safe list
+        return sorted(dates)
 
+    @property
+    def blocked_dates_list(self):
+        """For frontend use"""
+        return self.get_blocked_dates()
+    
+    @property
+    def available_days_list(self):
+        """Return list of allowed weekdays (0=Sun, 6=Sat)"""
+        if not self.available_days:
+            return []
+        return [int(x) for x in self.available_days.split(',') if x.strip().isdigit()]
+
+    @property
+    def min_stay_nights(self):
+        """Override in child classes if needed, default 1"""
+        return 1
     def get_itinerary_days(self):
         return self.itinerary
 
@@ -365,7 +433,7 @@ class AbstractAccommodationPage(SeoMixin, Page):
         amenity_labels = [choice_dict.get(value, value) for value in selected_values]  # Fallback to value if no match
 
         context['amenity_labels'] = amenity_labels  # Or ', '.join(amenity_labels) for a single string
-        context['blackout_dates_list'] = self.blackout_dates_list  # For JS
+        context['blackout_dates_list'] = self.blackout_entries # For JS
         return context
 
     def clean(self):
@@ -526,8 +594,6 @@ class AbstractAccommodationPage(SeoMixin, Page):
         """Override in children for 'LT', 'FT', 'DT'."""
         raise NotImplementedError("Subclasses must define get_code_prefix()")
     
-    # accommodations/models.py — add inside AbstractAccommodationPage class (near the bottom)
-
     def get_jsonld_schema(self):
         """
         100% safe AccommodationistTrip JSON-LD — works on ALL accommodation types

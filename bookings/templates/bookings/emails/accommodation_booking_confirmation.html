@@ -1,0 +1,37 @@
+{% load i18n %}
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Booking Confirmation</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+  <h1>Thank You for Your Booking, {{ booking.customer_name }}!</h1>
+  <p>Your accommodation has been successfully reserved:</p>
+
+  <h2>{{ accommodation.name }}</h2>
+  <p><strong>Dates:</strong> {{ booking.check_in }} → {{ booking.check_out }} ({{ nights }} night{{ nights|pluralize }})</p>
+  <p><strong>Guests:</strong> {{ booking.adults }} adult{{ booking.adults|pluralize }}, {{ booking.children }} child{{ booking.children|pluralize }}</p>
+  <p><strong>Total Amount:</strong> ${{ booking.total_price }}</p>
+
+  {% if paypal_url %}
+    <p><strong>Complete your payment here:</strong></p>
+    <p style="text-align: center;">
+      <a href="{{ paypal_url }}" style="background: #0070ba; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+        Pay Now with PayPal
+      </a>
+    </p>
+    <p><small>This link expires in 24 hours.</small></p>
+  {% else %}
+    <p><strong>Status:</strong> Payment confirmed! Your booking is complete.</p>
+  {% endif %}
+
+  <hr>
+  <p>We’ll contact you soon with check-in details.</p>
+  <p>Questions? Reply to this email or WhatsApp: +593 96 735 9549</p>
+
+  <footer style="margin-top: 40px; font-size: 12px; color: #999;">
+    {{ site_name }} • Ecuador, Iceland, Colombia & Dominican Republic
+  </footer>
+</body>
+</html>

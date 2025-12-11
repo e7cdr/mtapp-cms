@@ -7,32 +7,14 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-<<<<<<< HEAD
-        ("bookings", "0001_initial"),
-        ("contenttypes", "0002_remove_content_type_name"),
-=======
         ('bookings', '0001_initial'),
         ('contenttypes', '0002_remove_content_type_name'),
->>>>>>> cbb398c85844ebfd77d9a14aaa552cb88b5e7f01
     ]
 
     operations = [
         migrations.AlterField(
-<<<<<<< HEAD
-            model_name="booking",
-            name="content_type",
-            field=models.ForeignKey(
-                help_text="Type of tour (Full, Land, or Day) or Accommodation.",
-                limit_choices_to={
-                    "model__in": ("fulltourpage", "landtourpage", "daytourpage", "")
-                },
-                on_delete=django.db.models.deletion.CASCADE,
-                to="contenttypes.contenttype",
-            ),
-=======
             model_name='booking',
             name='content_type',
             field=models.ForeignKey(help_text='Type of tour (Full, Land, or Day) or Accommodation.', limit_choices_to={'model__in': ('fulltourpage', 'landtourpage', 'daytourpage', '')}, on_delete=django.db.models.deletion.CASCADE, to='contenttypes.contenttype'),
->>>>>>> cbb398c85844ebfd77d9a14aaa552cb88b5e7f01
         ),
     ]

@@ -1,0 +1,450 @@
+{% load static i18n %}
+
+<div id="bookingModal" class="booking-modal" role="dialog" aria-modal="true" aria-labelledby="bookingModalTitle">
+  <div class="booking-modal-overlay" data-close-modal></div>
+  
+  <div class="booking-modal-content">
+    <button class="booking-modal-close" aria-label="{% trans 'Close' %}" data-close-modal>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M18 6L6 18M6 6l12 12"/>
+      </svg>
+    </button>
+
+    <div class="booking-modal-header">
+      <h2 id="bookingModalTitle" class="booking-modal-title">
+        {% trans "Book" %}: <span id="modalAccommodationName">{{ page.name }}</span>
+      </h2>
+      <p class="booking-modal-subtitle">
+        {{ page.location }}, {{ page.destination }}
+      </p>
+    </div>
+
+    <div class="booking-modal-body">
+      <form id="accommodationBookingForm" 
+            action="{% url 'accommodation:accommodation_booking' page.id %}" 
+            method="post" 
+            novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="accommodation_id" value="{{ page.id }}">
+        <input type="hidden" name="child_ages" id="child_ages" value="[]">
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="check_in">{% trans "Check-in" %}</label>
+            <input type="text" id="check_in" name="check_in" required class="flatpickr-input" readonly>
+          </div>
+          <div class="form-group">
+            <label for="check_out">{% trans "Check-out" %}</label>
+            <input type="text" id="check_out" name="check_out" required class="flatpickr-input" readonly>
+          </div>
+
+          <div class="form-group">
+            <label for="adults">{% trans "Adults" %}</label>
+            <select id="adults" name="adults" required>
+              {% for i in "12345678"|make_list %}
+                <option value="{{ forloop.counter }}" {% if forloop.counter == 2 %}selected{% endif %}>
+                  {{ forloop.counter }} {% trans "Adult" %}{% if forloop.counter > 1 %}s{% endif %}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="children">{% trans "Children" %} <small>(0–12)</small></label>
+            <select id="children" name="children">
+              {% for i in "0123456"|make_list %}
+                <option value="{{ forloop.counter0 }}">{{ forloop.counter0 }} {% trans "Children" %}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div id="childAgesContainer" class="mt-4"></div>
+
+        <div class="form-grid mt-4">
+          <div class="form-group">
+            <label>{% trans "Full Name" %} <span class="text-red-600">*</span></label>
+            <input type="text" name="name" required class="w-full" placeholder="John Doe">
+          </div>
+          <div class="form-group">
+            <label>{% trans "Email" %} <span class="text-red-600">*</span></label>
+            <input type="email" name="email" required class="w-full" placeholder="you@example.com">
+          </div>
+          <div class="form-group">
+            <label>{% trans "Phone" %}</label>
+            <input type="tel" name="phone" class="w-full" placeholder="+593 99 999 9999">
+          </div>
+          <div class="form-group">
+            <label>{% trans "Special Requests" %}</label>
+            <textarea name="notes" rows="3" class="w-full"></textarea>
+          </div>
+        </div>
+
+        <!-- LIVE PRICE -->
+        <div class="price-summary mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border">
+          <div class="text-lg font-semibold">
+            {% trans "Total to Pay" %}:
+            <span id="totalPrice" class="text-2xl text-green-600 dark:text-green-400">$0.00</span>
+            <span class="text-sm text-gray-600 dark:text-gray-400">USD</span>
+          </div>
+          <div id="nightsInfo" class="text-sm text-gray-600 dark:text-gray-400 mt-1"></div>
+        </div>
+
+        <div class="form-actions mt-6">
+          <button type="submit" id="submitBookingBtn" class="btn-primary w-full">
+            <span class="text">{% trans "Continue to Payment" %}</span>
+            <span class="loading hidden">{% trans "Processing..." %}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<style>
+  /* MODAL — HIDDEN BY DEFAULT, PERFECTLY CENTERED */
+  .booking-modal {
+    display: none; /* ← THIS IS THE KEY */
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+  }
+
+  .booking-modal.active {
+    display: flex; /* ← SHOWS WHEN ACTIVE */
+  }
+
+  .booking-modal-overlay {
+    position: absolute;
+    inset: 0;
+  }
+
+  .booking-modal-content {
+    position: relative;
+    background: white;
+    border-radius: 1rem;
+    max-width:  : 560px;
+    width        : 100%;
+    max-height   : 95vh;
+    overflow-y   : auto;
+    box-shadow   : 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    animation    : modalFadeIn 0.3s ease-out;
+  }
+
+  @keyframes modalFadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .booking-modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    font-size: 1.75rem;
+    cursor: pointer;
+    color: #666;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+    z-index: 10;
+  }
+
+  .booking-modal-close:hover {
+    background: #f3f4f6;
+    color: #000;
+  }
+
+  .booking-modal-header {
+    padding: 2rem 2rem 1rem;
+    text-align: center;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .booking-modal-title {
+    font-size: 1.875rem;
+    font-weight: 700;
+    margin: 0;
+    color: #111;
+  }
+
+  .booking-modal-subtitle {
+    color: #6b7280;
+    margin: 0.5rem 0 0;
+    font-size: 1.1rem;
+  }
+
+  .booking-modal-body {
+    padding: 1.5rem 2rem 2rem;
+  }
+
+  /* FORM GRID */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+  }
+
+  @media (max-width: 640px) {
+    .form-grid { grid-template-columns: 1fr; }
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .form-group label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #374151;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 0.75rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    transition: border 0.2s;
+  }
+
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  /* FLATPICKR INPUTS */
+  .flatpickr-input {
+    background: white;
+  }
+
+  /* PRICE SUMMARY */
+  .price-summary {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+  }
+
+  /* BUTTON */
+  .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+  }
+
+  .btn-primary:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .hidden { display: none; }
+
+  /* RESPONSIVE */
+  @media (max-width: 480px) {
+    .booking-modal-content {
+      margin: 1rem;
+      border-radius: 0.75rem;
+    }
+    .booking-modal-header {
+      padding: 1.5rem 1.5rem 1rem;
+    }
+    .booking-modal-body {
+      padding: 1rem 1.5rem 1.5rem;
+    }
+  }
+</style>
+<script type="module">
+  document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('bookingModal');
+    const openButtons = document.querySelectorAll('[data-open-booking-modal]');
+    const closeTriggers = document.querySelectorAll('[data-close-modal]');
+    const form = document.getElementById('accommodationBookingForm');
+    const checkInInput = document.getElementById('check_in');
+    const checkOutInput = document.getElementById('check_out');
+    const adultsSelect = document.getElementById('adults');
+    const childrenSelect = document.getElementById('children');
+    const childAgesContainer = document.getElementById('childAgesContainer');
+    const totalPriceEl = document.getElementById('totalPrice');
+    const nightsInfoEl = document.getElementById('nightsInfo');
+
+    const PAGE_ID = {{ page.id }};
+
+    let checkInPicker, checkOutPicker;
+
+    openButtons.forEach(btn => btn.addEventListener('click', e => {
+      e.preventDefault();
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+
+      if (!checkInPicker) {
+        checkInPicker = flatpickr(checkInInput, {
+          minDate: "today",
+          dateFormat: "Y-m-d",
+          disable: [
+            date => {{ page.blocked_dates_list|safe }}.includes(date.toISOString().split('T')[0]),
+            date => {
+              const days = {{ page.available_days_list|safe }};
+              return days.length > 0 && !days.includes(date.getDay());
+            }
+          ],
+          onChange: () => updatePrice()
+        });
+
+        checkOutPicker = flatpickr(checkOutInput, {
+          minDate: "today",
+          dateFormat: "Y-m-d",
+          disable: [
+            date => {{ page.blocked_dates_list|safe }}.includes(date.toISOString().split('T')[0]),
+            date => {
+              const days = {{ page.available_days_list|safe }};
+              return days.length > 0 && !days.includes(date.getDay());
+            }
+          ],
+          onChange: () => updatePrice()
+        });
+      }
+
+      checkInPicker.clear();
+      checkOutPicker.clear();
+      totalPriceEl.textContent = '$0.00';
+      nightsInfoEl.textContent = '';
+    }));
+
+    const closeModal = () => {
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+      form?.reset();
+      childAgesContainer.innerHTML = '';
+      totalPriceEl.textContent = '$0.00';
+      nightsInfoEl.textContent = '';
+    };
+
+    closeTriggers.forEach(el => el.addEventListener('click', closeModal));
+    modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && modal.classList.contains('active')) closeModal();
+    });
+
+    childrenSelect?.addEventListener('change', () => {
+      const count = parseInt(childrenSelect.value) || 0;
+      childAgesContainer.innerHTML = '';
+      for (let i = 1; i <= count; i++) {
+        childAgesContainer.innerHTML += `
+          <div class="form-group">
+            <label>{% trans "Child" %} ${i} {% trans "Age" %}</label>
+            <select name="child_age_${i}" required class="w-full">
+              ${Array.from({length: 13}, (_, a) => `<option value="${a}">${a} {% trans "years" %}</option>`).join('')}
+            </select>
+          </div>
+        `;
+      }
+      updateChildAges();
+    });
+
+    function updateChildAges() {
+      const ages = [];
+      for (let i = 1; i <= 10; i++) {
+        const el = document.getElementById(`child_age_${i}`);
+        if (el) ages.push(parseInt(el.value) || 0);
+      }
+      document.getElementById('child_ages').value = JSON.stringify(ages.filter(a => a > 0));
+    }
+
+    async function updatePrice() {
+      const checkIn = checkInInput.value;
+      const checkOut = checkOutInput.value;
+      const adults = parseInt(adultsSelect.value) || 0;
+      const children = parseInt(childrenSelect.value) || 0;
+
+      if (!checkIn || !checkOut || adults === 0) {
+        totalPriceEl.textContent = '$0.00';
+        nightsInfoEl.textContent = '';
+        return;
+      }
+
+      const nights = Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000);
+      if (nights <= 0) return;
+
+      try {
+        const res = await fetch(`/accommodations/${PAGE_ID}/price-preview/?check_in=${checkIn}&check_out=${checkOut}&adults=${adults}&children=${children}`);
+        const data = await res.json();
+        totalPriceEl.textContent = `$${data.total.toFixed(2)}`;
+        nightsInfoEl.textContent = `${nights} night${nights > 1 ? 's' : ''}`;
+      } catch (e) {
+        totalPriceEl.textContent = '—';
+        nightsInfoEl.textContent = '';
+      }
+    }
+
+    [checkInInput, checkOutInput, adultsSelect, childrenSelect].forEach(el => {
+      el?.addEventListener('change', updatePrice);
+    });
+
+    form?.addEventListener('submit', async e => {
+      e.preventDefault();
+      const submitBtn = document.getElementById('submitBookingBtn');
+      const text = submitBtn.querySelector('.text');
+      const loading = submitBtn.querySelector('.loading');
+
+      text.classList.add('hidden');
+      loading.classList.remove('hidden');
+      submitBtn.disabled = true;
+
+      try {
+        const formData = new FormData(form);
+        const response = await fetch(form.action, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+          }
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.redirect_url) {
+          window.location.href = data.redirect_url;
+        } else {
+          let msg = "{% trans 'Please fix' %}:\n\n";
+          for (const field in data.errors) {
+            msg += `• ${data.errors[field].join('\n• ')}\n`;
+          }
+          alert(msg);
+          text.classList.remove('hidden');
+          loading.classList.add('hidden');
+          submitBtn.disabled = false;
+        }
+      } catch (err) {
+        alert("{% trans 'Connection failed. Try again.' %}");
+        text.classList.remove('hidden');
+        loading.classList.add('hidden');
+        submitBtn.disabled = false;
+      }
+    });
+  });
+</script>

@@ -142,6 +142,7 @@ ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'  # Users verify email before login
 ACCOUNT_LOGIN_METHODS = {'email'}  # Login with email
 SITE_ID = 1  # Required for allauth
+SITE_NAME = "Milano Travel"
 
 # Make Axes much friendlier for admins
 AXES_FAILURE_LIMIT = 5
@@ -236,17 +237,6 @@ STATIC_URL = "/static/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 MEDIA_URL = "/media/"
 
-# Default storage settings
-# See https://docs.djangoproject.com/en/4.2/ref/settings/#std-setting-STORAGES
-STORAGES = {
-    "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
-
 ADMINS = [('e7c', 'evc1893@gmail.com')]
 
 
@@ -317,7 +307,7 @@ LOGGING = {
         },
         'django.template': {
             'handlers': ['console', 'file'],
-            'level': 'DEBUG',
+            'level': 'INFO',
             'propagate': False,
         },
     },
@@ -395,3 +385,6 @@ from django.views.decorators.cache import cache_control
 @cache_control(max_age=31536000, immutable=True)
 def media_serve(request, path, document_root=None):
     return static_serve(request, path, document_root)
+
+
+

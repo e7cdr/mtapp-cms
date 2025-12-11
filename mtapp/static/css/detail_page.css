@@ -184,7 +184,8 @@ body {
     background-color: var(--red-transp);
 }
 
-.sticker-1, .tour-itinerary, .tour-video {
+
+.sticker-1, .tour-itinerary {
     background-color: var(--yellow-transp) ;
 }
 

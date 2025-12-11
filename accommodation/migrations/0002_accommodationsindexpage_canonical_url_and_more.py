@@ -7,155 +7,12 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-<<<<<<< HEAD
-        ("accommodation", "0001_initial"),
-        ("wagtailimages", "0027_image_description"),
-=======
         ('accommodation', '0001_initial'),
         ('wagtailimages', '0027_image_description'),
->>>>>>> cbb398c85844ebfd77d9a14aaa552cb88b5e7f01
     ]
 
     operations = [
         migrations.AddField(
-<<<<<<< HEAD
-            model_name="accommodationsindexpage",
-            name="canonical_url",
-            field=models.URLField(
-                blank=True,
-                help_text="Leave blank to use the page's URL.",
-                max_length=255,
-                verbose_name="Canonical URL",
-            ),
-        ),
-        migrations.AddField(
-            model_name="accommodationsindexpage",
-            name="og_image",
-            field=models.ForeignKey(
-                blank=True,
-                help_text="Shown when linking to this page on social media. If blank, may show an image from the page, or the default from Settings > SEO.",
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="+",
-                to="wagtailimages.image",
-                verbose_name="Preview image",
-            ),
-        ),
-        migrations.AddField(
-            model_name="cabinpage",
-            name="canonical_url",
-            field=models.URLField(
-                blank=True,
-                help_text="Leave blank to use the page's URL.",
-                max_length=255,
-                verbose_name="Canonical URL",
-            ),
-        ),
-        migrations.AddField(
-            model_name="cabinpage",
-            name="og_image",
-            field=models.ForeignKey(
-                blank=True,
-                help_text="Shown when linking to this page on social media. If blank, may show an image from the page, or the default from Settings > SEO.",
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="+",
-                to="wagtailimages.image",
-                verbose_name="Preview image",
-            ),
-        ),
-        migrations.AddField(
-            model_name="campsitepage",
-            name="canonical_url",
-            field=models.URLField(
-                blank=True,
-                help_text="Leave blank to use the page's URL.",
-                max_length=255,
-                verbose_name="Canonical URL",
-            ),
-        ),
-        migrations.AddField(
-            model_name="campsitepage",
-            name="og_image",
-            field=models.ForeignKey(
-                blank=True,
-                help_text="Shown when linking to this page on social media. If blank, may show an image from the page, or the default from Settings > SEO.",
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="+",
-                to="wagtailimages.image",
-                verbose_name="Preview image",
-            ),
-        ),
-        migrations.AddField(
-            model_name="glampingpage",
-            name="canonical_url",
-            field=models.URLField(
-                blank=True,
-                help_text="Leave blank to use the page's URL.",
-                max_length=255,
-                verbose_name="Canonical URL",
-            ),
-        ),
-        migrations.AddField(
-            model_name="glampingpage",
-            name="og_image",
-            field=models.ForeignKey(
-                blank=True,
-                help_text="Shown when linking to this page on social media. If blank, may show an image from the page, or the default from Settings > SEO.",
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="+",
-                to="wagtailimages.image",
-                verbose_name="Preview image",
-            ),
-        ),
-        migrations.AddField(
-            model_name="hostelpage",
-            name="canonical_url",
-            field=models.URLField(
-                blank=True,
-                help_text="Leave blank to use the page's URL.",
-                max_length=255,
-                verbose_name="Canonical URL",
-            ),
-        ),
-        migrations.AddField(
-            model_name="hostelpage",
-            name="og_image",
-            field=models.ForeignKey(
-                blank=True,
-                help_text="Shown when linking to this page on social media. If blank, may show an image from the page, or the default from Settings > SEO.",
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="+",
-                to="wagtailimages.image",
-                verbose_name="Preview image",
-            ),
-        ),
-        migrations.AddField(
-            model_name="hotelroompage",
-            name="canonical_url",
-            field=models.URLField(
-                blank=True,
-                help_text="Leave blank to use the page's URL.",
-                max_length=255,
-                verbose_name="Canonical URL",
-            ),
-        ),
-        migrations.AddField(
-            model_name="hotelroompage",
-            name="og_image",
-            field=models.ForeignKey(
-                blank=True,
-                help_text="Shown when linking to this page on social media. If blank, may show an image from the page, or the default from Settings > SEO.",
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="+",
-                to="wagtailimages.image",
-                verbose_name="Preview image",
-            ),
-=======
             model_name='accommodationsindexpage',
             name='canonical_url',
             field=models.URLField(blank=True, help_text="Leave blank to use the page's URL.", max_length=255, verbose_name='Canonical URL'),
@@ -214,6 +71,5 @@ class Migration(migrations.Migration):
             model_name='hotelroompage',
             name='og_image',
             field=models.ForeignKey(blank=True, help_text='Shown when linking to this page on social media. If blank, may show an image from the page, or the default from Settings > SEO.', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to='wagtailimages.image', verbose_name='Preview image'),
->>>>>>> cbb398c85844ebfd77d9a14aaa552cb88b5e7f01
         ),
     ]

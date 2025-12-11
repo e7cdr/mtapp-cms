@@ -471,3 +471,58 @@ class ExchangeRate(models.Model):
 
     def __str__(self):
         return f"{self.currency_code}: {self.rate_to_usd}"
+    
+@register_snippet
+class AccommodationBooking(models.Model):
+    # Generic relation to ANY accommodation page (Glamping, Cabin, HotelRoom, etc.)
+    content_type = models.ForeignKey(ContentType, on_delete=models.PROTECT)
+    object_id = models.PositiveIntegerField()
+    accommodation = GenericForeignKey('content_type', 'object_id')
+
+    # Booking details
+    check_in = models.DateField()
+    check_out = models.DateField()
+    adults = models.PositiveSmallIntegerField()
+    children = models.PositiveSmallIntegerField(default=0)
+    child_ages = models.JSONField(default=list, blank=True, null=True,)
+
+    # Customer
+    customer_name = models.CharField(max_length=200)
+    customer_email = models.EmailField()
+    customer_phone = models.CharField(max_length=30, blank=True, null=True,)
+    notes = models.TextField(blank=True)
+
+    # Pricing & Status
+    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ('PENDING_PAYMENT', 'Pending Payment'),
+            ('PAID', 'Paid'),
+            ('SUPPLIER_NOTIFIED', 'Supplier Notified'),
+            ('COMPLETED', 'Completed'),
+            ('CANCELLED', 'Cancelled'),
+        ],
+        default='PENDING_PAYMENT'
+    )
+    supplier_notified = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['content_type', 'object_id']),
+            models.Index(fields=['check_in', 'check_out']),
+        ]
+
+    def __str__(self):
+        return f"{self.accommodation} • {self.check_in} → {self.check_out}"
+
+    def get_nights(self):
+        return (self.check_out - self.check_in).days
+
+    @property
+    def accommodation_page(self):
+        """Easy access to the actual page (GlampingPage, CabinPage, etc.)"""
+        return self.accommodation.specific

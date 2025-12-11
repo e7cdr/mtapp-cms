@@ -22,6 +22,28 @@ DATABASES = {
     }
 }
 
+# dev.py — ADD THESE LINES
+
+if DEBUG:
+    # === DISABLE ALL CACHING IN DEVELOPMENT ===
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+        }
+    }
+    
+    # Disable Wagtail page cache
+    WAGTAIL_CACHE = False
+    
+
+    
+    # Whitenoise — no cache
+    WHITENOISE_AUTOREFRESH = True
+    WHITENOISE_MAX_AGE = 0
+    
+    # Compressor — off
+    COMPRESS_ENABLED = False
+
 try:
     from .local import *
 except ImportError:
@@ -54,11 +76,21 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = False
 SECURE_HSTS_PRELOAD = False
 
 WAGTAIL_CACHE_BACKEND = 'default'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-DEFAULT_FILE_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",  # ← THIS WINS IN DEV
+    },
+}
+
+# DEFAULT_FILE_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 COMPRESS_OFFLINE = False
-WHITENOISE_MAX_AGE = 60 * 60 
-WHITENOISE_IMMUTABLE_FILE_TEST = lambda path, url: True  # Treat all static/media as immutable
+COMPRESS_ENABLED = False
+
+# WHITENOISE_MAX_AGE = 60 * 60 
+# WHITENOISE_IMMUTABLE_FILE_TEST = lambda path, url: True  # Treat all static/media as immutable
 
 
 CACHES = {
