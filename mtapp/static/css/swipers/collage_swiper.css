@@ -17,7 +17,7 @@
 }
 
 .collage-swiper1-container {
-    height: 90vh;
+    height: 100vh !important;
     width: 100%;
     color: white;
 }

@@ -4,6 +4,7 @@
 <link rel="stylesheet" href="{% static 'css/footer.css' %}" />
 {% endblock extra_css %}
 <footer>
+    {% image settings.site_settings.BrandSettings.footer_background original loading="lazy" class="footer-background" alt="Footer background" %}
 {% if settings.site_settings.Sponsors_Badges.sponsor_logos.all %}
 <div class="band-container">
     <div class="badges-wrapper">
@@ -22,7 +23,6 @@
 </div>
 {% endif %}
     <div class="footer-container">
-        {% image settings.site_settings.BrandSettings.footer_background original loading="lazy" class="footer-background" alt="Footer background" %}
         {% if settings.site_settings.BrandSettings %}
         <div class="contact-info-block">
             <div class="address">

@@ -1,5 +1,6 @@
 footer {
     background: white;
+    position: relative;
 
 }
 .footer-container {
@@ -20,7 +21,7 @@ footer {
     left: 0;
     height: 100%;
     width: 100%;
-    opacity: 0.2;
+    opacity: 0.8;
     border-radius: inherit;
 }
 .contact-info-block {
