@@ -274,7 +274,7 @@
     <script id="booking-data" type="application/json">
     {
         "tourType": "{{ tour_type|escapejs }}",
-        "tourId": {{ tour.id|escapejs }},
+        "tourId": "{{ tour.id|escapejs }}",
         "tourName": "{{ tour.name|escapejs }}",
         "collect_price": {{ tour.collect_price|yesno:"true,false"|lower }},
         "languagePrefix": "{{ LANGUAGE_CODE|escapejs }}",
