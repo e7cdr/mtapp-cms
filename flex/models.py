@@ -12,6 +12,7 @@ These blocks will appear in the StreamField options when creating or editing pag
 from wagtail.admin.panels import FieldPanel
 from wagtail.fields import StreamField
 from wagtail.models import Page
+from wagtail.blocks import RichTextBlock
 
 from streams import blocks
 
@@ -24,6 +25,7 @@ class FlexPage(Page):
     content = StreamField(
         [
             ("explore_block", blocks.ExploreBlock()),
+            ('richtext', RichTextBlock()),
             ("carousel", blocks.FadeCarousel()),
             ("text_band", blocks.TextBand_Block()),
             ("flex_images", blocks.Flex_Images_Block()),
