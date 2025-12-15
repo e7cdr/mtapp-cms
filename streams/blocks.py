@@ -443,3 +443,22 @@ class FAQBlock(blocks.StreamBlock):
         template = "streams/faq_block.html"
         icon = "list-ul"
         label = "FAQ Section"
+
+class WrappedRichTextBlock(blocks.StructBlock):
+    """
+    A rich text section wrapped in a container for easier CSS targeting.
+    Optionally add a custom CSS class for more styling control.
+    """
+    content = blocks.RichTextBlock(
+        label="Rich Text Content"
+    )
+    custom_class = blocks.CharBlock(
+        required=False,
+        help_text="Optional extra CSS class(es) for this section (space-separated)",
+        label="Custom CSS Class"
+    )
+
+    class Meta:
+        icon = 'pilcrow'  # or 'doc-full' for a paragraph-like icon
+        template = 'streams/wrapped_richtext.html'  # we'll create this next
+        label = 'Rich Text Section'

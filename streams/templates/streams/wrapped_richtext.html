@@ -1,0 +1,17 @@
+{% load wagtailcore_tags %}
+
+<style>
+    .rich-text-section  {
+        text-align: justify;
+        box-shadow: 0 0 0.5rem black;
+        padding: 1rem;
+        border-radius: 1rem;
+        margin-block: 1rem;
+        margin-right: 30vw;
+        margin-left: 3rem;
+        }
+</style>
+
+<section class="rich-text-section {% if value.custom_class %}{{ value.custom_class }}{% endif %}">
+    {{ value.content|richtext }}
+</section>
