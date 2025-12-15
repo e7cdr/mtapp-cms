@@ -1,12 +1,17 @@
-
 document.addEventListener('DOMContentLoaded', () => {
     const fadeContainer = document.querySelector('.fade-swiper-container');
     if (!fadeContainer) return;
 
     const totalSlides = fadeContainer.querySelectorAll('.swiper-slide').length;
 
-    // === 1. SWIPER + YOUTUBE LOGIC ===
+    // Store YouTube players by realIndex
     const players = {};
+
+    // Track if user has interacted (click/tap/key) — unlocks sound
+    let userHasInteracted = false;
+    document.addEventListener('click', () => { userHasInteracted = true; }, { once: true });
+    document.addEventListener('touchstart', () => { userHasInteracted = true; }, { once: true });
+    document.addEventListener('keydown', () => { userHasInteracted = true; }, { once: true });
 
     function loadAndPlayYouTubeVideo(container) {
         const videoId = container.dataset.videoId;
@@ -16,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
             videoId: videoId,
             playerVars: {
                 autoplay: 1,
+                mute: 1,                  // Start muted → guaranteed autoplay everywhere
                 rel: 0,
                 modestbranding: 1,
                 playsinline: 1,
@@ -28,7 +34,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     const iframe = e.target.getIframe();
                     iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
                     iframe.setAttribute('loading', 'lazy');
+
                     e.target.playVideo();
+
+                    // Unmute immediately if user already interacted
+                    if (userHasInteracted) {
+                        e.target.unMute();
+                        e.target.setVolume(100); // Adjust volume as needed (0-100)
+                    }
+                },
+                onStateChange: (e) => {
+                    // Unmute on any state change if user has now interacted
+                    if (userHasInteracted && e.data !== YT.PlayerState.ENDED) {
+                        e.target.unMute();
+                        e.target.setVolume(100);
+                    }
                 }
             }
         });
@@ -42,61 +62,85 @@ document.addEventListener('DOMContentLoaded', () => {
         pagination: { el: '.swiper-pagination' },
         effect: 'fade',
         fadeEffect: { crossFade: true },
-        autoplay: false,
         speed: 2000,
         lazy: true,
         keyboard: true,
         grabCursor: true,
-        allowTouchMove: true
-    });
+        allowTouchMove: true,
+        on: {
+            init: function () {
+                const firstSlide = this.slides[this.activeIndex];
+                const youtubeContainer = firstSlide.querySelector('.youtube-lazy');
 
-    fadeSwiper.on('slideChange transitionEnd', function () {
-        const prevIndex = this.previousRealIndex !== undefined ? this.previousRealIndex : this.realIndex;
-        const activeIndex = this.realIndex;
-
-        // Stop previous video
-        if (players[prevIndex]) {
-            players[prevIndex].pauseVideo();
-            if (players[prevIndex]._onEnded) {
-                players[prevIndex].removeEventListener('onStateChange', players[prevIndex]._onEnded);
+                if (youtubeContainer) {
+                    // Small delay for first YouTube slide to avoid API race
+                    setTimeout(() => handleActiveSlide.call(this), 300);
+                } else {
+                    handleActiveSlide.call(this);
+                }
+            },
+            slideChangeTransitionEnd: function () {
+                handleActiveSlide.call(this);
             }
         }
+    });
 
+    function handleActiveSlide() {
+        const activeRealIndex = this.realIndex;
         const activeSlide = this.slides[this.activeIndex];
         const youtubeContainer = activeSlide.querySelector('.youtube-lazy');
 
+        // Pause & clean up previous video (if any)
+        if (this.previousIndex !== undefined && this.previousIndex !== this.activeIndex) {
+            const prevPlayer = players[this.previousRealIndex || activeRealIndex];
+            if (prevPlayer) {
+                prevPlayer.pauseVideo();
+                if (prevPlayer._onEnded) {
+                    prevPlayer.removeEventListener('onStateChange', prevPlayer._onEnded);
+                    delete prevPlayer._onEnded;
+                }
+            }
+        }
+
         if (youtubeContainer) {
-            if (!players[activeIndex]) {
-                players[activeIndex] = loadAndPlayYouTubeVideo(youtubeContainer);
+            // YouTube slide
+            let player = players[activeRealIndex];
+
+            if (!player) {
+                player = players[activeRealIndex] = loadAndPlayYouTubeVideo(youtubeContainer);
             } else {
-                players[activeIndex].playVideo();
+                player.playVideo();
+
+                // Unmute if user has interacted
+                if (userHasInteracted) {
+                    player.unMute();
+                    player.setVolume(100);
+                }
             }
 
-            const player = players[activeIndex];
-            const onEnded = (event) => {
+            // Auto-advance only when video truly ends
+            const onVideoEnded = (event) => {
                 if (event.data === YT.PlayerState.ENDED) {
                     fadeSwiper.slideNext();
                 }
             };
-            player._onEnded = onEnded;
-            player.addEventListener('onStateChange', onEnded);
+
+            if (!player._onEnded) {
+                player._onEnded = onVideoEnded;
+                player.addEventListener('onStateChange', onVideoEnded);
+            }
+
         } else {
-            // Image slide → auto-advance after 6 seconds
+            // Image slide → auto-advance after delay
             setTimeout(() => {
-                if (fadeSwiper.realIndex === activeIndex) {
+                if (fadeSwiper.realIndex === activeRealIndex) {
                     fadeSwiper.slideNext();
                 }
-            }, 6000);
+            }, 6000); // Adjust image display time here
         }
-    });
+    }
 
-    // Kickstart first slide
-    fadeSwiper.on('init', function () {
-        setTimeout(() => this.emit('slideChange'), 400);
-    });
-    fadeSwiper.init();
-
-    // Load YouTube API only once
+    // Load YouTube Iframe API (only once)
     if (!window.YT) {
         const tag = document.createElement('script');
         tag.src = "https://www.youtube.com/iframe_api";
@@ -104,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
         firstScript.parentNode.insertBefore(tag, firstScript);
     }
 
-    // === 2. GSAP TITLE ANIMATION (zero forced reflows) ===
+    // === GSAP TITLE ANIMATION (unchanged) ===
     const titleEl = document.querySelector('.fade-title h1');
     const section = document.querySelector('.fade-swiper-section');
 
@@ -112,7 +156,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.fonts.ready.then(() => {
             gsap.registerPlugin(ScrollTrigger, SplitText);
 
-            // THIS LINE KILLS ALL FORCED REFLOWS
             gsap.context(() => {
                 const split = new SplitText(titleEl, { type: "chars" });
 
@@ -141,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ease: "sine.inOut"
                 }, "-=0.8");
 
-            }, section); // ← scoped = no layout thrashing
+            }, section);
         });
     }
 });
