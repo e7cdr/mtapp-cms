@@ -1,6 +1,8 @@
 # tours/templatetags/tour_filters.py
 from django import template
 from urllib.parse import urlencode
+
+from django.urls import NoReverseMatch, reverse
 from streams.blocks import GLOBAL_ICON_CHOICES
 
 
@@ -63,3 +65,33 @@ def get_choice_label(value, choices):
     choice_dict = dict(choices)  # {'fa-laptop': 'Business Center', ...}
     return choice_dict.get(value, value)  # Fallback to value
 
+@register.simple_tag(takes_context=True)
+def booking_url(context, tour_page):
+    """
+    Returns the correct booking URL with language prefix for Full/Land/Day tours.
+    Usage: {% booking_url page %}
+    """
+    request = context.get('request')
+    if not request:
+        return '#'
+
+    # Map model name to tour_type
+    model_name = tour_page.specific_class.__name__
+    tour_type_map = {
+        'FullTourPage': 'full',
+        'LandTourPage': 'land',
+        'DayTourPage': 'day',
+    }
+    tour_type = tour_type_map.get(model_name)
+
+    if not tour_type:
+        return '#'
+
+    try:
+        # This automatically includes the current language prefix (e.g., /en/, /es/)
+        return reverse('bookings:booking_start', kwargs={
+            'tour_type': tour_type,
+            'tour_id': tour_page.id
+        })
+    except NoReverseMatch:
+        return '#'

@@ -155,9 +155,9 @@ class ProposalForm(forms.ModelForm):  # Changed to ModelForm
 
         if tour_type and tour_id and travel_date:
             model_map = {
-                'full': "FullTourPage",
+                'full': FullTourPage,
                 'land': LandTourPage,
-                'day': "DayTourPage",
+                'day': DayTourPage,
             }
             model = model_map.get(tour_type)
             if model:

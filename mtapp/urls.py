@@ -32,7 +32,6 @@ urlpatterns = [
     path('api/available-dates/', AvailableDatesView.as_view(), name='available_dates_api'),
     
     # FUNCTIONAL APPS — NO LANGUAGE PREFIX, BUT TEMPLATES ARE TRANSLATED
-    path('bookings/', include('bookings.urls', namespace='bookings')),
     path('p-methods/', include('p_methods.urls', namespace='p_methods')),
     
     path('captcha/', include('captcha.urls')),
@@ -42,6 +41,7 @@ urlpatterns = [
 
 # ONLY WAGTAIL CONTENT PAGES GET /en/ /is/ /pl/
 urlpatterns += i18n_patterns(
+    path('bookings/', include('bookings.urls', namespace='bookings')),
     path('accommodations/', include('accommodation.urls')),
     path('i18n/', include('django.conf.urls.i18n')),
     path("search/", search_views.search, name="search"),

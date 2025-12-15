@@ -1,17 +1,16 @@
 import json
 import urllib
 import logging
-import paypalrestsdk as paypal
 
 from datetime import date, datetime, timedelta
-from bookings.pdf_gen import generate_itinerary_pdf
+from django.core.serializers.json import DjangoJSONEncoder
 from decimal import Decimal
 
 from bookings.utils.pricing import compute_pricing
 
 from .forms import ProposalForm
 from partners.models import Partner
-from tours.models import DayTourPage, LandTourPage
+from tours.models import DayTourPage, FullTourPage, LandTourPage
 from bookings.forms import ProposalForm
 from bookings.models import (
     AccommodationBooking,
@@ -27,10 +26,6 @@ from django.utils import timezone
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.urls import reverse, reverse_lazy
-from django_ratelimit.decorators import ratelimit
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import never_cache
-from django.views.decorators.csrf import csrf_exempt
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, TemplateView
 from django.http import Http404, JsonResponse, HttpResponse
@@ -39,7 +34,6 @@ from django.shortcuts import get_object_or_404, render, redirect
 
 from bookings.tours_utils import (
     send_internal_confirmation_email,
-    send_itinerary_email,
     send_preconfirmation_email,
     send_proposal_submitted_email,
     send_supplier_email
@@ -62,42 +56,68 @@ class BookingStartView(FormView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
+        
+        tour_type = self.kwargs['tour_type']
         tour_id = self.kwargs['tour_id']
-        self.tour = get_object_or_404(LandTourPage, id=tour_id)
+
+        model_map = {
+            'full': FullTourPage,
+            'land': LandTourPage,
+            'day': DayTourPage,
+        }
+        model = model_map.get(tour_type.lower())
+        if not model:
+            raise Http404("Invalid tour type")
+
+        self.tour = get_object_or_404(model, id=tour_id)
         kwargs['tour'] = self.tour
 
-        # DETERMINE MODE BASED ON collect_price
-        collect_price = getattr(self.tour, 'collect_price', True)
-
         initial = {
-            'tour_type': 'land',
+            'tour_type': tour_type,
             'tour_id': tour_id,
             'currency': 'USD',
             'travel_date': date.today(),
+            'form_submission': 'pricing',
         }
 
-        if not collect_price:
-            # Force inquiry-only mode
-            initial.update({
-                'form_submission': 'inquiry',  # new mode
-                'customer_name': '',
-                'customer_email': '',
-                'customer_phone': '',
-            })
-        else:
-            initial['form_submission'] = 'pricing'
+        if not getattr(self.tour, 'collect_price', True):
+            initial['form_submission'] = 'inquiry'
 
         kwargs['initial'] = initial
         return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        tour_type = self.kwargs['tour_type']
+        
         context['tour'] = self.tour
-        context['tour_type'] = 'land'
-        context['tour_duration'] = self.tour.duration_days if self.tour else 0
-        context['booking_data'] = {'tourName': self.tour.name}
-        context['blackout_dates_json'] = json.dumps(self.tour.blackout_dates_list)  # Flattened list
-        # Safe form access for initial_children
+        context['tour_type'] = tour_type
+        context['is_day_tour'] = tour_type == 'day'
+        
+        # Day tours usually have fixed date
+        if tour_type == 'day':
+            context['tour_duration'] = 1
+            context['fixed_date'] = self.tour.start_date
+        else:
+            context['tour_duration'] = getattr(self.tour, 'duration_days', 1)
+
+        context['booking_data_json'] = json.dumps({
+            "tourType": tour_type,
+            "tourId": self.tour.id,
+            "tourName": self.tour.name or "",
+            "collect_price": bool(getattr(self.tour, 'collect_price', True)),
+            "languagePrefix": self.request.LANGUAGE_CODE,
+            "cancellationPolicy": self.tour.general_info or "",
+            "tour_start_date": (self.tour.start_date.isoformat() if hasattr(self.tour, 'start_date') and self.tour.start_date else None),
+            "tour_end_date": (self.tour.end_date.isoformat() if hasattr(self.tour, 'end_date') and self.tour.end_date else None),
+            "fixed_date": self.tour.start_date.isoformat() if tour_type == 'day' else None,
+            "blackout_dates": getattr(self.tour, 'blackout_dates_list', []),
+        }, cls=DjangoJSONEncoder)
+
+
+        # ────────────────────── KEEP EVERYTHING ELSE EXACTLY AS BEFORE ──────────────────────
+        context['blackout_dates_json'] = json.dumps(self.tour.blackout_dates_list)
+
         form = kwargs.get('form', self.get_form())
         is_bound = form.is_bound
         context['initial_children'] = form.cleaned_data.get('number_of_children', 0) if is_bound else 0
@@ -109,13 +129,8 @@ class BookingStartView(FormView):
         max_age = getattr(self.tour, 'child_age_max', 12)
         context['select_age_range'] = list(range(min_age, max_age + 1))
 
-        if self.tour:
-            context['tour_start_date'] = self.tour.start_date.isoformat() if self.tour.start_date else date.today().isoformat()
-            context['tour_end_date'] = self.tour.end_date.isoformat() if self.tour.end_date else (date.today() + timedelta(days=365)).isoformat()
-            context['available_days'] = self.tour.available_days  # e.g., '0,1,2,3'
-
         return context
-
+    
     def post(self, request, *args, **kwargs):
         form = self.get_form()
         if form.is_valid():
@@ -189,12 +204,12 @@ class BookingStartView(FormView):
                 }, status=400)
             # return self.form_invalid(form)
 
-def submit_proposal(request, tour_id):
-    print(f"\n=== submit_proposal called at {timezone.now()} ===")
-    print("Method:", request.method)
-    print("Is AJAX:", request.headers.get('X-Requested-With') == 'XMLHttpRequest')
-    print("CSRF cookie:", request.COOKIES.get('csrftoken'))
-    print("CSRF header:", request.headers.get('X-CSRFToken'))
+def submit_proposal(request, tour_type: str, tour_id: int):
+    # print(f"\n=== submit_proposal called at {timezone.now()} ===")
+    # print("Method:", request.method)
+    # print("Is AJAX:", request.headers.get('X-Requested-With') == 'XMLHttpRequest')
+    # print("CSRF cookie:", request.COOKIES.get('csrftoken'))
+    # print("CSRF header:", request.headers.get('X-CSRFToken'))
     if request.method != 'POST':
         return JsonResponse({'error': 'Invalid method'}, status=405)
 
@@ -214,8 +229,23 @@ def submit_proposal(request, tour_id):
         logger.error(f"Invalid travel_date format '{travel_date_str}': {ve}")
         return JsonResponse({'error': 'Invalid travel date format'}, status=400)
 
-    tour = get_object_or_404(LandTourPage, id=tour_id)
-    content_type = ContentType.objects.get_for_model(tour)
+    tour_type_str = session_data.get('tour_type', 'land')
+    model_map = {
+        'full': FullTourPage,
+        'land': LandTourPage,
+        'day': DayTourPage,
+    }
+    model = model_map.get(tour_type_str.lower())
+    if not model:
+        return JsonResponse({'error': 'Invalid tour type'}, status=400)
+
+    tour = get_object_or_404(model, id=tour_id)
+
+    if tour.id != int(session_data.get('tour_id', 0)):
+        logger.warning(f"Tour ID mismatch: session {session_data.get('tour_id')} vs URL {tour_id}")
+        return JsonResponse({'error': 'Invalid tour selection'}, status=400)
+
+    content_type = ContentType.objects.get_for_model(tour)    
 
     # ────────────────────── NEW: Handle collect_price=False ──────────────────────
     collect_price = getattr(tour, 'collect_price', True)  # This is the key line
@@ -255,9 +285,19 @@ def submit_proposal(request, tour_id):
         number_of_infants=session_data.get('number_of_infants', 0),
     )
 
-    # Calculate end_date
-    duration = getattr(tour, 'duration_days', 0)
-    end_date = proposal.travel_date + timedelta(days=duration)
+    if tour_type_str == 'day':
+        # Day tours: single day, end_date = travel_date
+        end_date = proposal.travel_date
+        duration_days = 1
+    else:
+        # Full and Land tours: duration_days is the total length
+        duration_days = getattr(tour, 'duration_days', 1) or 1
+        # Correct: a 5-day tour starting on day 1 ends on day 5 → add (duration - 1)
+        end_date = proposal.travel_date + timedelta(days=duration_days - 1)
+
+    # Optional: attach for email templates
+    proposal.duration_days = duration_days
+    proposal.save(update_fields=['duration_days'])
 
     email_success = True  # Flag for email status
 
@@ -335,7 +375,7 @@ class ProposalSuccessView(TemplateView):
         context['status_note'] = ' (Internal review pending)' if tour.is_company_tour else ' (Awaiting supplier confirmation)'
         return context
 
-def render_confirmation(request, tour_id):
+def render_confirmation(request, tour_type: str, tour_id: int):
     context = {
         'tour_id': tour_id,
         'submit_url': reverse('bookings:submit_proposal', args=[tour_id]),  # Pre-compute here
@@ -349,7 +389,15 @@ def render_confirmation(request, tour_id):
     else:
         print(f"DEBUG: Raw travel_date in session: '{session_data.get('travel_date', 'MISSING')}' (type: {type(session_data.get('travel_date'))})")
         try:
-            tour = get_object_or_404(LandTourPage, id=tour_id)
+            tour_type = session_data.get('tour_type', 'land')
+            model_map = {'full': FullTourPage, 'land': LandTourPage, 'day': DayTourPage}
+            model = model_map.get(tour_type.lower())
+            if not model:
+                context['error'] = "Invalid tour type"
+            else:
+                tour = get_object_or_404(model, id=tour_id)
+                context['tour'] = tour
+                context['tour_type'] = tour_type
         except Http404:
             context['error'] = _("Invalid tour selected.")
             print("DEBUG: Tour 404 - error set")
@@ -364,16 +412,13 @@ def render_confirmation(request, tour_id):
             # Safe access to avoid KeyError
             context.update({
                 'tour': tour,
-                'tour_type': session_data.get('tour_type', 'land'),
+                'tour_type': session_data.get('tour_type', 'land', 'full', 'day'),
                 'form_data': session_data,
                 'booking_data': {'tourName': tour.name},
                 'selected_room_config': session_data.get('selected_room_config', {}),
                 'tour_duration': getattr(tour, 'duration_days', 0),
                 'selected_configuration_index': session_data.get('selected_configuration', 0),
             })
-            print(f"DEBUG: Final form_data.travel_date for template: '{session_data['travel_date']}'")
-            print(f"DEBUG Render: Context tour_id = {context['tour_id']} (type: {type(context['tour_id'])})")
-            print(f"DEBUG Render: submit_url = {context['submit_url']}")
 
     return render(request, 'bookings/partials/confirm_proposal.html', context)
 
@@ -457,7 +502,7 @@ def child_ages(request) -> HttpResponse:
     except json.JSONDecodeError:
         child_ages = []
 
-    model_map = {'full': "FullTourPage", 'land': LandTourPage, 'day': DayTourPage}
+    model_map = {'full': FullTourPage, 'land': LandTourPage, 'day': DayTourPage}
     model = model_map.get(tour_type.lower())
     if not model:
         logger.error(f"Invalid tour type: {tour_type}")
@@ -509,7 +554,7 @@ def revert_to_booking_form(request, tour_type: str, tour_id: int) -> HttpRespons
     logger.debug(f"revert_to_booking_form called: tour_type={tour_type}, tour_id={tour_id}")
 
     # Map tour type to model
-    model_map = {'full': "FullTourPage", 'land': LandTourPage, 'day': DayTourPage}
+    model_map = {'full': FullTourPage, 'land': LandTourPage, 'day': DayTourPage}
     model = model_map.get(tour_type.lower())
     if not model:
         logger.error(f"Invalid tour type: {tour_type}")
@@ -596,7 +641,7 @@ def revert_to_booking_form(request, tour_type: str, tour_id: int) -> HttpRespons
         'tour': tour,
         'tour_type_val': tour_type,
         'tour_id': tour_id,
-        'tour_duration': tour.duration_days if tour_type in ['full', 'land'] else tour.duration_hours,
+        'tour_duration': tour.duration_days if tour_type in ['full', 'land', 'day'] else tour.duration_hours,
         'configurations': configurations,
         'configurations_json': json.dumps(configurations, ensure_ascii=False),
         'form_errors': [] if configurations else [_("No pricing options available. Please adjust your inputs.")],
@@ -655,6 +700,7 @@ def payment_success(request, pk):
         'nights': (acc_booking.check_out - acc_booking.check_in).days,
     }
     return render(request, 'bookings/payment_success.html', context)
+
 def get_bookings(request) -> JsonResponse:
     bookings = [{'id': b.pk, 'name': f"{b.customer_name} ({b.pk})"} for b in Booking.objects.all()]
     return JsonResponse({'bookings': bookings})

@@ -13,9 +13,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     return cookieValue;
 }
-    const bookingData = JSON.parse(document.getElementById('booking-data').textContent);
-    const isInquiryOnly = bookingData.collect_price === false;
+    const BOOKING_DATA = window.BOOKING_DATA || {};
 
+    const isInquiryOnly = BOOKING_DATA.collect_price === false;
+   
     if (isInquiryOnly) {
         console.log('Inquiry-only tour → no pricing, modal WILL appear');
 
@@ -113,110 +114,6 @@ document.addEventListener('DOMContentLoaded', function () {
         loadPricing(); // Initial load
     }
 
-    // function loadPricing() {
-    //     clearTimeout(pricingTimeout);
-    //     pricingTimeout = setTimeout(() => {
-    //         const formData = new FormData(document.getElementById('bookingForm'));
-    //         const tourType = document.querySelector('#id_tour_type').value;
-    //         const tourId = document.querySelector('#id_tour_id').value;
-    //         const url = `/bookings/calculate_pricing/${tourType}/${tourId}/`;
-
-    //         fetch(url, {
-    //             method: 'POST',
-    //             body: formData,
-    //             headers: { 'X-Requested-With': 'XMLHttpRequest' }
-    //         })
-    //             .then(response => response.text())
-    //             .then(html => {
-    //                 document.getElementById('pricing-options').innerHTML = html;
-    //                 setTimeout(() => {
-    //                     initializeFilters();
-    //                     rebindRadioSelection();
-    //                 }, 50);
-    //             })
-    //             .catch(error => {
-    //                 console.error('Pricing fetch error:', error);
-    //                 document.getElementById('pricing-options').innerHTML = '<div class="alert alert-warning">Pricing unavailable—please try again.</div>';
-    //             });
-    //     }, 300);
-    // }
-
-    // pricingInputs.forEach(selector => {
-    //     document.addEventListener('change', function (event) {
-    //         if (event.target.matches(selector)) loadPricing();
-    //     });
-    // });
-
-    // if (!isInquiryOnly) {
-    //     loadPricing();  // Initial
-    // }
-
-
-    // ────────────────────── Submit Proposal (Modal Flow) ──────────────────────
-    // document.getElementById('submitProposal').addEventListener('click', function (e) {
-    //     e.preventDefault();
-    //     const form = document.getElementById('bookingForm');
-    //     const formData = new FormData(form);
-    //     const tourId = parseInt(document.getElementById('id_tour_id').value);
-    //     const saveUrl = form.action;
-
-    //     // Step 1: POST to save session (validate form) — WITH DEBUG
-    //     fetch(saveUrl, {
-    //         method: 'POST',
-    //         body: formData,
-    //         headers: {
-    //             'X-Requested-With': 'XMLHttpRequest',
-    //             'X-CSRFToken': getCookie('csrftoken')
-    //         }
-    //     })
-    //     .then(response => {
-    //         console.log('First POST response:', response);
-    //         console.log('Status:', response.status);
-    //         console.log('Headers:', [...response.headers.entries()]);
-
-    //         if (!response.ok) {
-    //             return response.text().then(text => {
-    //                 console.error('Server returned error HTML:', text.substring(0, 500));
-    //                 throw new Error(`Server error ${response.status}`);
-    //             });
-    //         }
-
-    //         // Check content-type before parsing JSON
-    //         const contentType = response.headers.get('content-type');
-    //         if (!contentType || !contentType.includes('application/json')) {
-    //             return response.text().then(text => {
-    //                 console.error('Expected JSON but got HTML:', text.substring(0, 500));
-    //                 throw new Error('Invalid response from server');
-    //             });
-    //         }
-
-    //         return response.json();
-    //     })
-    //     .then(data => {
-    //         console.log('First POST success:', data);
-    //         if (!data.success) throw new Error('Validation failed');
-
-    //         // Now load confirmation modal
-    //         return fetch(`/bookings/confirm/${tourId}/`, {
-    //             headers: {
-    //                 'X-Requested-With': 'XMLHttpRequest',
-    //                 'X-CSRFToken': getCookie('csrftoken')
-    //             }
-    //         });
-    //     })
-    //     .then(response => {
-    //         if (!response.ok) throw new Error('Failed to load confirmation');
-    //         return response.text();
-    //     })
-    //     .then(html => {
-    //         document.getElementById('confirmationContent').innerHTML = html;
-    //         new bootstrap.Modal(document.getElementById('confirmationModal')).show();
-    //     })
-    //     .catch(error => {
-    //         console.error('Booking error:', error);
-    //         alert('Error: ' + error.message + '. Please refresh and try again.');
-    //     });
-    // });
     // ────────────────────── Submit Proposal (Modal Flow) ──────────────────────
     document.getElementById('submitProposal').addEventListener('click', function (e) {
         e.preventDefault();
@@ -272,7 +169,8 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             // SUCCESS → Open modal
-            return fetch(`/bookings/confirm/${tourId}/`, {
+            const tourType = document.querySelector('#id_tour_type').value;
+            return fetch(`/bookings/confirm/${tourType}/${tourId}/`, {
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
                     'X-CSRFToken': getCookie('csrftoken')
@@ -348,7 +246,9 @@ document.addEventListener('DOMContentLoaded', function () {
             modalForm.querySelectorAll('input[type="hidden"]').forEach(input => {
                 formData.append(input.name, input.value);
             });
-            const url = modalForm.dataset.action;
+            const tourType = modalForm.dataset.tourType;
+            const tourId = modalForm.dataset.tourId;
+            const url = `/bookings/submit-proposal/${tourType}/${tourId}/`;
 
                 fetch(url, { 
                     method: 'POST', 
@@ -377,13 +277,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    const tourStartDate = bookingData.tour_start_date;
-    const tourEndDate = bookingData.tour_end_date;
-    const availableDaysStr = bookingData.available_days;  // e.g., "0,1,2,3"
+    const tourStartDate = BOOKING_DATA.tour_start_date;
+    const tourEndDate = BOOKING_DATA.tour_end_date;
+    const availableDaysStr = BOOKING_DATA.available_days;  // e.g., "0,1,2,3"
     const availableDays = availableDaysStr ? availableDaysStr.split(',').map(d => parseInt(d.trim())) : [];  // [0,1,2,3]
 
     // NEW: Blackout dates (array of 'YYYY-MM-DD' strings from model)
-    const blackoutDates = bookingData.blackout_dates || [];
+    const blackoutDates = BOOKING_DATA.blackout_dates || [];
     const blackoutDateObjects = blackoutDates.map(dateStr => {
         const [year, month, day] = dateStr.split('-').map(Number);
         return new Date(year, month - 1, day);  // Date object for flatpickr

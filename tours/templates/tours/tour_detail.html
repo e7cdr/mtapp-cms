@@ -51,11 +51,10 @@
     Tour Video
     </a>
     <a class="book-button conic-gradient-animation" href="{{ self.pdf_file.url }}">View PDF</a>
-    
     <br />
     {% if not self.is_sold_out %}
     <div class="booking-actions">
-     <a href="{% url 'bookings:booking_start' self.id %}" class="book-button conic-gradient-animation">Book Now</a>
+     <a href="{% booking_url page %}" class="book-button conic-gradient-animation">Book Now</a>
      <a href="https://api.whatsapp.com/send/?phone=593967359549&text=Hello%2C+I+am+interested+in+{{ self.name }}+from+your+webpage&type=phone_number&app_absent=0"
       class="book-button secondary">
       WhatsApp

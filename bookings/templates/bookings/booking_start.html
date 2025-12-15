@@ -17,8 +17,8 @@
 
         <div id="booking-form-container" data-duration="{{ tour_duration|default:0 }}">
             <form id="bookingForm" method="post"
-                  action="{% url 'bookings:booking_start' tour.id|default:0 %}"
-                  class="booking-form card">
+                action="{% url 'bookings:booking_start' tour_type=tour_type tour_id=tour.id %}"
+                class="booking-form card">
                 {% csrf_token %}
 
                 <!-- Hidden inputs for tour_type and tour_id -->
@@ -270,19 +270,11 @@
 </section>
 {% endblock content %}
 {% block extra_js %}
-<script src="{% static 'js/booking_form.js'%}"></script>
-    <script id="booking-data" type="application/json">
-    {
-        "tourType": "{{ tour_type|escapejs }}",
-        "tourId": "{{ tour.id|escapejs }}",
-        "tourName": "{{ tour.name|escapejs }}",
-        "collect_price": {{ tour.collect_price|yesno:"true,false"|lower }},
-        "languagePrefix": "{{ LANGUAGE_CODE|escapejs }}",
-        "cancellationPolicy": "{{ tour.general_info|escapejs|truncatewords:20 }}",
-        "tour_start_date": "{{ tour_start_date|escapejs }}",
-        "tour_end_date": "{{ tour_end_date|escapejs }}",
-        "available_days": "{{ available_days|escapejs }}",
-        "blackout_dates": {{ blackout_dates_json|safe }}
-    }
-    </script>
-{% endblock extra_js %}
+<script src="{% static 'js/booking_form.js' %}"></script>
+
+<script>
+// This runs AFTER booking_form.js → guarantees BOOKING_DATA exists
+const BOOKING_DATA = {{ booking_data_json|safe }};
+console.log('Booking data successfully loaded:', BOOKING_DATA);
+</script>
+{% endblock %}

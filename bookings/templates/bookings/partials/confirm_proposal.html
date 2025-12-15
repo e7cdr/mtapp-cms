@@ -98,8 +98,10 @@
     {{ error }}
 </div>
 {% else %}
-<div id="confirmationForm" data-action="{{ submit_url }}">
-{% csrf_token %}
+<div id="confirmationForm" 
+     data-tour-type="{{ tour_type }}" 
+     data-tour-id="{{ tour.id }}">
+     {% csrf_token %}
 <input type="hidden" name="confirm" value="true">
 <input type="hidden" name="form_submission" value="booking">
 <input type="hidden" name="selected_configuration" value="{{ selected_configuration_index|default:'0' }}">
