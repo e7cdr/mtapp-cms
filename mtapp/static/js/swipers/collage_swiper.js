@@ -27,7 +27,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 const youtubeContainer = firstSlide.querySelector('.youtube-lazy');
 
                 if (youtubeContainer) {
-                    // Small delay only for first YouTube slide to avoid race conditions
                     setTimeout(() => handleActiveSlide.call(this), 300);
                 } else {
                     handleActiveSlide.call(this);
@@ -39,10 +38,16 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Store YouTube players by realIndex
+    // Store YouTube players by realIndex + track if user has interacted
     const players = {};
+    let userHasInteracted = false;
 
-    // Create and play a YouTube player
+    // Detect any user interaction (click, touch, key) once
+    document.addEventListener('click', () => { userHasInteracted = true; }, { once: true });
+    document.addEventListener('touchstart', () => { userHasInteracted = true; }, { once: true });
+    document.addEventListener('keydown', () => { userHasInteracted = true; }, { once: true });
+
+    // Create YouTube player (starts muted for reliable autoplay)
     function loadAndPlayYouTubeVideo(container) {
         const videoId = container.dataset.videoId;
         const player = new YT.Player(container, {
@@ -51,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function () {
             videoId: videoId,
             playerVars: {
                 autoplay: 1,
-                mute: 1,                // ← Critical: allows true autoplay without click
+                mute: 1,                  // Start muted → guaranteed autoplay
                 rel: 0,
                 modestbranding: 1,
                 playsinline: 1,
@@ -65,23 +70,35 @@ document.addEventListener('DOMContentLoaded', function () {
                     iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
                     iframe.setAttribute('loading', 'lazy');
 
-                    e.target.mute();        // Extra safety mute
-                    e.target.playVideo();   // Ensures playback starts
+                    e.target.playVideo();
+
+                    // If user already interacted before ready, unmute immediately
+                    if (userHasInteracted) {
+                        e.target.unMute();
+                        e.target.setVolume(100); // or your preferred level, e.g. 50
+                    }
+                },
+                onStateChange: function (e) {
+                    // Unmute on any state change if user has interacted
+                    if (userHasInteracted && e.data !== YT.PlayerState.ENDED) {
+                        e.target.unMute();
+                        e.target.setVolume(100);
+                    }
                 }
             }
         });
         return player;
     }
 
-    // Core logic: handle current active slide
+    // Core logic
     function handleActiveSlide() {
         const activeRealIndex = this.realIndex;
         const activeSlide = this.slides[this.activeIndex];
         const youtubeContainer = activeSlide.querySelector('.youtube-lazy');
 
-        // Clean up previous video (if any)
+        // Clean up previous video
         if (this.previousIndex !== undefined && this.previousIndex !== this.activeIndex) {
-            const prevPlayer = players[activeRealIndex]; // fallback, not critical
+            const prevPlayer = players[activeRealIndex];
             if (prevPlayer) {
                 prevPlayer.pauseVideo();
                 if (prevPlayer._onEnded) {
@@ -92,16 +109,20 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (youtubeContainer) {
-            // YouTube slide
             let player = players[activeRealIndex];
 
             if (!player) {
                 player = players[activeRealIndex] = loadAndPlayYouTubeVideo(youtubeContainer);
             } else {
                 player.playVideo();
+
+                // Unmute if user has interacted
+                if (userHasInteracted) {
+                    player.unMute();
+                    player.setVolume(100);
+                }
             }
 
-            // Auto-advance when video ends
             const onVideoEnded = function (event) {
                 if (event.data === YT.PlayerState.ENDED) {
                     collageSwiper1.slideNext();
@@ -119,7 +140,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (collageSwiper1.realIndex === activeRealIndex) {
                     collageSwiper1.slideNext();
                 }
-            }, 6000); // Adjust image duration here
+            }, 6000);
         }
     }
 
