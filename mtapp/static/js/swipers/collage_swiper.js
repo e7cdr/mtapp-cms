@@ -21,6 +21,10 @@
         speed: 500,
         keyboard: { enabled: true },
         allowTouchMove: true,
+        autoplay: {
+            delay: 2000,
+            pauseOnMouseEnter: true,
+        },
     });
 
     // Store YouTube players by real index (works with loop)
