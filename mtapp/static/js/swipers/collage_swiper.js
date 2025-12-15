@@ -21,10 +21,6 @@
         speed: 500,
         keyboard: { enabled: true },
         allowTouchMove: true,
-        autoplay: {
-            delay: 2000,
-            pauseOnMouseEnter: true,
-        },
     });
 
     // Store YouTube players by real index (works with loop)
@@ -104,7 +100,7 @@ function loadAndPlayYouTubeVideo(container) {
                 if (collageSwiper1.realIndex === activeRealIndex) {
                     collageSwiper1.slideNext();
                 }
-            }, 6000); // 6 seconds for images — change as you like
+            }, 2000); // 6 seconds for images — change as you like
         }
     });
 
