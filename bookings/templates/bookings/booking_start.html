@@ -183,9 +183,8 @@
                                     <div class="form-group mb-3 {% if not initial_children %}d-none{% endif %}" id="children-ages-group">
                                         <div id="child-ages-selects">
                                             {% include "bookings/partials/child_ages.html" with number_of_children=initial_children select_age_range=select_age_range child_ages=initial_child_ages %}
+                                            {% comment %} <input type="hidden" name="child_ages" id="id_child_ages" value="{{ initial_child_ages_json|default:'[]' }}"> {% endcomment %}
                                         </div>
-                                        <!-- Hidden JSON for form submission -->
-                                        <input type="hidden" name="child_ages" id="id_child_ages" value="{{ initial_child_ages_json|default:'[]' }}">
                                     </div>
                             </div>
                             <!-- Column 3: Children, Ages, Notes -->
@@ -277,4 +276,4 @@
 const BOOKING_DATA = {{ booking_data_json|safe }};
 console.log('Booking data successfully loaded:', BOOKING_DATA);
 </script>
-{% endblock %}
+{% endblock extra_js %}

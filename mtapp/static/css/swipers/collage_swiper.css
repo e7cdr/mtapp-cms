@@ -17,7 +17,7 @@
 }
 
 .collage-swiper1-container {
-    height: 100vh !important;
+    height: 70vh !important;
     width: 100%;
     color: white;
 }
@@ -48,7 +48,7 @@
 .collage-swiper2-container .swiper-wrapper {
     display: grid !important;  /* Reinforce grid on wrapper */
     grid-template-columns: repeat(4, 1fr);  /* 3 equal cols */
-    grid-auto-rows: 10rem;  /* Fixed row height = your square size */
+    grid-auto-rows: 8rem;  /* Fixed row height = your square size */
     gap: 0.5rem;  /* Matches spaceBetween */
 }
 

@@ -1000,12 +1000,6 @@ class DayTourPage(AbstractTourPage):
     min_group_size = models.PositiveIntegerField(default=2, help_text="Minimum to operate the tour")
     max_group_size = models.PositiveIntegerField(default=15, help_text="Maximum per guide")
 
-    # Usually fixed price per person for day tours
-    price_per_person = models.DecimalField(
-        max_digits=8, decimal_places=2,
-        help_text="Flat price per person (most common for day tours)",
-        null=True, blank=True
-    )
     template = "tours/tour_detail.html"
 
     content_panels = AbstractTourPage.content_panels + [
@@ -1016,10 +1010,6 @@ class DayTourPage(AbstractTourPage):
             FieldPanel('min_group_size'),
             FieldPanel('max_group_size'),
         ], heading="Day Tour Details", classname="collapsible"),
-
-        MultiFieldPanel([
-            FieldPanel('price_per_person'),
-        ], heading="Simple Pricing (optional override)", classname="collapsible collapsed"),
     ]
 
     parent_page_types = ['tours.ToursIndexPage']
@@ -1027,14 +1017,6 @@ class DayTourPage(AbstractTourPage):
 
     def get_code_prefix(self):
         return "DT"  # DT = Day Tour
-
-    # Smart fallback: if price_per_person is set → use it in teasers
-    @property
-    def active_prices(self):
-        prices = super().active_prices if hasattr(super(), 'active_prices') else {}
-        if self.price_per_person:
-            prices['adult'] = self.price_per_person
-        return prices
 
     class Meta:
         verbose_name = "Day Tour"

@@ -56,63 +56,76 @@ document.addEventListener('DOMContentLoaded', function () {
         '#id_travel_date'
     ];
     function loadPricing() {
-    // INQUIRY-ONLY: DO NOTHING + SILENT
-    if (isInquiryOnly) {
-        console.log('loadPricing() blocked — inquiry-only tour');
-        return;
-    }
+        console.log('loadPricing() called');
+        console.log('Adults:', document.querySelector('input[name="number_of_adults"]').value);
+        console.log('Children:', document.querySelector('input[name="number_of_children"]').value);
 
-    // Safety check: if pricing container was removed (should never happen, but safe)
-    const pricingContainer = document.getElementById('pricing-options');
-    if (!pricingContainer) {
-        console.log('Pricing container not found — skipping loadPricing()');
-        return;
-    }
+        if (isInquiryOnly) {
+            console.log('loadPricing() blocked — inquiry-only tour');
+            return;
+        }
 
-    clearTimeout(pricingTimeout);
-    pricingTimeout = setTimeout(() => {
-        const formData = new FormData(document.getElementById('bookingForm'));
-        const tourType = document.querySelector('#id_tour_type').value;
-        const tourId = document.querySelector('#id_tour_id').value;
-        const url = `/bookings/calculate_pricing/${tourType}/${tourId}/`;
+        const pricingContainer = document.getElementById('pricing-options');
+        if (!pricingContainer) {
+            console.log('Pricing container not found — skipping loadPricing()');
+            return;
+        }   
 
-        fetch(url, {
-            method: 'POST',
-            body: formData,
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(response => response.text())
-        .then(html => {
-            // Final safety — double-check container still exists
-            if (document.getElementById('pricing-options')) {
-                document.getElementById('pricing-options').innerHTML = html;
-                setTimeout(() => {
-                    initializeFilters();
-                    rebindRadioSelection();
-                }, 50);
-            }
-        })
-        .catch(error => {
-            // Only log real errors — not expected nulls
-            if (document.getElementById('pricing-options')) {
+        updateChildAgesJSON();
+
+        clearTimeout(pricingTimeout);
+        pricingTimeout = setTimeout(() => {
+            const formData = new FormData(document.getElementById('bookingForm'));
+            console.log('Final child_ages hidden:', document.getElementById('id_child_ages').value);
+            const tourType = document.querySelector('#id_tour_type').value;
+            const tourId = document.querySelector('#id_tour_id').value;
+            const languagePrefix = BOOKING_DATA.languagePrefix || 'en';  // ← ADD THIS
+            const url = `/${languagePrefix}/bookings/calculate_pricing/${tourType}/${tourId}/`;  // ← UPDATED URL
+            const csrfToken = getCookie('csrftoken');
+            fetch(url, {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': csrfToken }
+            })
+            .then(response => response.text())
+            .then(html => {
+                if (document.getElementById('pricing-options')) {
+                    document.getElementById('pricing-options').innerHTML = html;
+                    setTimeout(() => {
+                        initializeFilters();
+                        rebindRadioSelection();
+                    }, 50);
+                }
+            })
+            .catch(error => {
                 console.error('Pricing fetch error:', error);
-                document.getElementById('pricing-options').innerHTML = 
-                    '<div class="alert alert-warning">Pricing temporarily unavailable.</div>';
-            }
-            // Otherwise: silent (inquiry mode or container gone)
-        });
-    }, 300);
-}
+            });
+        }, 300);  // Increased timeout for safety
+    }
 
     // Bind events ONLY if NOT inquiry-only
-    if (!isInquiryOnly) {
-        pricingInputs.forEach(selector => {
-            document.addEventListener('change', function (event) {
-                if (event.target.matches(selector)) loadPricing();
-            });
-        });
-        loadPricing(); // Initial load
-    }
+    document.addEventListener('change', function (event) {
+        if (event.target.matches('input[name="number_of_adults"], input[name="number_of_children"], #id_travel_date')) {
+            console.log('Change detected:', event.target.name, event.target.value);
+            loadPricing();
+        }
+    });
+
+    document.addEventListener('input', function (event) {
+        if (event.target.matches('input[name="number_of_adults"], input[name="number_of_children"]')) {
+            loadPricing();
+        }
+    });
+
+    setTimeout(() => !isInquiryOnly && loadPricing(), 200);
+    // if (!isInquiryOnly) {
+    //     pricingInputs.forEach(selector => {
+    //         document.addEventListener('change', function (event) {
+    //             if (event.target.matches(selector)) loadPricing();
+    //         });
+    //     });
+    //     loadPricing(); // Initial load
+    // }
 
     // ────────────────────── Submit Proposal (Modal Flow) ──────────────────────
     document.getElementById('submitProposal').addEventListener('click', function (e) {
@@ -458,54 +471,70 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('Filters initialized');
     }
 
+
     // Children Ages
     const childrenInput = document.querySelector('input[name="number_of_children"]');
     const agesGroup = document.getElementById('children-ages-group');
     const childAgesHidden = document.getElementById('id_child_ages');
     const childAgesContainer = document.getElementById('child-ages-selects');
 
+
     if (childrenInput && agesGroup && childAgesHidden) {
         const minAge = parseInt(agesGroup.dataset.minAge || 0);
         const maxAge = parseInt(agesGroup.dataset.maxAge || 12);
         const ageRange = Array.from({ length: maxAge - minAge + 1 }, (_, i) => minAge + i);
 
-        function renderChildAges(numChildren, prefillAges = []) {
-            let html = '';
-            if (numChildren > 0) {
-                prefillAges = prefillAges.slice(0, numChildren);
-                for (let i = 0; i < numChildren; i++) {
-                    const selected = prefillAges[i] || ageRange[0];
-                    html += `
-                        <div class="mb-2">
-                            <label for="child_age_${i + 1}" class="form-label small">Child ${i + 1} Age</label>
-                            <select name="child_age_${i + 1}" id="child_age_${i + 1}" class="form-control child-age-input">
-                                ${ageRange.map(age => `<option value="${age}" ${age == selected ? 'selected' : ''}>${age}</option>`).join('')}
-                            </select>
-                        </div>
-                    `;
-                }
+    function updateChildAgesJSON() {
+    const selects = childAgesContainer.querySelectorAll('.child-age-input');
+    const ages = Array.from(selects).map(s => parseInt(s.value)).filter(age => !isNaN(age));
+    childAgesHidden.value = JSON.stringify(ages);
+    console.log('Updated child_ages hidden:', childAgesHidden.value);  // ← ADD THIS
+
+    if (typeof window.loadPricing === 'function' && !isInquiryOnly) {
+        loadPricing();
+    }
+}
+
+    function renderChildAges(numChildren, prefillAges = []) {
+        let html = '';
+        const ageRange = window.SELECT_AGE_RANGE || [...Array(13).keys()].slice(1); // 1 to 12 fallback
+
+        for (let i = 0; i < numChildren; i++) {
+            const selected = prefillAges[i] || '';
+            html += `
+                <div class="mb-2">
+                    <label for="child_age_${i}" class="block font-lora text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                        Child ${i + 1} Age
+                    </label>
+                    <select id="child_age_${i}" class="child-age-input w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 dark:bg-gray-700 dark:border-gray-600">
+                        ${ageRange.map(age => `<option value="${age}" ${age == selected ? 'selected' : ''}>${age}</option>`).join('')}
+                    </select>
+                </div>
+            `;
+        }
+
+        // ADD THE HIDDEN INPUT HERE
+        html += `<input type="hidden" name="child_ages" id="id_child_ages" value="[]">`;
+
+        childAgesContainer.innerHTML = html;
+
+        // Re-attach event listeners
+        childAgesContainer.querySelectorAll('.child-age-input').forEach(select => {
+            select.addEventListener('change', updateChildAgesJSON);
+        });
+
+        // Set initial values from prefill
+        childAgesContainer.querySelectorAll('.child-age-input').forEach((select, index) => {
+            if (prefillAges[index] !== undefined) {
+                select.value = prefillAges[index];
             }
-            childAgesContainer.innerHTML = html;
+        });
 
-            // Listeners
-            childAgesContainer.querySelectorAll('.child-age-input').forEach(select => {
-                select.addEventListener('change', updateChildAgesJSON);
-            });
-            updateChildAgesJSON();
-            console.log('Children ages rendered for', numChildren, 'with prefill', prefillAges);
-        }
+        updateChildAgesJSON();
+        console.log('Children ages rendered for', numChildren, 'with prefill', prefillAges);
+    }
 
-        function updateChildAgesJSON() {
-            const selects = childAgesContainer.querySelectorAll('.child-age-input');
-            const ages = Array.from(selects).map(s => parseInt(s.value)).filter(age => !isNaN(age));
-            childAgesHidden.value = JSON.stringify(ages);
-            console.log('Updated child_ages:', ages);
-            if (typeof window.loadPricing === 'function' && !isInquiryOnly) {
-                window.loadPricing();
-        }
-        }
-
-        function toggleAges() {
+    function toggleAges() {
             const numChildren = parseInt(childrenInput.value || 0);
             agesGroup.classList.toggle('d-none', numChildren === 0);
             if (numChildren > 0) {

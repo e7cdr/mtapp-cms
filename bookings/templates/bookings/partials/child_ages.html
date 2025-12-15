@@ -3,12 +3,12 @@
 {% if number_of_children > 0 %}
     {% for i in number_of_children|times %}
         <div class="mb-2">
-            <label for="child_age_{{ i }}" class="block font-lora text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+            <label for="child_age_{{ forloop.counter0 }}" class="block font-lora text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                 {% trans "Child" %} {{ forloop.counter }} {% trans "Age" %}
             </label>
-            <select name="child_age_{{ i }}" id="child_age_{{ i }}" class="child-age-input w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 dark:bg-gray-700 dark:border-gray-600">
+            <select id="child_age_{{ forloop.counter0 }}" class="child-age-input w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 dark:bg-gray-700 dark:border-gray-600">
                 {% for age in select_age_range %}
-                    <option value="{{ age }}" {% if child_ages|index:i == age %}selected{% endif %}>{{ age }}</option>
+                    <option value="{{ age }}" {% if child_ages|index:forloop.counter0 == age %}selected{% endif %}>{{ age }}</option>
                 {% endfor %}
             </select>
         </div>
