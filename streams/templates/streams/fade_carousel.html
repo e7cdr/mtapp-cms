@@ -27,14 +27,9 @@
                    {% if item.link %}
                     <a href="{{ item.link.url }}"></a>
                 {% endif %}
-                <img
-                height=""
-                width=""
-                src="{{ img.url }}"
-                alt="{{ item.caption|default:'Swiper images' }}"
-                id="slide-{{ forloop.counter }}"
-                loading="lazy"
-                />
+                {% if item.caption %}
+                <p class="caption">{{ item.caption }}</p>
+                {% endif %}
             {% elif item.yt_vid %}
             <div class="youtube-lazy"
                 data-video-id="{{ item.yt_vid }}" data-volume="50"
@@ -46,7 +41,6 @@
             </div>
             {% endif %}
             </div>
-            <p class="caption">{{ item.caption }}</p>
             {% empty %}
             <p>No images or videos found. Please go to the admin panel to add them.</p>
             {% endfor %}
