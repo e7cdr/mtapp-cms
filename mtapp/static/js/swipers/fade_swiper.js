@@ -40,14 +40,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Unmute immediately if user already interacted
                     if (userHasInteracted) {
                         e.target.unMute();
-                        e.target.setVolume(100); // Adjust volume as needed (0-100)
+                        e.target.setVolume(10); // Adjust volume as needed (0-10)
                     }
                 },
                 onStateChange: (e) => {
                     // Unmute on any state change if user has now interacted
                     if (userHasInteracted && e.data !== YT.PlayerState.ENDED) {
                         e.target.unMute();
-                        e.target.setVolume(100);
+                        e.target.setVolume(10);
                     }
                 }
             }
@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Unmute if user has interacted
                 if (userHasInteracted) {
                     player.unMute();
-                    player.setVolume(100);
+                    player.setVolume(3);
                 }
             }
 

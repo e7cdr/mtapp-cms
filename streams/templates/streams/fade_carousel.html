@@ -20,7 +20,37 @@
     {% endif %}
   </div>
     <div class="swiper-wrapper">
-        {% for item in value.images %}
+              {% for item in value.images %}
+                  <div class="swiper-slide">
+                {% if item.image %}
+                {% image item.image fill-1920x1080 format-webp webpquality-60 fetchpriority="high" loading="lazy" alt="{{ item.caption }}" class="fade-image" %}
+                   {% if item.link %}
+                    <a href="{{ item.link.url }}"></a>
+                {% endif %}
+                <img
+                height=""
+                width=""
+                src="{{ img.url }}"
+                alt="{{ item.caption|default:'Swiper images' }}"
+                id="slide-{{ forloop.counter }}"
+                loading="lazy"
+                />
+            {% elif item.yt_vid %}
+            <div class="youtube-lazy"
+                data-video-id="{{ item.yt_vid }}" data-volume="50"
+                style="position:absolute; inset:0; background:#000;">
+                <div style="position:absolute; inset:0; background:url('https://i.ytimg.com/vi/{{ item.yt_vid }}/maxresdefault.jpg') center/cover no-repeat; filter:brightness(0.7);"></div>
+                <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none;">
+                    <div style="width:100px; height:100px; background:rgba(255,255,255,0.2); backdrop-filter:blur(20px); border-radius:50%; border:4px solid rgba(255,255,255,0.4); box-shadow:0 20px 40px rgba(0,0,0,0.5);"></div>
+                </div>
+            </div>
+            {% endif %}
+            </div>
+            <p class="caption">{{ item.caption }}</p>
+            {% empty %}
+            <p>No images or videos found. Please go to the admin panel to add them.</p>
+            {% endfor %}
+        {% comment %} {% for item in value.images %}
         <div class="swiper-slide">
             {% image item.image fill-1920x1080 format-webp webpquality-60 fetchpriority="high" loading="lazy" alt="{{ item.caption }}" class="fade-image" %}
             {% if item.link %}
@@ -30,7 +60,7 @@
             <p class="caption">{{ item.caption }}</p>
             {% endif %}
         </div>
-        {% endfor %}
+        {% endfor %} {% endcomment %}
     </div>
 <div class="swiper-pagination"></div>
 </div>

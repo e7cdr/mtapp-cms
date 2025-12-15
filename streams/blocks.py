@@ -264,7 +264,7 @@ class Swipers(blocks.StructBlock):
         blocks.StructBlock([
             ('image', ImageChooserBlock(required=False,)),
             ('caption', blocks.CharBlock(required=False, max_length=40 , help_text="Optional caption for the image")),
-            ('yt_vid', blocks.CharBlock(required=False, max_length=40 , help_text="Youtube video ID. This will only work for COLLAGE AND THUMBNAIL Variation")),
+            ('yt_vid', blocks.CharBlock(required=False, max_length=40 , help_text="Youtube video ID. This will only work for COLLAGE AND THUMBNAIL Variation", verbose_name="Youtube Video ID")),
             ('link', blocks.PageChooserBlock(required=False, help_text="Optional link for the image. If provided, the image will be clickable.")),
         ]),
         ) 
@@ -283,8 +283,9 @@ class FadeCarousel(blocks.StructBlock):
     height = blocks.IntegerBlock(default=50, help_text="Image height in 'rem' units.", verbose_name="Image Height")
     images = blocks.ListBlock(
         blocks.StructBlock([
-            ('image', ImageChooserBlock()),
+            ('image', ImageChooserBlock(required=False)),
             ('caption', blocks.CharBlock(required=False, max_length=40 , help_text="Optional caption for the image")),
+            ('yt_vid', blocks.CharBlock(required=False, max_length=40 , help_text="Youtube video ID. This will only work for COLLAGE AND THUMBNAIL Variation")),
             ('link', blocks.PageChooserBlock(required=False, help_text="Optional link for the image. If provided, the image will be clickable.")),
         ]),
         ) 
