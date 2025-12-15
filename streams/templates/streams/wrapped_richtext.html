@@ -6,9 +6,7 @@
         box-shadow: 0 0 0.5rem black;
         padding: 1rem;
         border-radius: 1rem;
-        margin-block: 1rem;
-        margin-right: 30vw;
-        margin-left: 3rem;
+        margin-block: 7vw;
         }
 
     .rich-text-section ul {
@@ -21,12 +19,31 @@
         color: white;
         border-left: 3px solid black;
         border-left-style: groove;
-        padding-left: 1rem;
+        padding-inline: 0.7rem;
         border-radius: 0.7rem 0 0.7rem 0;
         font-size: large;
         text-shadow: 0 0 0.7px black;
-        margin-inline: 3rem;
-        margin-block: 1rem;
+        margin: 1vw;
+
+    }
+
+    .rich-text-section img {
+        width: 100%;
+        height: auto;
+        border-radius: 2rem;
+        box-shadow: 0 0 0.5rem black;
+    }
+
+    @media (max-width:500px) {
+        .rich-text-section  {
+            font-size: xx-small;
+        }
+        .rich-text-section h1  {
+            font-size: calc(0.8rem + 1vw);
+        }
+        .rich-text-section blockquote {
+            font-size: x-small;
+        }
 
     }
 </style>
