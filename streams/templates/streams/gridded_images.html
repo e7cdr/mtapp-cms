@@ -8,20 +8,14 @@
     <div class="squared-container">
         <div class="grid-wrapper">
             {% for item in self.images %}
+            <a href="{% if self.link %}{{ self.link }}{% else %}{% url 'wagtail_serve' '' %}{% endif %}">
             <div class="image-container">
                 <h1 class="image-caption">
                     {{ item.caption }}
                 </h1>
-                <a href="">
-            {% image item.image fill-1920x1080 format-webp webpquality-80  as img %}
-                <img src="{{ img.url }}" 
-                alt="{{ item.caption }}"
-                height=""
-                width=""
-                loading="lazy"
-                >
-                </a>
+            {% image item.image fill-1920x1080 format-webp webpquality-80 loading="lazy" alt="{{ item.caption }}" %}
             </div>
+        </a>
             {% endfor %}
         </div>
     </div>
