@@ -10,6 +10,24 @@
         margin-right: 30vw;
         margin-left: 3rem;
         }
+
+    .rich-text-section ul {
+        list-style-type: circle;
+    }
+
+    .rich-text-section blockquote {
+        background-color: #ddc264;
+        color: white;
+        border-left: 3px solid black;
+        border-left-style: groove;
+        padding-left: 1rem;
+        border-radius: 0.7rem 0 0.7rem 0;
+        font-size: large;
+        text-shadow: 0 0 0.7px black;
+        margin-inline: 3rem;
+        margin-block: 1rem;
+
+    }
 </style>
 
 <section class="rich-text-section {% if value.custom_class %}{{ value.custom_class }}{% endif %}">
