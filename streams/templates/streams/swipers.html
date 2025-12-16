@@ -98,13 +98,11 @@
         {% endif %}
         <div class="swiper-wrapper">
             {% for item in value.images %}
-            <a href="{% if item.link %}{{ item.link }}{% else %}{% url 'wagtail_serve' '' %}{% endif %}">
                 <div class="swiper-slide">
                     {% if item.image %}
                     {% image item.image fill-1920x1080 format-webp webpquality-80 alt="{{ item.caption|default:'Swiper images' }}" id="slide-{{ forloop.counter }}" loading="lazy" %}
                     {% endif %}
                 </div>
-            </a>
             {% empty %}
                 <p>No images found. Please go to the admin panel to add them.</p>
             {% endfor %}
@@ -125,7 +123,10 @@
             {% for item in value.images %}
             <div class="swiper-slide">
                 {% if item.image %}
-                {% image item.image fill-370x315 format-webp webpquality-80 alt="{{ item.caption|default:'Swiper images' }}" id="slide-{{ forloop.counter }}" loading="lazy" %}
+                {% image item.image fill-370x315 format-webp webpquality-80 alt="Swiper images" id="slide-{{ forloop.counter }}" loading="lazy" %}
+                {% endif %}
+                {% if item.caption %}
+                <p class="framed-caption">{{ item.caption }}</p>
                 {% endif %}
             </div>
             {% empty %}
@@ -166,7 +167,9 @@
             </div>
             {% endif %}
         </div>
+            {% if item.caption %}
             <p class="caption">{{ item.caption }}</p>
+            {% endif %}
             {% empty %}
             <p>No images found. Please go to the admin panel to add them.</p>
             {% endfor %}
@@ -181,7 +184,7 @@
             {% for item in value.images %}
                 <div class="swiper-slide">
                     {% if item.image %}
-                    {% image item.image fill-1920x1080 format-webp webpquality-80 alt="{{ item.caption|default:'Swiper images' }}" id="slide-{{ forloop.counter }}" loading="lazy" %}
+                    {% image item.image fill-1920x1080 format-webp webpquality-80 alt="Thumbnail Images" id="slide-{{ forloop.counter }}" loading="lazy" %}
                     {% elif item.yt_vid %}
                     <img height="" width="" src="https://i.ytimg.com/vi/{{ item.yt_vid }}/hqdefault.jpg"
                     alt="YouTube thumbnail"

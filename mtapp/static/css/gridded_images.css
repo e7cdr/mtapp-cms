@@ -18,7 +18,6 @@
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     grid-auto-rows: 15rem;
     gap: 0.6rem;
-
     /* Force maximum 4 columns */
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     grid-template-columns: repeat(clamp(1, auto-fit, 4), minmax(280px, 1fr));
