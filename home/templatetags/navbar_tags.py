@@ -2,7 +2,6 @@ from django import template
 from django.conf import settings
 from django.utils import translation
 from wagtail.models import Site, Locale
-from tours.models import ToursIndexPage  # Keep if needed for .specific()
 from wagtail.models import Page
 
 register = template.Library()

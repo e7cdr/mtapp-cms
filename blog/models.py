@@ -111,7 +111,7 @@ class BlogIndexPage(RoutablePageMixin, SeoMixin, Page):
     def get_context(self, request, *args, **kwargs):
         context = super().get_context(request, *args, **kwargs)
         
-        posts = BlogDetailPage.objects.descendant_of(self).live().public().order_by('-date_published')
+        posts = BlogDetailPage.objects.descendant_of(self).live().public().order_by('-date_published').filter(locale=self.locale).specific()
 
         # === FILTERS ===
         selected_category = None

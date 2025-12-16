@@ -3,4 +3,4 @@ from rest_framework.authtoken.models import Token
 
 user = User.objects.get(username='yourusername')  # ← change this
 token = Token.objects.create(user=user)
-print("YOUR TOKEN →", token.key)
+print("YOUR TOKEN →", token.key)        
