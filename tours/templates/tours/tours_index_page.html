@@ -29,8 +29,8 @@
                     <select name="tour_type" id="tour_type" class="form-select">
                         <option value="">{% trans "All" %}</option>
                         <option value="land" {% if request.GET.tour_type == 'land' %}selected{% endif %}>{% trans "Land Tours" %}</option>
-                        <option value="day" disabled>{% trans "Day Tours" %}</option>
-                        <option value="full" disabled>{% trans "Full Tours" %}</option>
+                        <option value="day">{% trans "Day Tours" %}</option>
+                        <option value="full">{% trans "Full Tours" %}</option>
                     </select>
                 </div>
 
@@ -118,13 +118,7 @@
             {% endif %}
             <div class="image-zone">
                 <a href="{{ tour.url }}">
-                {% image tour.cover_image fill-315x200 as img %}
-                <img src="{{ img.url }}" 
-                height=""
-                width=""
-                alt="{{ tour.name }} card image"
-                loading="lazy"
-                >
+                {% image tour.cover_image fill-315x200 alt="{{ tour.name }} card image" loading="lazy" %}
                 <div class="card-country">{{ tour.destination }}</div>
                 <div class="card-location">{{ tour.location }}</div>
                 </a>

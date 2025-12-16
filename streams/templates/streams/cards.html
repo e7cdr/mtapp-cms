@@ -9,12 +9,8 @@
    <div class="card">
     <!-- Top Card Side-->
     <div class="image-zone">
-      {% image self.image fill-315x200 as img %}
-      <img src="{{ img.url }}" alt="{{ self.title }} card image"
-      loading="lazy"
-      height=""
-      width="">
-      
+      {% image self.image fill-315x200 alt="{{ self.title }} card image" loading="lazy" %}
+     
       {% for tag in self.tags %}
       <div class="new-sticker">{{ tag.top_tag_1 }}</div>
       <div class="special-offer-sticker">{{ tag.top_tag_2 }}</div>
