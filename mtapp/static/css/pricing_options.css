@@ -1,50 +1,206 @@
+/* pricing_options.css - Pure vanilla, clean and modern */
 
-
-.pricing-table {
-    padding: 0.5rem;
+.pricing-options-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: system-ui, -apple-system, sans-serif;
 }
 
-.pricing-table .title, .pricing-table .subtitle {
-    margin-bottom: 1.5rem;
+.pricing-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.pricing-header h2 {
+    font-size: 28px;
     font-weight: 600;
+    color: #333;
+    margin-bottom: 10px;
 }
 
-.pricing-table .subtitle {
-    font-size: small;
-}
-.subtitle p {
-    margin-bottom: 0;
-}
-
-.ranges {
-    padding-top: .5rem;
-    padding-bottom: .5rem;
-    padding-right: 1rem;
-    padding-left: 1rem;
-    border: 1px solid #dee2e6;
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-    width: 80%;
+.pricing-summary {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    font-size: 15px;
+    color: #555;
 }
 
-button {
-    border-radius: 0.4rem;
-    font-size: small;
+.pricing-summary p {
+    margin: 8px 0;
 }
 
-.hover\:scale-102:hover {
-    transform: scale(1.02);
+.pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+    margin-bottom: 40px;
 }
-.configuration-item.hidden {
-    display: none !important;
+
+.pricing-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    position: relative;
 }
-@media (max-width: 640px) {
-    .pricing-table .text-base {
-        font-size: 0.875rem;
+
+.pricing-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.pricing-card.cheapest {
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+.cheapest-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: #10b981;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: bold;
+    z-index: 10;
+}
+
+.card-body {
+    padding: 24px;
+}
+
+.price-amount {
+    font-size: 36px;
+    font-weight: bold;
+    color: #333;
+    text-align: center;
+    margin-bottom: 8px;
+}
+
+.price-currency {
+    font-size: 16px;
+    color: #666;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.room-details {
+    margin: 20px 0;
+}
+
+.room-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 15px;
+}
+
+.room-row:last-child {
+    border-bottom: none;
+    font-weight: bold;
+    padding-top: 16px;
+    margin-top: 12px;
+    border-top: 2px solid #eee;
+}
+
+.select-button {
+    width: 100%;
+    padding: 14px;
+    background: #f59e0b;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+    margin-top: 20px;
+}
+
+.select-button:hover {
+    background: #d97706;
+}
+
+.select-button.selected {
+    background: #16a34a;
+}
+
+.select-button.selected:hover {
+    background: #15803d;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin-top: 40px;
+    font-size: 16px;
+}
+
+.pagination button {
+    padding: 10px 20px;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.pagination button:hover:not(:disabled) {
+    background: #f0f0f0;
+}
+
+.pagination button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination button.prev {
+    background: #f3f4f6;
+}
+
+.pagination button.next {
+    background: #f59e0b;
+    color: white;
+}
+
+.pagination button.next:hover:not(:disabled) {
+    background: #d97706;
+}
+
+.no-results {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+    font-size: 18px;
+}
+
+.room-note {
+    background: #f0fdf4;
+    color: #166534;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .pricing-grid {
+        grid-template-columns: 1fr;
     }
-    .pricing-table .text-sm {
-        font-size: 0.75rem;
-    }
-    .pricing-table .p-3 {
-        padding: 0.5rem;
+    
+    .pagination {
+        flex-direction: column;
+        gap: 12px;
     }
 }

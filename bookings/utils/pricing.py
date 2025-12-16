@@ -90,6 +90,182 @@ def get_demand_multiplier(accommodation, check_in_date):
     demand_multiplier = Decimal('1.0') + (max_factor * Decimal(str(occupancy_rate)))
     return demand_multiplier
 
+# def compute_pricing(tour_type, tour_id, form_data, session):
+#     logger.debug(f"compute_pricing called: type={tour_type}, id={tour_id}, form_data keys={list(form_data.keys())}")
+
+#     model_map = {
+#         'full': FullTourPage,
+#         'land': LandTourPage,
+#         'day': DayTourPage,
+#     }
+#     model = model_map.get(tour_type.lower())
+#     if not model:
+#         logger.error(f"Invalid tour type: {tour_type}")
+#         return []
+
+#     tour = get_object_or_404(model, pk=tour_id)
+
+#     # === Extract and validate inputs safely ===
+#     try:
+#         number_of_adults = max(1, int(form_data.get('number_of_adults', 1) or 1))
+#         number_of_children = max(0, int(form_data.get('number_of_children', 0) or 0))
+#     except (ValueError, TypeError):
+#         number_of_adults = 1
+#         number_of_children = 0
+
+#     currency = form_data.get('currency', session.get('currency', 'USD')).upper()
+#     session['currency'] = currency
+
+#     # === Parse child ages ===
+#     try:
+#         child_ages = json.loads(form_data.get('child_ages', '[]'))
+#         child_ages = [int(a) for a in child_ages if isinstance(a, (int, str)) and str(a).isdigit()]
+#     except (json.JSONDecodeError, ValueError):
+#         child_ages = []
+
+#     child_age_min = getattr(tour, 'child_age_min', 7)
+#     infants = sum(1 for age in child_ages if age < child_age_min)
+#     children = len(child_ages) - infants
+
+#     max_children_per_room = getattr(tour, 'max_children_per_room', 1) or 1
+#     # === Factors ===
+#     seasonal_factor = Decimal(str(getattr(tour, 'seasonal_factor', 1.0) or '1.0'))
+#     exchange_rate = get_exchange_rate(currency)
+
+#     # Demand adjustment (simplified — use your existing logic if needed)
+#     price_adjustment = Decimal('1.0')  # You can plug in demand logic here
+
+#     # === Load prices safely ===
+#     try:
+#         price_adult = Decimal(str(getattr(tour, 'price_adult', 0) or '0'))
+#         price_chd = Decimal(str(getattr(tour, 'price_chd', 0) or '0'))
+#         price_inf = Decimal(str(getattr(tour, 'price_inf', 0) or '0'))
+#         price_sgl = Decimal(str(getattr(tour, 'price_sgl', 0) or '0'))
+#         price_dbl = Decimal(str(getattr(tour, 'price_dbl', 0) or '0'))
+#         price_tpl = Decimal(str(getattr(tour, 'price_tpl', 0) or '0'))
+#     except (InvalidOperation, ValueError):
+#         return [{'error': 'Invalid price configuration.', 'total_price': None}]
+
+#     pricing_type_raw = getattr(tour, 'pricing_type', None)
+#     logger.debug(f"Raw pricing_type from tour: '{pricing_type_raw}' (type: {type(pricing_type_raw)})")
+#     if not pricing_type_raw or pricing_type_raw.strip() == '':
+#         logger.warning(f"Tour {tour_id} has no pricing_type set! Forcing 'Per_person' for DayTour")
+#         pricing_type = 'Per_person'
+#     else:
+#         pricing_type = pricing_type_raw.strip()
+
+#     logger.debug(f"Final pricing_type used: '{pricing_type}'")
+#     # =============================================
+#     # 1. PER PERSON PRICING — Used by Day Tours + any tour with 'Per_person'
+#     # =============================================
+#     logger.debug(f"PER_PERSON PRICING: adults={number_of_adults}, children={children}, infants={infants}")
+#     logger.debug(f"Prices → adult={price_adult}, chd={price_chd}, inf={price_inf}")
+#     logger.debug(f"Raw total before factors: {number_of_adults * price_adult + children * price_chd + infants * price_inf}")
+#     if pricing_type == 'Per_person':
+#         total_price = (
+#             number_of_adults * price_adult +
+#             children * price_chd +
+#             infants * price_inf
+#         )
+#         total_price *= seasonal_factor * price_adjustment * exchange_rate
+#         rounded_price = total_price.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
+#         return [{
+#             'singles': 0, 'doubles': 0, 'triples': 0,
+#             'total_rooms': 0,
+#             'children': children,
+#             'infants': infants,
+#             'child_ages': child_ages,
+#             'total_price': float(rounded_price),
+#             'currency': currency,
+#             'cheapest': True,
+#             'pricing_type': 'Per_person',
+#             'note': 'Flat rate per person'
+#         }]
+
+#     # =============================================
+#     # 2. PER ROOM & COMBINED — Room-based logic
+#     # =============================================
+#     if number_of_adults == 0:
+#         return []
+
+#     # Generate all possible room combinations
+#     configurations = []
+#     seen = set()
+#     children_exceed = False
+#     max_rooms_needed = number_of_adults  # worst case: all singles
+
+#     for singles in range(max_rooms_needed + 1):
+#         for doubles in range(max_rooms_needed + 1):
+#             for triples in range(max_rooms_needed + 1):
+#                 total_rooms = singles + doubles + triples
+#                 if total_rooms == 0 or total_rooms > max_rooms_needed * 2:  # sanity limit
+#                     continue
+
+#                 # Calculate how many adults this combo accommodates
+#                 accommodated = singles * 1 + doubles * 2 + triples * 3
+#                 if accommodated < number_of_adults:
+#                     continue  # not enough beds
+
+#                 # Allow extra beds (e.g., 4 adults → 2 doubles = perfect, or 1 double + 2 singles = extra room)
+#                 # We accept any combo that fits all adults
+
+#                 # Child limit check
+#                 if (children + infants) > total_rooms * max_children_per_room:
+#                     children_exceed = True
+#                     continue
+
+#                 key = (singles, doubles, triples)
+#                 if key in seen:
+#                     continue
+#                 seen.add(key)
+
+#                 # === Price Calculation ===
+#                 if pricing_type == 'Per_room':
+#                     base_price = singles * price_sgl + doubles * price_dbl + triples * price_tpl
+#                     total_price = base_price + children * price_chd + infants * price_inf
+
+#                 elif pricing_type == 'Combined':
+#                     # Use your tier logic or fallback
+#                     total_price = (
+#                         singles * price_sgl +
+#                         doubles * price_dbl +
+#                         triples * price_tpl +
+#                         children * price_chd +
+#                         infants * price_inf
+#                     )
+
+#                 total_price *= seasonal_factor * price_adjustment * exchange_rate
+#                 rounded_price = total_price.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
+#                 configurations.append({
+#                     'singles': singles,
+#                     'doubles': doubles,
+#                     'triples': triples,
+#                     'total_rooms': total_rooms,
+#                     'children': children,
+#                     'infants': infants,
+#                     'child_ages': child_ages,
+#                     'total_price': float(rounded_price),
+#                     'currency': currency,
+#                     'cheapest': False,
+#                     'pricing_type': pricing_type,
+#                 })
+
+#     # Final sort and cheapest
+#     if configurations:
+#         configurations.sort(key=lambda x: x['total_price'])
+#         configurations[0]['cheapest'] = True
+#     elif children_exceed:
+#         configurations = [{'error': 'Too many children for available rooms.', 'blocked': True}]
+#     else:
+#         configurations = [{'error': 'No room options available.'}]
+#     logger.debug(f"compute_pricing: adults={number_of_adults}, children={children}, infants={infants}, max_per_room={max_children_per_room}")
+#     logger.debug(f"Generated {len(configurations)} configurations")
+
+#     return configurations
+
+
 def compute_pricing(tour_type, tour_id, form_data, session):
     logger.debug(f"compute_pricing called: type={tour_type}, id={tour_id}, form_data keys={list(form_data.keys())}")
 
@@ -184,87 +360,110 @@ def compute_pricing(tour_type, tour_id, form_data, session):
         }]
 
     # =============================================
-    # 2. PER ROOM & COMBINED — Room-based logic
+    # SMART & CURATED ROOM CONFIGURATIONS (Best Practice)
     # =============================================
-    if number_of_adults == 0:
-        return []
-
-    # Generate all possible room combinations
     configurations = []
+
+    # Helper to add config
+    def add_config(s, d, t):
+        total_rooms = s + d + t
+        if total_rooms == 0:
+            return
+        if (children + infants) > total_rooms * max_children_per_room:
+            return
+
+        beds = s * 1 + d * 2 + t * 3
+        if beds < number_of_adults:
+            return
+
+        # Calculate price
+        if pricing_type == 'Per_room':
+            base = s * price_sgl + d * price_dbl + t * price_tpl
+        else:
+            base = s * price_sgl + d * price_dbl + t * price_tpl
+
+        total_price = (base + children * price_chd + infants * price_inf
+                      ) * seasonal_factor * price_adjustment * exchange_rate
+        rounded = total_price.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
+        configurations.append({
+            'singles': s,
+            'doubles': d,
+            'triples': t,
+            'total_rooms': total_rooms,
+            'children': children,
+            'infants': infants,
+            'child_ages': child_ages,
+            'total_price': float(rounded),
+            'currency': currency,
+            'cheapest': False,
+            'pricing_type': pricing_type,
+            'note': get_note(s, d, t)  # We'll add this
+        })
+
+    def get_note(s, d, t):
+        parts = []
+        if t: parts.append(f"{t} Triple" + ("s" if t > 1 else ""))
+        if d: parts.append(f"{d} Double" + ("s" if d > 1 else ""))
+        if s: parts.append(f"{s} Single" + ("s" if s > 1 else ""))
+        note = " + ".join(parts)
+        if s + d + t == number_of_adults // 2 + (number_of_adults % 2):  # rough perfect fit
+            note += " (recommended)"
+        return note
+
+    # 1. Best: Use as many triples as possible
+    for t in range(min(number_of_adults // 3 + 1, number_of_adults // 2 + 1)):
+        remaining = number_of_adults - t * 3
+        if remaining < 0: continue
+        d = remaining // 2
+        s = remaining % 2
+        add_config(s, d, t)
+
+    # 2. Best sharing with doubles
+    d = number_of_adults // 2
+    s = number_of_adults % 2
+    add_config(s, d, 0)
+
+    # 3. One extra room variations
+    if number_of_adults >= 2:
+        add_config(number_of_adults - 2, 1, 0)  # 1 double + rest singles
+        if number_of_adults >= 3:
+            add_config(number_of_adults - 3, 0, 1)  # 1 triple + rest singles
+
+    # 4. All singles (privacy option)
+    add_config(number_of_adults, 0, 0)
+
+    # 5. Mixed with one extra double
+    if number_of_adults >= 2:
+        add_config(number_of_adults - 2, 2, 0)  # 2 doubles (one empty bed)
+    for c in configurations:
+        beds = c['singles'] + c['doubles'] * 2 + c['triples'] * 3
+        extra_beds = beds - number_of_adults
+        if extra_beds <= 1 and c['total_rooms'] <= number_of_adults // 2 + 2:
+            c['recommended'] = True
+    # Remove duplicates and sort
     seen = set()
-    children_exceed = False
+    unique_configs = []
+    for c in configurations:
+        key = (c['singles'], c['doubles'], c['triples'])
+        if key not in seen:
+            seen.add(key)
+            unique_configs.append(c)
 
-    max_rooms_needed = number_of_adults  # worst case: all singles
+    unique_configs.sort(key=lambda x: x['total_price'])
+    if unique_configs:
+        unique_configs[0]['cheapest'] = True
 
-    for singles in range(max_rooms_needed + 1):
-        for doubles in range(max_rooms_needed + 1):
-            for triples in range(max_rooms_needed + 1):
-                total_rooms = singles + doubles + triples
-                if total_rooms == 0 or total_rooms > max_rooms_needed * 2:  # sanity limit
-                    continue
+    logger.debug(f"Generated {len(unique_configs)} curated configurations")
+    # Filter out options with too many rooms (too much waste)
+    filtered = []
+    for c in configurations:
+        if c['total_rooms'] <= number_of_adults // 2 + 3:  # Allow small overflow
+            filtered.append(c)
 
-                # Calculate how many adults this combo accommodates
-                accommodated = singles * 1 + doubles * 2 + triples * 3
-                if accommodated < number_of_adults:
-                    continue  # not enough beds
+    configurations = filtered
+    return unique_configs if unique_configs else [{'error': 'No valid configuration'}]
 
-                # Allow extra beds (e.g., 4 adults → 2 doubles = perfect, or 1 double + 2 singles = extra room)
-                # We accept any combo that fits all adults
-
-                # Child limit check
-                if (children + infants) > total_rooms * max_children_per_room:
-                    children_exceed = True
-                    continue
-
-                key = (singles, doubles, triples)
-                if key in seen:
-                    continue
-                seen.add(key)
-
-                # === Price Calculation ===
-                if pricing_type == 'Per_room':
-                    base_price = singles * price_sgl + doubles * price_dbl + triples * price_tpl
-                    total_price = base_price + children * price_chd + infants * price_inf
-
-                elif pricing_type == 'Combined':
-                    # Use your tier logic or fallback
-                    total_price = (
-                        singles * price_sgl +
-                        doubles * price_dbl +
-                        triples * price_tpl +
-                        children * price_chd +
-                        infants * price_inf
-                    )
-
-                total_price *= seasonal_factor * price_adjustment * exchange_rate
-                rounded_price = total_price.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-
-                configurations.append({
-                    'singles': singles,
-                    'doubles': doubles,
-                    'triples': triples,
-                    'total_rooms': total_rooms,
-                    'children': children,
-                    'infants': infants,
-                    'child_ages': child_ages,
-                    'total_price': float(rounded_price),
-                    'currency': currency,
-                    'cheapest': False,
-                    'pricing_type': pricing_type,
-                })
-
-    # Final sort and cheapest
-    if configurations:
-        configurations.sort(key=lambda x: x['total_price'])
-        configurations[0]['cheapest'] = True
-    elif children_exceed:
-        configurations = [{'error': 'Too many children for available rooms.', 'blocked': True}]
-    else:
-        configurations = [{'error': 'No room options available.'}]
-    logger.debug(f"compute_pricing: adults={number_of_adults}, children={children}, infants={infants}, max_per_room={max_children_per_room}")
-    logger.debug(f"Generated {len(configurations)} configurations")
-
-    return configurations
 
 def render_pricing(request, tour_type, tour_id):
     if not request.headers.get('X-Requested-With') == 'XMLHttpRequest':
