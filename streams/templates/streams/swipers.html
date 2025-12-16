@@ -47,23 +47,11 @@
             {% for item in value.images %}
             <div class="swiper-slide">
                 {% if item.image %}
-                {% if item.link %}
-                 <a href="{{ item.link }}">
-                {% image item.image fill-1920x1080 format-webp webpquality-80 as img %}
-                <img
-                height=""
-                width=""
-                src="{{ img.url }}"
-                alt="{{ item.caption|default:'Swiper images' }}"
-                id="slide-{{ forloop.counter }}"
-                loading="lazy"
-                />
-                    </a>
-                {% endif %}
+                <a href="{% if item.link %}{{ item.link }}{% else %}{% url 'wagtail_serve' '' %}{% endif %}">
+                {% image item.image fill-1920x1080 format-webp webpquality-80 alt="{{ item.caption|default:'Swiper images' }}" id="slide-{{ forloop.counter }}" loading="lazy" %}
+                </a>
                 {% elif item.yt_vid %}
-                <div 
-                    class="youtube-lazy" 
-                    data-video-id="{{ item.yt_vid }}"
+                <div class="youtube-lazy" data-video-id="{{ item.yt_vid }}"
                     style="width:100%; height:100%; background:#000; position:relative;">
                     <div class="play-button">Play</div>
                 </div>
@@ -81,19 +69,7 @@
             {% for item in value.images %}
             <div class="swiper-slide">
                 {% if item.image %}
-                {% if item.link %}
-                 <a href="{{ item.link }}">
-                {% image item.image fill-1920x1080 format-webp webpquality-80 as img %}
-                <img
-                height=""
-                width=""
-                src="{{ img.url }}"
-                alt="{{ item.caption|default:'Swiper images' }}"
-                id="slide-{{ forloop.counter }}"
-                loading="lazy"
-                />
-                </a>
-                {% endif %}
+                {% image item.image fill-1920x1080 format-webp webpquality-80 alt="{{ item.caption|default:'Swiper images' }}" id="slide-{{ forloop.counter }}" loading="lazy" %}
                 {% elif item.yt_vid %}
                 <div class="youtube-thumb" style="position:relative; display:inline-block; width:100%; height:100%;">
                     <img 
@@ -122,23 +98,13 @@
         {% endif %}
         <div class="swiper-wrapper">
             {% for item in value.images %}
-            <div class="swiper-slide">
-                {% if item.image %}
-                {% if item.link %}
-                <a href="{{ item.link }}">
-                {% image item.image fill-1920x1080 format-webp webpquality-80 as img %}
-                <img
-                height=""
-                width=""
-                src="{{ img.url }}"
-                alt="{{ item.caption|default:'Swiper images' }}"
-                id="slide-{{ forloop.counter }}"
-                loading="lazy"
-                />
-                </a>
-                {% endif %}
-                {% endif %}
-            </div>
+            <a href="{% if item.link %}{{ item.link }}{% else %}{% url 'wagtail_serve' '' %}{% endif %}">
+                <div class="swiper-slide">
+                    {% if item.image %}
+                    {% image item.image fill-1920x1080 format-webp webpquality-80 alt="{{ item.caption|default:'Swiper images' }}" id="slide-{{ forloop.counter }}" loading="lazy" %}
+                    {% endif %}
+                </div>
+            </a>
             {% empty %}
                 <p>No images found. Please go to the admin panel to add them.</p>
             {% endfor %}
@@ -159,19 +125,7 @@
             {% for item in value.images %}
             <div class="swiper-slide">
                 {% if item.image %}
-                {% if item.link %}
-                 <a href="{{ item.link }}">
-                {% image item.image fill-370x315 format-webp webpquality-80 as img %}
-                <img
-                height="370"
-                width="315"
-                src="{{ img.url }}"
-                alt="{{ item.caption|default:'Swiper images' }}"
-                id="slide-{{ forloop.counter }}"
-                loading="lazy"
-                />
-                </a>
-                {% endif %}
+                {% image item.image fill-370x315 format-webp webpquality-80 alt="{{ item.caption|default:'Swiper images' }}" id="slide-{{ forloop.counter }}" loading="lazy" %}
                 {% endif %}
             </div>
             {% empty %}
@@ -199,22 +153,10 @@
         <div class="swiper-wrapper">
             {% for item in value.images %}
             <div class="swiper-slide">
-                {% if item.image %}
-                {% if item.link %}
-                <a href="{{ item.link }}">
-                {% image item.image fill-1920x1080 format-webp webpquality-80 as img %}
-                <img
-                height=""
-                width=""
-                src="{{ img.url }}"
-                alt="{{ item.caption|default:'Swiper images' }}"
-                id="slide-{{ forloop.counter }}"
-                loading="lazy"
-                />
-                </a>
-                {% endif %}
-            {% elif item.yt_vid %}
-            <div class="youtube-lazy"
+                    {% if item.image %}
+                    {% image item.image fill-1920x1080 format-webp webpquality-80 alt="{{ item.caption|default:'Swiper images' }}" id="slide-{{ forloop.counter }}" loading="lazy" %}
+                {% elif item.yt_vid %}
+                <div class="youtube-lazy"
                 data-video-id="{{ item.yt_vid }}" data-volume="50"
                 style="position:absolute; inset:0; background:#000;">
                 <div style="position:absolute; inset:0; background:url('https://i.ytimg.com/vi/{{ item.yt_vid }}/maxresdefault.jpg') center/cover no-repeat; filter:brightness(0.7);"></div>
@@ -223,7 +165,7 @@
                 </div>
             </div>
             {% endif %}
-            </div>
+        </div>
             <p class="caption">{{ item.caption }}</p>
             {% empty %}
             <p>No images found. Please go to the admin panel to add them.</p>
@@ -237,28 +179,16 @@
     <div class="swiper collage-swiper2-container">
         <div class="swiper-wrapper grid-thumb">
             {% for item in value.images %}
-            <div class="swiper-slide">
-                {% if item.image %}
-                {% if item.link %}
-                 <a href="{{ item.link }}">
-                {% image item.image fill-1920x1080 format-webp webpquality-80 as img %}
-                        <img
-                        height=""
-                        width=""
-                        src="{{ img.url }}"
-                        alt="{{ item.caption|default:'Swiper images' }}"
-                        id="slide-{{ forloop.counter }}"
-                        loading="lazy"
-                        />
-                    </a>
-                {% endif %}
-                {% elif item.yt_vid %}
-                <img height="" width="" src="https://i.ytimg.com/vi/{{ item.yt_vid }}/hqdefault.jpg"
+                <div class="swiper-slide">
+                    {% if item.image %}
+                    {% image item.image fill-1920x1080 format-webp webpquality-80 alt="{{ item.caption|default:'Swiper images' }}" id="slide-{{ forloop.counter }}" loading="lazy" %}
+                    {% elif item.yt_vid %}
+                    <img height="" width="" src="https://i.ytimg.com/vi/{{ item.yt_vid }}/hqdefault.jpg"
                     alt="YouTube thumbnail"
                     loading="lazy"
                     style="width:100%; height:100%; object-fit:cover; border-radius:8px;">
-                {% endif %}
-            </div>
+                    {% endif %}
+                </div>
             {% empty %}
                 <p>No images found. Please go to the admin panel to add them.</p>
             {% endfor %}
@@ -266,26 +196,16 @@
     </div>
 </section>
 {% elif self.variations == 'coverflow' %}
-    <section class="coverflow-swiper-container swiper">
+<section class="coverflow-swiper-container swiper">
         <div class="swiper-wrapper">
                 {% for item in value.images %}
                 <div class="swiper-slide">
+                    <a href="{% if item.link %}{{ item.link }}{% else %}{% url 'wagtail_serve' '' %}{% endif %}">
                     {% if item.image %}
-                    {% if item.link %}
-                    <a href="{{ item.link }}">
-                    {% image item.image fill-1920x1080 format-webp webpquality-80 as img %}
-                    <img
-                    height=""
-                    width=""
-                    src="{{ img.url }}"
-                    alt="{{ item.caption|default:'Swiper images' }}"
-                    id="slide-{{ forloop.counter }}"
-                    loading="lazy"
-                    />
-                    </a>
-                    {% endif %}
+                    {% image item.image fill-1920x1080 format-webp webpquality-80 alt="{{ item.caption|default:'Swiper images' }}" id="slide-{{ forloop.counter }}" loading="lazy" %}
                     <p class="caption">{{ item.caption }}</p>
                     {% endif %}
+                </a>
                 </div>
                 {% endfor %}
             </div>
@@ -301,34 +221,24 @@
         <div class="swiper-wrapper">
             {% for item in value.images %}
             <div class="swiper-slide">
+                <a href="{% if item.link %}{{ item.link }}{% else %}{% url 'wagtail_serve' '' %}{% endif %}">
                 {% if item.image %}
-                {% if item.link %}
-                <a href="{{ item.link }}">
-                {% image item.image fill-1920x1080 format-webp webpquality-80 as img %}
-                <img
-                height=""
-                width=""
-                src="{{ img.url }}"
-                alt="{{ item.caption|default:'Swiper images' }}"
-                id="slide-{{ forloop.counter }}"
-                loading="lazy"
-                />
+                {% image item.image fill-1920x1080 format-webp webpquality-80 alt="{{ item.caption|default:'Swiper images' }}" id="slide-{{ forloop.counter }}" loading="lazy" %}
                 </a>
-                {% endif %}
                 {% if item.caption %}
                 <p class="caption">{{ item.caption }}</p>
                 {% endif %}
                 {% elif item.yt_vid %}
                 <div class="youtube-lazy"
-                    data-video-id="{{ item.yt_vid }}"
-                    style="position:absolute; inset:0; background:#000;">
-                    <div style="position:absolute; inset:0; background:url('https://i.ytimg.com/vi/{{ item.yt_vid }}/maxresdefault.jpg') center/cover no-repeat; filter:brightness(0.7);"></div>
-                    <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none;">
-                        <div style="width:90px; height:90px; background:rgba(255,255,255,0.15); backdrop-filter:blur(20px); border-radius:50%; border:3px solid rgba(255,255,255,0.3);"></div>
-                    </div>
+                data-video-id="{{ item.yt_vid }}"
+                style="position:absolute; inset:0; background:#000;">
+                <div style="position:absolute; inset:0; background:url('https://i.ytimg.com/vi/{{ item.yt_vid }}/maxresdefault.jpg') center/cover no-repeat; filter:brightness(0.7);"></div>
+                <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none;">
+                    <div style="width:90px; height:90px; background:rgba(255,255,255,0.15); backdrop-filter:blur(20px); border-radius:50%; border:3px solid rgba(255,255,255,0.3);"></div>
                 </div>
-                {% endif %}
             </div>
+            {% endif %}
+        </div>
             {% endfor %}
         </div>
     <div class="swiper-pagination"></div>
