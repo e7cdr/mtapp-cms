@@ -93,7 +93,7 @@ class HomePage(WagtailCacheMixin, SeoMixin, Page):
             context['blog_page'] = None
 
         if self.include_latest_blog_posts:
-            context['latest_blog_posts'] = BlogDetailPage.objects.live().public().order_by('-date_published')[:6]
+            context['latest_blog_posts'] = BlogDetailPage.objects.live().public().order_by('-date_published').filter(locale=self.locale).specific()[:6]
         else:
             context['latest_blog_posts'] = None
 
