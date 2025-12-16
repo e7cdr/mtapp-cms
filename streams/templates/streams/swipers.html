@@ -47,9 +47,10 @@
             {% for item in value.images %}
             <div class="swiper-slide">
                 {% if item.image %}
+                {% if item.link %}
+                 <a href="{{ item.link }}">
                 {% image item.image fill-1920x1080 format-webp webpquality-80 as img %}
-                   {% if item.link %}
-                    <a href="{{ item.link.url }}"></a>
+                    </a>
                 {% endif %}
                 <img
                 height=""
@@ -80,9 +81,10 @@
             {% for item in value.images %}
             <div class="swiper-slide">
                 {% if item.image %}
+                {% if item.link %}
+                 <a href="{{ item.link }}">
                 {% image item.image fill-1920x1080 format-webp webpquality-80 as img %}
-                   {% if item.link %}
-                    <a href="{{ item.link.url }}"></a>
+                    </a>
                 {% endif %}
                 <img
                 height=""
@@ -122,9 +124,9 @@
             {% for item in value.images %}
             <div class="swiper-slide">
                 {% if item.image %}
-                {% image item.image fill-1920x1080 format-webp webpquality-80 as img %}
-                   {% if item.link %}
-                    <a href="{{ item.link.url }}"></a>
+                {% if item.link %}
+                <a href="{{ item.link }}">
+                {% image item.image fill-1920x1080 format-webp webpquality-80 as img %}</a>
                 {% endif %}
                 <img
                 height=""
@@ -156,9 +158,10 @@
             {% for item in value.images %}
             <div class="swiper-slide">
                 {% if item.image %}
+                {% if item.link %}
+                 <a href="{{ item.link }}">
                 {% image item.image fill-370x315 format-webp webpquality-80 as img %}
-                   {% if item.link %}
-                    <a href="{{ item.link.url }}"></a>
+                    </a>
                 {% endif %}
                 <img
                 height="370"
@@ -196,9 +199,9 @@
             {% for item in value.images %}
             <div class="swiper-slide">
                 {% if item.image %}
-                {% image item.image fill-1920x1080 format-webp webpquality-80 as img %}
-                   {% if item.link %}
-                    <a href="{{ item.link.url }}"></a>
+                {% if item.link %}
+                <a href="{{ item.link }}">
+                {% image item.image fill-1920x1080 format-webp webpquality-80 as img %}</a>
                 {% endif %}
                 <img
                 height=""
@@ -236,7 +239,7 @@
                 {% if item.image %}
                 {% image item.image fill-1920x1080 format-webp webpquality-80 as img %}
                    {% if item.link %}
-                    <a href="{{ item.link.url }}"></a>
+                    <a href="{{ item.link }}"></a>
                 {% endif %}
                 <img
                 height=""
@@ -265,9 +268,10 @@
             {% for item in value.images %}
             <div class="swiper-slide">
                 {% if item.image %}
-                {% image item.image fill-1920x1080 format-webp webpquality-80 as img %}
                 {% if item.link %}
-                <a href="{{ item.link.url }}"></a>
+                <a href="{{ item.link }}">
+                {% image item.image fill-1920x1080 format-webp webpquality-80 as img %}
+                </a>
                 {% endif %}
                 <img
                 height=""
@@ -295,9 +299,10 @@
         {% for item in value.images %}
         <div class="swiper-slide">
             {% if item.image %}
-            {% image item.image fill-1920x1080 format-webp webpquality-80 as img %}
             {% if item.link %}
-            <a href="{{ item.link.url }}"></a>
+            <a href="{{ item.link }}">
+            {% image item.image fill-1920x1080 format-webp webpquality-80 as img %}
+            </a>
             {% endif %}
             <img
             height=""
