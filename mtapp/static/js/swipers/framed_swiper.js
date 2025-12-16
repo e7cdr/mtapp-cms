@@ -20,10 +20,10 @@ document.addEventListener('DOMContentLoaded', function(){
                     spaceBetween: 10,
                 },
             },
-            autoplay: {
-                delay: 2000,
-                pauseOnMouseEnter: true,     
-            },   
+            // autoplay: {
+            //     delay: 2000,
+            //     pauseOnMouseEnter: true,     
+            // },   
             speed: 3000,
         lazy: true,
         // lazyPreloaderClass:"swiper-lazy-preloader",

@@ -260,6 +260,7 @@ class CTA_Block_2B(blocks.StructBlock):
 class Swipers(blocks.StructBlock):
     """Swiper design with different variations"""
     swiper_title = blocks.CharBlock(required=False, help_text="The main title.", max_length=33)
+    variations = blocks.ChoiceBlock(choices=swipers, default='basic')
     images = blocks.ListBlock(
         blocks.StructBlock([
             ('image', ImageChooserBlock(required=False,)),
@@ -268,7 +269,6 @@ class Swipers(blocks.StructBlock):
             ('link', blocks.PageChooserBlock(required=False, help_text="Optional link for the image. If provided, the image will be clickable.")),
         ]),
         ) 
-    variations = blocks.ChoiceBlock(choices=swipers, default='basic')
    
     class Meta:
         template = "streams/swipers.html"

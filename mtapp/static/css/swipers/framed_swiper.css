@@ -54,6 +54,22 @@
     
 }
 
+.framed-caption{
+    position: absolute;
+    color: white;
+    font-family: Style Script, cursive;
+    text-shadow: 2px 1px 3px rgba(0, 0, 0, .9);
+    font-size: 9vw;
+}
+
+@media (min-width:700px) {
+    .framed-caption{
+    font-size: 4vw;
+}
+}
+
+
+
 .framed-swiper-container .swiper-wrapper {
     height: 30rem;
 } 
