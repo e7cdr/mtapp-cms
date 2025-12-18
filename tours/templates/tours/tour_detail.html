@@ -96,21 +96,16 @@
         </li>
 
         <li class="nav-item" role="presentation">
-         <a
-          class="nav-link"
-          id="itinerary-tab"
-          data-bs-toggle="tab"
-          href="#itinerary"
-          role="tab"
-          aria-selected="false"
-          tabindex="-1"
-          >Itinerary</a
-         >
+         <a class="nav-link" id="itinerary-tab" data-bs-toggle="tab" href="#itinerary" role="tab" aria-selected="false" tabindex="-1">
+            Itinerary</a>
+        </li>
+        <li class="nav-item" role="presentation">
+         <a class="nav-link" id="flight-tab" data-bs-toggle="tab" href="#flight" role="tab" aria-selected="false" tabindex="-1">
+            Estimated Flight Details</a>
         </li>
         <li class="nav-item" role="presentation">
          <a class="nav-link" id="notes-tab" data-bs-toggle="tab" href="#notes" role="tab" aria-selected="false" tabindex="-1"
-          >Additional Notes</a
-         >
+          >Additional Notes</a>
         </li>
         {% if not self.pricing_table == False %}
         <li class="nav-item" role="presentation">
@@ -213,6 +208,17 @@
       </div>
 
        <!-- Flight Details -->
+      {% if self.departure_cities and self.airline %}
+      
+    <div class="tab-pane fade hidden" id="flight" role="tabpanel" aria-labelledby="flight-tab">
+           <li>Departure: {{ self.departure_cities }}</li>
+           <li>Airline: {{ self.airline }}</li>
+           <li>Class: {{ self.flight_class }}</li>
+        </div>
+        {% else %}
+            <p>No flight information yet.</p>
+        {% endif %}
+
         {% if not self.pricing_table == False %}
         <!-- Pricing & Details -->
             <div class="tab-pane fade hidden" id="pricing" role="tabpanel" aria-labelledby="pricing-tab">

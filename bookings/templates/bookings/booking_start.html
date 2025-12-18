@@ -136,6 +136,13 @@
                             <!-- Column 1: Name, Email, Phone -->
                             <div class="col-md-4">
                                 <div class="form-group mb-3">
+                                    <label for="{{ form.number_of_adults.id_for_label }}" class="form-label">{% trans "Number of Adults" %}</label>
+                                    {{ form.number_of_adults|default:1 }}
+                                    {% if form.number_of_adults.errors %}
+                                        <div class="text-danger small">{{ form.number_of_adults.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="form-group mb-3">
                                     <label for="{{ form.customer_name.id_for_label }}" class="form-label">{% trans "Name" %}</label>
                                     {{ form.customer_name }}
                                     {% if form.customer_name.errors %}
@@ -161,13 +168,6 @@
                                     {{ form.nationality }}
                                     {% if form.nationality.errors %}
                                         <div class="text-danger small">{{ form.nationality.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                <div class="form-group mb-3">
-                                    <label for="{{ form.number_of_adults.id_for_label }}" class="form-label">{% trans "Number of Adults" %}</label>
-                                    {{ form.number_of_adults|default:1 }}
-                                    {% if form.number_of_adults.errors %}
-                                        <div class="text-danger small">{{ form.number_of_adults.errors }}</div>
                                     {% endif %}
                                 </div>
                             </div>
@@ -270,10 +270,35 @@
 {% endblock content %}
 {% block extra_js %}
 <script src="{% static 'js/booking_form.js' %}"></script>
-
 <script>
-// This runs AFTER booking_form.js → guarantees BOOKING_DATA exists
-const BOOKING_DATA = {{ booking_data_json|safe }};
-console.log('Booking data successfully loaded:', BOOKING_DATA);
+    document.addEventListener("DOMContentLoaded", function() {
+        const bookingData = {{ booking_data_json|safe }};
+
+        flatpickr("#id_travel_date", {  // or your input selector
+            dateFormat: "Y-m-d",
+            minDate: bookingData.tour_start_date || "today",
+            maxDate: bookingData.tour_end_date || null,
+            disableMobile: true,  // Crucial for custom disable on phones
+
+            disable: [
+                {% for date_str in tour.blackout_dates_list %}
+                    "{{ date_str }}",
+                {% empty %}
+                    // no blackout dates
+                {% endfor %}
+            ],
+            {% if tour.available_days %}
+            enable: [
+                function(date) {
+                    const allowedDays = [{% for day in tour.available_days %} {{ day }} {% if not forloop.last %}, {% endif %}{% endfor %}];
+                    return allowedDays.includes(date.getDay());
+                }
+            ],
+            {% else %}
+                //enable: []
+            {% endif %}
+
+        });
+    });
 </script>
 {% endblock extra_js %}

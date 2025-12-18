@@ -112,6 +112,7 @@ class BookingStartView(FormView):
             "tour_end_date": (self.tour.end_date.isoformat() if hasattr(self.tour, 'end_date') and self.tour.end_date else None),
             "fixed_date": self.tour.start_date.isoformat() if tour_type == 'day' else None,
             "blackout_dates": getattr(self.tour, 'blackout_dates_list', []),
+            "available_days": [int(d) for d in self.tour.available_days.split(',') if d]
         }, cls=DjangoJSONEncoder)
 
 

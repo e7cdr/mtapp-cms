@@ -8,6 +8,7 @@
 
 .tour-display {
     position: relative;
+    width: 85%;
 }
 
 .captcha {
@@ -55,10 +56,8 @@
     position: absolute;
     top: 0;
     left: 0;
-    /* margin-left: 37%; */
-    /* margin: 162px; */
     height: 100%;
-    width: auto;
+    width: 100%;
     max-width: 31rem;
     max-height: 20.6rem;
     text-align: center;
@@ -90,40 +89,69 @@ div.container h2 {
 
 }
 
-.card {
-    --bs-card-spacer-y: 1rem;
-    --bs-card-spacer-x: 1rem;
-    --bs-card-title-spacer-y: 0.5rem;
-    --bs-card-title-color: ;
-    --bs-card-subtitle-color: ;
-    --bs-card-border-width: var(--bs-border-width);
-    --bs-card-border-color: var(--bs-border-color-translucent);
-    --bs-card-border-radius: var(--bs-border-radius);
-    --bs-card-box-shadow: ;
-    --bs-card-inner-border-radius: calc(var(--bs-border-radius) - (var(--bs-border-width)));
-    --bs-card-cap-padding-y: 0.5rem;
-    --bs-card-cap-padding-x: 1rem;
-    --bs-card-cap-bg: rgba(var(--bs-body-color-rgb), 0.03);
-    --bs-card-cap-color: ;
-    --bs-card-height: ;
-    --bs-card-color: ;
-    --bs-card-bg: var(--bs-body-bg);
-    --bs-card-img-overlay-padding: 1rem;
-    --bs-card-group-margin: 0.75rem;
-    position: relative;
+.row {
+    grid-template-columns: 1fr 1fr;
+}
+
+
+  @media (max-width: 768px) {
+    .row {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .col-md-4 {
     display: flex;
     flex-direction: column;
-    min-width: 0;
-    height: var(--bs-card-height);
-    color: var(--bs-body-color);
-    word-wrap: break-word;
-    background-color: var(--bs-card-bg);
-    background-clip: border-box;
-    border: var(--bs-card-border-width) solid var(--bs-card-border-color);
-    border-radius: var(--bs-card-border-radius);
-    margin-bottom: 1.5rem;
-    box-shadow: 0 0 2px black;
-}
+    gap: 1rem;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .form-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    --gray-300: #d1d5db;
+    font-size: 1rem;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius);
+    background: white;
+    transition: var(--transition);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+  }
+
+  .form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+  }
+
+  .text-danger {
+    color: var(--danger);
+    font-size: 0.875rem;
+    margin-top: 0.35rem;
+  }
+
+  .d-none {
+    display: none !important;
+  }
+
 
 label {
     font-weight: 600;

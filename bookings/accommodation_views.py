@@ -78,16 +78,24 @@ def accommodation_price_preview(request, accommodation_id):
     check_out = request.GET.get('check_out')
     adults = int(request.GET.get('adults', 1))
     children = int(request.GET.get('children', 0))
+    child_ages_str = request.GET.get('child_ages', '[]')
 
     if not check_in or not check_out:
         return JsonResponse({'total': 0})
 
     from datetime import datetime
+    import json
+    try:
+        child_ages = json.loads(child_ages_str)
+    except json.JSONDecodeError:
+        child_ages = []
+    
     data = {
         'check_in': datetime.strptime(check_in, '%Y-%m-%d').date(),
         'check_out': datetime.strptime(check_out, '%Y-%m-%d').date(),
         'adults': adults,
         'children': children,
+        'child_ages': child_ages,
     }
 
     total = calculate_accommodation_price(accommodation, data)

@@ -412,7 +412,11 @@ class AbstractTourPage(SeoMixin, Page):
 
         # Get labels for selected values
         amenity_labels = [choice_dict.get(value, value) for value in selected_values]  # Fallback to value if no match
-
+        # Get available days
+        if self.available_days:
+            context['available_days'] = self.available_days
+        else:
+            context['available_days'] = []
         context['amenity_labels'] = amenity_labels  # Or ', '.join(amenity_labels) for a single string
         context['blackout_dates_list'] = self.blackout_dates_list  # For JS
         return context
@@ -1065,6 +1069,9 @@ class FullTourPage(AbstractTourPage):
         choices=[('economy', 'Economy'), ('premium', 'Premium Economy'), ('business', 'Business')],
         default='economy'
     )
+
+    template = "tours/tour_detail.html"
+
 
     content_panels = AbstractTourPage.content_panels + [
         MultiFieldPanel([

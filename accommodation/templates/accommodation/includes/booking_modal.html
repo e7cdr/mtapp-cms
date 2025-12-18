@@ -349,56 +349,89 @@
       if (e.key === 'Escape' && modal.classList.contains('active')) closeModal();
     });
 
-    childrenSelect?.addEventListener('change', () => {
-      const count = parseInt(childrenSelect.value) || 0;
-      childAgesContainer.innerHTML = '';
-      for (let i = 1; i <= count; i++) {
-        childAgesContainer.innerHTML += `
-          <div class="form-group">
-            <label>{% trans "Child" %} ${i} {% trans "Age" %}</label>
-            <select name="child_age_${i}" required class="w-full">
-              ${Array.from({length: 13}, (_, a) => `<option value="${a}">${a} {% trans "years" %}</option>`).join('')}
-            </select>
-          </div>
-        `;
-      }
-      updateChildAges();
-    });
+  childrenSelect?.addEventListener('change', () => {
+    const count = parseInt(childrenSelect.value) || 0;
+    childAgesContainer.innerHTML = '';
+    for (let i = 1; i <= count; i++) {
+      childAgesContainer.innerHTML += `
+        <div class="form-group">
+          <label>{% trans "Child" %} ${i} {% trans "Age" %}</label>
+          <select id="child_age_${i}" name="child_age_${i}" required class="w-full">
+            ${Array.from({length: 13}, (_, a) => 
+              `<option value="${a}" ${a === 7 ? 'selected' : ''}>${a} {% trans "years" %}</option>`
+            ).join('')}
+          </select>
+        </div>
+      `;
 
-    function updateChildAges() {
-      const ages = [];
-      for (let i = 1; i <= 10; i++) {
-        const el = document.getElementById(`child_age_${i}`);
-        if (el) ages.push(parseInt(el.value) || 0);
-      }
-      document.getElementById('child_ages').value = JSON.stringify(ages.filter(a => a > 0));
+      // ADD THIS LINE — UPDATE PRICE WHEN AGE CHANGES
+      document.getElementById(`child_age_${i}`).addEventListener('change', updatePrice);
     }
+    updateChildAges();
+    updatePrice(); // update immediately
+  });
 
-    async function updatePrice() {
-      const checkIn = checkInInput.value;
-      const checkOut = checkOutInput.value;
-      const adults = parseInt(adultsSelect.value) || 0;
-      const children = parseInt(childrenSelect.value) || 0;
-
-      if (!checkIn || !checkOut || adults === 0) {
-        totalPriceEl.textContent = '$0.00';
-        nightsInfoEl.textContent = '';
+  function updateChildAges() {
+    const count = parseInt(childrenSelect.value) || 0;
+    const ages = [];
+    for (let i = 1; i <= count; i++) {
+      const select = document.getElementById(`child_age_${i}`);
+      if (!select) {
+        console.error(`Missing child_age_${i}`);
         return;
       }
+      const age = parseInt(select.value);
+      if (isNaN(age)) {
+        console.error(`Invalid age for child ${i}`);
+        return;
+      }
+      ages.push(age);
+    }
+    document.getElementById('child_ages').value = JSON.stringify(ages);
+  }
+  
+  async function updatePrice() {
+    const checkIn = checkInInput.value;
+    const checkOut = checkOutInput.value;
+    const adults = parseInt(adultsSelect.value) || 0;
+    const children = parseInt(childrenSelect.value) || 0;
 
-      const nights = Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000);
-      if (nights <= 0) return;
+    if (!checkIn || !checkOut || adults === 0) {
+      totalPriceEl.textContent = '$0.00';
+      nightsInfoEl.textContent = '';
+      return;
+    }
 
-      try {
-        const res = await fetch(`/accommodations/${PAGE_ID}/price-preview/?check_in=${checkIn}&check_out=${checkOut}&adults=${adults}&children=${children}`);
-        const data = await res.json();
-        totalPriceEl.textContent = `$${data.total.toFixed(2)}`;
-        nightsInfoEl.textContent = `${nights} night${nights > 1 ? 's' : ''}`;
-      } catch (e) {
-        totalPriceEl.textContent = '—';
-        nightsInfoEl.textContent = '';
+    const nights = Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000);
+    if (nights <= 0) return;
+
+    // Collect current ages — same logic as submit
+    const ages = [];
+    for (let i = 1; i <= children; i++) {
+      const select = document.getElementById(`child_age_${i}`);
+      if (select) {
+        ages.push(parseInt(select.value) || 0);
       }
     }
+
+    try {
+      const params = new URLSearchParams({
+        check_in: checkIn,
+        check_out: checkOut,
+        adults: adults,
+        children: children,
+        child_ages: JSON.stringify(ages)
+      });
+
+      const res = await fetch(`/accommodations/${PAGE_ID}/price-preview/?${params}`);
+      const data = await res.json();
+      totalPriceEl.textContent = `$${data.total.toFixed(2)}`;
+      nightsInfoEl.textContent = `${nights} night${nights > 1 ? 's' : ''}`;
+    } catch (e) {
+      totalPriceEl.textContent = '—';
+      nightsInfoEl.textContent = '';
+    }
+  }
 
     [checkInInput, checkOutInput, adultsSelect, childrenSelect].forEach(el => {
       el?.addEventListener('change', updatePrice);
@@ -406,6 +439,7 @@
 
     form?.addEventListener('submit', async e => {
       e.preventDefault();
+      updateChildAges();  // ← Collect ages right before submit
       const submitBtn = document.getElementById('submitBookingBtn');
       const text = submitBtn.querySelector('.text');
       const loading = submitBtn.querySelector('.loading');

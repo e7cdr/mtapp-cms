@@ -164,8 +164,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (pricingContainer) {
                     pricingContainer.innerHTML = html;
                     setTimeout(() => {
-                        initializeFilters();
-                        rebindRadioSelection();
                     }, 50);
                 }
             })
