@@ -6,13 +6,7 @@
 <section class="flex-section">
 {% if self.background_image %}
  <div class="content-flex-1" style="background: linear-gradient( var({{ self.background_color }}));">
-   {% image self.background_image fill-1920x1080 format-webp webpquality-80 as img %}
-   <img id="flex2-coverimg" 
-   loading="lazy"
-   height=""
-   width=""
-   src="{{ img.url }}" 
-   alt="Textblock background image" />
+   {% image self.background_image fill-1920x1080 format-webp webpquality-80 id="flex2-coverimg" alt="Textblock background image" loading="lazy" %}
   <div class="item">
    <h2>{{ self.band_title }}</h2>
   </div>
@@ -26,19 +20,6 @@
   </div>
   <div class="item">{{ self.textbox_1|richtext }}</div>
   <div class="item">{{ self.textbox_2|richtext }}</div>
-  {% if self.social_media_icon %}
-    {% if social_links %}
-    <div class="social-media-wrap">
-        {% for link in social_links %}
-        <button type="button">
-            <a href="{{ link.url }}" class="{{ link.icon }}" 
-               {% if link.color %}style="color: {{ link.color }}"{% endif %}>
-                <!-- Optional: Add aria-label for accessibility, e.g., aria-label="{{ link.field|title }} link" -->
-            </a>
-        </button>
-        {% endfor %}
-    </div>
-    {% endif %}
   {% endif %}
  </div>
  {% endif %}
@@ -56,7 +37,7 @@
         tl.to('.flex-section', {
             scale: 0.99,
             boxShadow: '0 0 1rem black',
-            duration: 2,
+            duration: ,
             repeat: -1,
             yoyo: true,
             ease: "power1.inOut",
@@ -68,14 +49,14 @@
                     tl.from(self.words, {
                         autoAlpha: 0,
                         scale: 0,
-                        x: "random(-220, 300)",
-                        y: "random(-120, 100)",
+                        x: "random(-22, 30)",
+                        y: "random(-120, 10)",
                         stagger: {
                             grid: 'auto',
                             from: 'center',
-                            each: 0.15,
+                            each: 0.1,
                         },
-                        duration: 0.4,
+                        duration: 0.2,
                         ease: "power1.inOut",
                         onComplete: () => self.revert()
                     },);

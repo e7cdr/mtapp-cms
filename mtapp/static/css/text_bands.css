@@ -1,4 +1,3 @@
-/*  */
 @import url('footer.css');
 
 section {
@@ -47,10 +46,6 @@ section {
     object-fit: cover;
 }
 
-
-.content-flex-1, .content-flexbox {
-    margin-top: 3rem;
-}
 .content-flex-1::before {
     content: '';
     position: absolute;
@@ -58,10 +53,10 @@ section {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.7)); /* Base darkening overlay */
-    z-index: 1; /* Above image (z=0), below content (z=2) */
-    pointer-events: none; /* Allows hover/clicks to pass through */
-    transition: background ease 0.8s; /* Smoothens the lightening */
+    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.8)); /* Base darkening overlay */
+    z-index: 1; 
+    pointer-events: none; 
+    transition: background ease 0.8s;
 }
 
 .item {

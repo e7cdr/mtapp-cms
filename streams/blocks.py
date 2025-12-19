@@ -162,52 +162,15 @@ class HomeCardsBlock(Cards_Block):
 class TextBand_Block(blocks.StructBlock):
     '''Three bands with text. #1 and #3 with background color. #2 with cover image'''
     band_title = blocks.CharBlock(required=False, max_length=36)
-    textbox_1 = blocks.RichTextBlock(required=True)
-    textbox_2 = blocks.RichTextBlock(required=True)
+    textbox_1 = blocks.RichTextBlock(required=True, features="minimal")
+    textbox_2 = blocks.RichTextBlock(required=True, features="minimal")
     background_image = ImageChooserBlock(required=False)
     background_color = blocks.ChoiceBlock(choices=colors, default='--yellow-dark-100')
-    social_media_icon = blocks.BooleanBlock(required=False, default=False, help_text="If checked, all social links configured in admin/settings will render.")
 
     class Meta:  # noqa
         template = "streams/text_bands.html"
         icon = "doc-full"
         label = "Text Band"
-
-    def get_context(self, value, parent_context=None):
-            context = super().get_context(value, parent_context=parent_context)
-
-            # Safe site fetch: Use get_current_site() to avoid request.site error
-            request = parent_context.get('request') if parent_context else None
-            if request:
-                try:
-                    site = get_current_site(request)
-                    footer_links = FooterLinks.for_site(site).first()
-                except Exception:  # Fallback if sites not configured
-                    footer_links = FooterLinks.objects.first()
-            else:
-                footer_links = FooterLinks.objects.first()  # Global fallback for non-request contexts
-
-            # Define platforms with their metadata
-            platforms = [
-                {'field': 'facebook', 'icon': 'fab fa-facebook-square', 'color': None},
-                {'field': 'instagram', 'icon': 'fab fa-instagram', 'color': None},
-                {'field': 'tik_tok', 'icon': 'fab fa-tiktok', 'color': None},
-                {'field': 'youtube', 'icon': 'fab fa-youtube', 'color': 'red'},
-                {'field': 'whatsapp', 'icon': 'fab fa-whatsapp', 'color': 'green'},
-                {'field': 'x_tw', 'icon': 'fab fa-x-twitter', 'color': 'black'},
-            ]
-
-            # Build filtered list: Only include if URL is set
-            social_links = []
-            for platform in platforms:
-                url = getattr(footer_links, platform['field'], None)
-                if url:
-                    platform_copy = platform.copy()
-                    platform_copy['url'] = url
-                    social_links.append(platform_copy)
-
-            context['social_links'] = social_links
-            return context
 
 class Itinerary_Block(blocks.StructBlock):
 

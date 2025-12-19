@@ -26,7 +26,7 @@
                         {% else %}
                             {% comment %} <img src="{% static 'images/default-avatar.jpg' %}" height="25" width="25" alt="" class="author-pic"> {% endcomment %}
                         {% endif %}
-                        <p class="author-name">{{ post.owner.get_full_name|default:"Milano Travel " }}</p>
+                        <p class="author-name">{{ post.owner.get_full_name|default:"Milano Travel" }}</p>
                     </div>
                     <p class="post-title">{{ post.title }}</p>
                 </div>
