@@ -47,23 +47,19 @@ def add_page_param(request_get, page):
 
 
 @register.filter
-def get_choice_label(value):
-    # Find the label for the given choice value
-    for choice_value, choice_label in GLOBAL_ICON_CHOICES:
-        if choice_value == value:
-            return choice_label
-    return value  # Fallback to the value if no label is found
-
-# @register.filter
-# def get_choice_label(value, choices):
-#     """
-#     Returns the label for a choice value from a CHOICES list/tuple.
-#     e.g., 'fa-laptop' -> 'Business Center'
-#     """
-#     if not value or not choices:
-#         return value or 'Unknown'
-#     choice_dict = dict(choices)  # {'fa-laptop': 'Business Center', ...}
-#     return choice_dict.get(value, value)  # Fallback to value
+def get_choice_label(value, choices=None):
+    """
+    Returns the human-readable label for a choice value.
+    Usage:
+        {{ value|get_choice_label }}                → returns value itself
+        {{ value|get_choice_label:MY_CHOICES }}     → returns label if found
+    """
+    if not value:
+        return 'Unknown'
+    if choices is None:
+        return value  # or '' if you prefer empty string
+    # Convert choices tuple/list to dict for fast lookup
+    return dict(choices).get(value, value)
 
 @register.simple_tag(takes_context=True)
 def booking_url(context, tour_page):

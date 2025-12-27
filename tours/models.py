@@ -418,6 +418,7 @@ class AbstractTourPage(SeoMixin, Page):
         else:
             context['available_days'] = []
         context['amenity_labels'] = amenity_labels  # Or ', '.join(amenity_labels) for a single string
+        context['GLOBAL_ICON_CHOICES'] = GLOBAL_ICON_CHOICES
         context['blackout_dates_list'] = self.blackout_dates_list  # For JS
         return context
 

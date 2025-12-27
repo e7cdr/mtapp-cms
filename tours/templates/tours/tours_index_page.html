@@ -131,25 +131,27 @@
             <a href="{{ tour.url }}">{{ tour.name }}</a>
         </div>
         {% endif %}
-        <p class="am">Amenities: <b><span class="am-count"></span></b></p>  <!-- Generic class; use data-id in JS -->        <div class="card-amenities grid-7-c">
-            {% if tour.amenity %}
-                {% for block in tour.amenity %}
-                    {% if block.block_type == 'include' %}
-                        {% comment %} {% for choice in block.value %}
-                            {% if choice %}
-                                <i class="card-icon {{ choice }}" title="{{ choice|get_choice_label:block.field.choices }}"></i>
-                            {% endif %}
-                        {% empty %} {% endcomment %}
-                            <i class="card-icon fa-question" title="No amenities specified"></i>
-                        {% endfor %}
-                    {% endif %}
-                {% empty %}
+        <p class="am">Amenities: <b><span class="am-count"></span></b></p>  <!-- Generic class; use data-id in JS -->        
+            <div class="card-amenities grid-7-c">
+                {% if tour.amenity %}
+                    {% for block in tour.amenity %}
+                        {% if block.block_type == 'include' %}
+                            {% for choice in block.value %}
+                                {% if choice %}
+                                    <i class="card-icon {{ choice }}"
+                                    title="{{ choice|get_choice_label:block.block.child_block.choices }}"></i>
+                                {% endif %}
+                            {% empty %}
+                                <i class="card-icon fa-question" title="No amenities specified"></i>
+                            {% endfor %}
+                        {% endif %}
+                    {% empty %}
+                        <i class="card-icon fa-question" title="No amenities specified"></i>
+                    {% endfor %}
+                {% else %}
                     <i class="card-icon fa-question" title="No amenities specified"></i>
-                {% endfor %}
-            {% else %}
-                <i class="card-icon fa-question" title="No amenities specified"></i>
-            {% endif %}
-        </div>
+                {% endif %}
+            </div>
             <div class="flex-box">
             {% comment %} <div class="card-price cell-5">${{tour.price_dbl}}</div> {% endcomment %}
             <div class="card-price">Ask for Price</div>
