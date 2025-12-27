@@ -12,7 +12,7 @@ from streams import blocks
 class HomePage(WagtailCacheMixin, SeoMixin, Page):
     """Home page model."""
     templates = "home/home_page.html"
-    max_count = 1
+        
 
     banner_title = models.CharField(max_length=100, blank=False, null=True)
     banner_subtitle = RichTextField(features=["bold", "italic"], blank=True, null=True)

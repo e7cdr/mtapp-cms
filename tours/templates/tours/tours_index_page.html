@@ -137,7 +137,7 @@
                     {% if block.block_type == 'include' %}
                         {% for choice in block.value %}
                             {% if choice %}
-                                <i class="card-icon {{ choice }}" title="{{ choice|get_choice_label:GLOBAL_ICON_CHOICES }}"></i>
+                                <i class="card-icon {{ choice }}" title="{{ choice|get_choice_label:block.field.choices }}"></i>
                             {% endif %}
                         {% empty %}
                             <i class="card-icon fa-question" title="No amenities specified"></i>
