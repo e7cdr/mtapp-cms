@@ -54,16 +54,16 @@ def get_choice_label(value):
             return choice_label
     return value  # Fallback to the value if no label is found
 
-@register.filter
-def get_choice_label(value, choices):
-    """
-    Returns the label for a choice value from a CHOICES list/tuple.
-    e.g., 'fa-laptop' -> 'Business Center'
-    """
-    if not value or not choices:
-        return value or 'Unknown'
-    choice_dict = dict(choices)  # {'fa-laptop': 'Business Center', ...}
-    return choice_dict.get(value, value)  # Fallback to value
+# @register.filter
+# def get_choice_label(value, choices):
+#     """
+#     Returns the label for a choice value from a CHOICES list/tuple.
+#     e.g., 'fa-laptop' -> 'Business Center'
+#     """
+#     if not value or not choices:
+#         return value or 'Unknown'
+#     choice_dict = dict(choices)  # {'fa-laptop': 'Business Center', ...}
+#     return choice_dict.get(value, value)  # Fallback to value
 
 @register.simple_tag(takes_context=True)
 def booking_url(context, tour_page):
