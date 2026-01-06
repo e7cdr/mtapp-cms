@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% load static custom_filters %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/login.css' %}"/>
+{% endblock extra_css %}
+
+{% block content %}
+    <div class="login-container">
+        <div class="card">
+            <div class="row g-0">
+                <div class="col-lg-6 form-details d-none d-lg-block">
+                    <h2>Create Account</h2>
+                    <p>To become a part of our community, please sign up using your personal information.</p>
+                </div>
+                <div class="col-lg-6">
+                    <div class="form-content">
+                        <h2>SIGNUP</h2>
+                        <form method="post" action="{% url 'account_signup' %}">
+                            {% csrf_token %}
+                            {{ form.non_field_errors }}
+                            {% for field in form %}
+                                {% if field.name not in 'password1 password2' %}
+                                    <div class="mb-3">
+                                        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                                        {{ field|add_class:"form-control" }}
+                                        {{ field.errors }}
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                            <div class="mb-3">
+                                <label for="{{ form.password1.id_for_label }}" class="form-label">Password</label>
+                                {{ form.password1|add_class:"form-control" }}
+                                {{ form.password1.errors }}
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{ form.password2.id_for_label }}" class="form-label">Password confirmation</label>
+                                {{ form.password2|add_class:"form-control" }}
+                                {{ form.password2.errors }}
+                            </div>
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="policy" name="policy" required>
+                                <label class="form-check-label" for="policy">
+                                    I agree to the <a href="#">Terms & Conditions</a>
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Sign Up</button>
+                        </form>
+                        <div class="bottom-link mt-4">
+                            Already have an account? <a href="{% url 'account_login' %}">Login</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock content %}

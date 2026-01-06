@@ -4,6 +4,11 @@
   .fade-image, .fade-swiper-section .swiper {
     height: {{ self.height }}rem !important;
 }
+
+  .video-stream {
+    width: 100% !important;
+    left: 0px !important;
+  }
 </style>
 {% endblock extra_css %}
 {% block content %}
@@ -44,17 +49,6 @@
             {% empty %}
             <p>No images or videos found. Please go to the admin panel to add them.</p>
             {% endfor %}
-        {% comment %} {% for item in value.images %}
-        <div class="swiper-slide">
-            {% image item.image fill-1920x1080 format-webp webpquality-60 fetchpriority="high" loading="lazy" alt="{{ item.caption }}" class="fade-image" %}
-            {% if item.link %}
-            <a href="{{ item.link.url }}"></a>
-            {% endif %}
-            {% if item.caption %}
-            <p class="caption">{{ item.caption }}</p>
-            {% endif %}
-        </div>
-        {% endfor %} {% endcomment %}
     </div>
 <div class="swiper-pagination"></div>
 </div>

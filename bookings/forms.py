@@ -165,8 +165,8 @@ class ProposalForm(forms.ModelForm):  # Changed to ModelForm
                     tour = model.objects.get(pk=tour_id)
                     content_type = ContentType.objects.get_for_model(model)
                     if tour_type == 'day':
-                        if travel_date != tour.date:
-                            self.add_error('travel_date', _("Travel date must be %s for this Day Tour.") % tour.date)
+                        if travel_date != tour.start_date:
+                            self.add_error('travel_date', _("Travel date must be %s for this Day Tour.") % tour.start_date)
                     else:
                         if not (tour.start_date <= travel_date <= tour.end_date):
                             self.add_error('travel_date', _("Travel date must be between %s and %s.") % (tour.start_date, tour.end_date))

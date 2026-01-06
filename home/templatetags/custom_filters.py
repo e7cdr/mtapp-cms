@@ -3,6 +3,7 @@ import datetime
 from django import template
 from wagtail.models import Page
 from django.utils.html import escape
+from django.utils.safestring import mark_safe
 from django.utils.formats import number_format
 from django.utils.translation import get_language
 
@@ -92,14 +93,7 @@ def parse_date(value):
         return datetime(value.replace('Z', '+00:00')).date()
     except (ValueError, TypeError):
         return None
-    
-# @register.filter
-# def split(value, delimiter):
-#     try:
-#         return value.split(delimiter)
-#     except (AttributeError, TypeError):
-#         return [value] if value else []
-    
+        
 @register.filter
 def split(value, delimiter):
     return value.split(delimiter)
@@ -120,7 +114,6 @@ def range_filter(value, start=None):
 def range(value):
     return range(value)
 
-
 @register.simple_tag
 def locale_slugurl(slug):
     """Get URL by slug in current locale."""
@@ -132,3 +125,23 @@ def locale_slugurl(slug):
         return '#'  # Fallback if not found
     except:
         return '#'
+    
+@register.filter(name='add_class')
+def add_class(field, css_class):
+    if not field:
+        return ''
+    return mark_safe(field.as_widget(attrs={'class': css_class}))
+
+@register.filter
+def add_attr(field, attr_spec):
+    if not field:
+        return field
+    attrs = {}
+    for part in attr_spec.split():
+        if ':' in part:
+            key, value = part.split(':', 1)
+            attrs[key] = value
+        else:
+            current = attrs.get('class', field.field.widget.attrs.get('class', ''))
+            attrs['class'] = f"{current} {part}".strip() if current else part
+    return field.as_widget(attrs=attrs)

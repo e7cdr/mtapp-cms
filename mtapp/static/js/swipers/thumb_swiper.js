@@ -39,14 +39,30 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const players = {};
 
-    function loadAndPlayYouTubeVideo(container) {
+    let youtubeAPIReady = false;
+    let pendingPlayers = [];
+
+    // Global callback required by YouTube API
+    window.onYouTubeIframeAPIReady = function () {
+        youtubeAPIReady = true;
+
+        // Process any players that were requested before API was ready
+        pendingPlayers.forEach(({ container, index }) => {
+            players[index] = createYouTubePlayer(container, index);
+        });
+        pendingPlayers = [];
+    };
+
+    function createYouTubePlayer(container, index) {
         const videoId = container.dataset.videoId;
+
         const player = new YT.Player(container, {
             width: '100%',
             height: '100%',
             videoId: videoId,
             playerVars: {
                 autoplay: 1,
+                mute: 1,                  // Explicitly mute for reliable autoplay
                 rel: 0,
                 modestbranding: 1,
                 playsinline: 1,
@@ -57,13 +73,24 @@ document.addEventListener('DOMContentLoaded', function () {
             events: {
                 onReady: (e) => {
                     const iframe = e.target.getIframe();
-                    iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; passive-touch');
+                    iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
                     iframe.setAttribute('loading', 'lazy');
+                    e.target.mute();       // Ensure muted
                     e.target.playVideo();
                 }
             }
         });
+
         return player;
+    }
+
+    function loadAndPlayYouTubeVideo(container, slideIndex) {
+        if (youtubeAPIReady) {
+            players[slideIndex] = createYouTubePlayer(container, slideIndex);
+        } else {
+            // Queue until API is ready
+            pendingPlayers.push({ container, index: slideIndex });
+        }
     }
 
     // Main magic — runs every time the main slide changes
@@ -82,13 +109,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const activeSlide = this.slides[this.activeIndex];
         const youtubeContainer = activeSlide.querySelector('.youtube-lazy');
 
-        if (youtubeContainer) {
-            // It's a YouTube slide
-            if (!players[activeIndex]) {
-                players[activeIndex] = loadAndPlayYouTubeVideo(youtubeContainer);
-            } else {
-                players[activeIndex].playVideo();
-            }
+            if (youtubeContainer) {
+                if (!players[activeIndex]) {
+                    loadAndPlayYouTubeVideo(youtubeContainer, activeIndex);  // Pass index
+                } else {
+                    players[activeIndex].playVideo();
+                }
 
             // Auto-advance when video ends
             const player = players[activeIndex];

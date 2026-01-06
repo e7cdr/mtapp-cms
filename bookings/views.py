@@ -379,7 +379,14 @@ class ProposalSuccessView(TemplateView):
 def render_confirmation(request, tour_type: str, tour_id: int):
     context = {
         'tour_id': tour_id,
-        'submit_url': reverse('bookings:submit_proposal', args=[tour_id]),  # Pre-compute here
+        'tour_type': tour_type,
+        'submit_proposal': reverse(
+            'bookings:submit_proposal',
+            kwargs={
+                'tour_type': tour_type,
+                'tour_id': tour_id,
+            }
+        ),  # Pre-compute here
     }
     session_data = request.session.get('proposal_data')
     print(f"DEBUG: session_data exists? {bool(session_data)}")  # Keep for now

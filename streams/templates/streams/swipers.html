@@ -1,39 +1,39 @@
 {% load static wagtailimages_tags custom_filters wagtailcore_tags %}
 {% block extra_css %}
 <style>
-.youtube-lazy {
-    background: #000 url('https://img.youtube.com/vi/{{ item.yt_vid }}/maxresdefault.jpg') center center no-repeat;
-    background-size: cover;
-    cursor: pointer;
-}
-.play-button {
-    position: absolute;
-    top: 50%; left: 50%;
-    width: 68px; height: 48px;
-    margin-left: -34px; margin-top: -24px;
-    background: rgba(0,0,0,0.7) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="68" height="48" viewBox="0 0 68 48"><path d="M66.52 7.74c-.78-2.93-3.09-5.24-6.02-6.02C55.79 0 34 0 34 0S12.21 0 7.49 1.72c-2.93.78-5.24 3.09-6.02 6.02C0 12.21 0 24 0 24s0 11.79 1.72 17.49c.78 2.93 3.09 5.24 6.02 6.02C12.21 48 34 48 34 48s21.79 0 26.51-1.72c2.93-.78 5.24-3.09 6.02-6.02C68 34.79 68 24 68 24s0-11.79-1.48-17.26z" fill="%23f00"/><path d="M45 24l-18-12v24z" fill="%23fff"/></svg>') center center no-repeat;
-    background-size: 100%;
-    border-radius: 50%;
-    pointer-events: none;
-}
+    .youtube-lazy {
+        background: #000 url('https://img.youtube.com/vi/{{ item.yt_vid }}/maxresdefault.jpg') center center no-repeat;
+        background-size: cover;
+        cursor: pointer;
+    }
+    .play-button {
+        position: absolute;
+        top: 50%; left: 50%;
+        width: 68px; height: 48px;
+        margin-left: -34px; margin-top: -24px;
+        background: rgba(0,0,0,0.7) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="68" height="48" viewBox="0 0 68 48"><path d="M66.52 7.74c-.78-2.93-3.09-5.24-6.02-6.02C55.79 0 34 0 34 0S12.21 0 7.49 1.72c-2.93.78-5.24 3.09-6.02 6.02C0 12.21 0 24 0 24s0 11.79 1.72 17.49c.78 2.93 3.09 5.24 6.02 6.02C12.21 48 34 48 34 48s21.79 0 26.51-1.72c2.93-.78 5.24-3.09 6.02-6.02C68 34.79 68 24 68 24s0-11.79-1.48-17.26z" fill="%23f00"/><path d="M45 24l-18-12v24z" fill="%23fff"/></svg>') center center no-repeat;
+        background-size: 100%;
+        border-radius: 50%;
+        pointer-events: none;
+    }
 
-.youtube-thumb {
-    cursor: pointer;
-}
-.thumb-play-icon {
-    position: absolute;
-    top: 50%; left: 50%;
-    width: 68px; height: 48px;
-    margin-left: -34px; margin-top: -24px;
-    background: rgba(0,0,0,0.7) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 68 48"><path d="M66.52 7.74c-.78-2.93-3.09-5.24-6.02-6.02C55.79 0 34 0 34 0S12.21 0 7.49 1.72c-2.93.78-5.24 3.09-6.02 6.02C0 12.21 0 24 0 24s0 11.79 1.72 17.49c.78 2.93 3.09 5.24 6.02 6.02C12.21 48 34 48 34 48s21.79 0 26.51-1.72c2.93-.78 5.24-3.09 6.02-6.02C68 34.79 68 24 68 24s0-11.79-1.48-17.26z" fill="%23f00"/><path d="M45 24l-18-12v24z" fill="%23fff"/></svg>') center center no-repeat;
-    background-size: 100%;
-    border-radius: 50%;
-    pointer-events: none;
-    transition: transform 0.2s;
-}
-.youtube-thumb:hover .thumb-play-icon {
-    transform: scale(1.1);
-}
+    .youtube-thumb {
+        cursor: pointer;
+    }
+    .thumb-play-icon {
+        position: absolute;
+        top: 50%; left: 50%;
+        width: 68px; height: 48px;
+        margin-left: -34px; margin-top: -24px;
+        background: rgba(0,0,0,0.7) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 68 48"><path d="M66.52 7.74c-.78-2.93-3.09-5.24-6.02-6.02C55.79 0 34 0 34 0S12.21 0 7.49 1.72c-2.93.78-5.24 3.09-6.02 6.02C0 12.21 0 24 0 24s0 11.79 1.72 17.49c.78 2.93 3.09 5.24 6.02 6.02C12.21 48 34 48 34 48s21.79 0 26.51-1.72c2.93-.78 5.24-3.09 6.02-6.02C68 34.79 68 24 68 24s0-11.79-1.48-17.26z" fill="%23f00"/><path d="M45 24l-18-12v24z" fill="%23fff"/></svg>') center center no-repeat;
+        background-size: 100%;
+        border-radius: 50%;
+        pointer-events: none;
+        transition: transform 0.2s;
+    }
+    .youtube-thumb:hover .thumb-play-icon {
+        transform: scale(1.1);
+    }
 </style>
 {% endblock extra_css %}
 

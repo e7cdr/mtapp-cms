@@ -27,7 +27,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 playsinline: 1,
                 fs: 1,
                 enablejsapi: 1,
-                origin: window.location.origin
             },
             events: {
                 onReady: (e) => {

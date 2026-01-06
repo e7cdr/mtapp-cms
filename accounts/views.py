@@ -1,3 +1,13 @@
+from django.http import JsonResponse
+
+from django.db import connection
+from django.views.decorators.http import require_http_methods
+from django.db.utils import OperationalError
+from django.shortcuts import render
+from django.utils import timezone
+from django.core.cache import cache
+from datetime import timedelta
+from django_ratelimit.core import _split_rate, _make_cache_key  # Import internals for key building (safe)
 from django.db.models import Sum
 from bookings.models import Booking
 from accounts.forms import CustomSignupForm
@@ -5,6 +15,7 @@ from allauth.account.views import SignupView
 from django.views.generic import TemplateView
 from revenue_management.models import Commission
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.admin.views.decorators import staff_member_required
 
 class CustomSignupView(SignupView):
     template_name = 'accounts/signup.html'  # We'll create this
@@ -39,11 +50,6 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
         return context
 
-from django.shortcuts import render
-from django.utils import timezone
-from django.core.cache import cache
-from datetime import timedelta
-from django_ratelimit.core import _split_rate, _make_cache_key  # Import internals for key building (safe)
 
 def ratelimit_exceeded(request, exception):
     # Reconstruct the cache key (mimics django-ratelimit's _make_cache_key)
@@ -76,12 +82,6 @@ def ratelimit_exceeded(request, exception):
     return render(request, 'ratelimit_blocked.html', context, status=429)
 
 
-from django.contrib.admin.views.decorators import staff_member_required
-from django.http import JsonResponse
-
-from django.db import connection
-from django.views.decorators.http import require_http_methods
-from django.db.utils import OperationalError
 
 @staff_member_required
 @require_http_methods(["GET"])
