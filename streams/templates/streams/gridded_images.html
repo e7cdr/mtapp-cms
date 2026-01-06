@@ -9,7 +9,7 @@
         <div class="grid-wrapper">
             {% for item in self.images %}
             <div class="image-container">
-                <a href="{% if item.link %}{{ item.link }}{% else %}{% url 'wagtail_serve' '' %}{% endif %}">
+                <a href="{% if item.link.url %}{{ item.link.url }}{% else %}{% url 'wagtail_serve' '' %}{% endif %}">
                     <h1 class="image-caption">
                         {{ item.caption }}
                     </h1>
