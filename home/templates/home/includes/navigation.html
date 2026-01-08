@@ -61,6 +61,14 @@
           </li>
         {% endwith %}
       {% endfor %}
+      <li class="auth_option">
+        {% if request.user.is_authenticated %}
+        <a href="{% url "account_logout" %}">Logout</a>
+        {% else %}
+        <a href="{% url "login" %}">Login</a>
+        {% endif %}
+      </li>
+
     </ul>
   </nav>
 </header>

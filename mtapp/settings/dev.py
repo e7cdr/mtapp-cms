@@ -35,8 +35,6 @@ if DEBUG:
     # Disable Wagtail page cache
     WAGTAIL_CACHE = False
     
-
-    
     # Whitenoise — no cache
     WHITENOISE_AUTOREFRESH = True
     WHITENOISE_MAX_AGE = 0

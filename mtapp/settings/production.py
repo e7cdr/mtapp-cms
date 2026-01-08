@@ -2,7 +2,7 @@ from .base import *
 from decouple import config
 
 
-DEBUG = True
+DEBUG = False
 ALLOWED_HOSTS = [
     'milanotravel.com.ec',
     'www.milanotravel.com.ec',
@@ -27,6 +27,7 @@ DATABASES = {
 }
 SITE_URL = 'www.milanotravel.com.ec'
 
+# EMAIL Backend
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = config('EMAIL_HOST', default='mail.milanotravel.com.ec')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)

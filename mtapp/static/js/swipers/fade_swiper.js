@@ -37,10 +37,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     e.target.playVideo();
 
                     // Unmute immediately if user already interacted
-                    if (userHasInteracted) {
-                        e.target.unMute();
-                        e.target.setVolume(10); // Adjust volume as needed (0-10)
-                    }
+                    // if (userHasInteracted) {
+                    //     e.target.unMute();
+                    //     e.target.setVolume(10); // Adjust volume as needed (0-10)
+                    // }
                 },
                 onStateChange: (e) => {
                     // Unmute on any state change if user has now interacted

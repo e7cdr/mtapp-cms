@@ -160,6 +160,19 @@
     top: calc(100% - 0.5rem);
 }
 
+
+.auth_option > a {
+    color: rgb(0, 170, 255) !important;
+    padding: 3px !important;
+    text-shadow: 0 0 3px rgba(255, 255, 255, 0.5);
+
+}
+
+.auth_option > a:hover {
+    color: #ffd500 !important;
+}
+
+
 /* ========================================================= */
 /*          PREVENT DROPDOWN FROM GOING OFF-SCREEN           */
 /* ========================================================= */

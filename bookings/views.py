@@ -206,11 +206,6 @@ class BookingStartView(FormView):
             # return self.form_invalid(form)
 
 def submit_proposal(request, tour_type: str, tour_id: int):
-    # print(f"\n=== submit_proposal called at {timezone.now()} ===")
-    # print("Method:", request.method)
-    # print("Is AJAX:", request.headers.get('X-Requested-With') == 'XMLHttpRequest')
-    # print("CSRF cookie:", request.COOKIES.get('csrftoken'))
-    # print("CSRF header:", request.headers.get('X-CSRFToken'))
     if request.method != 'POST':
         return JsonResponse({'error': 'Invalid method'}, status=405)
 
@@ -260,7 +255,6 @@ def submit_proposal(request, tour_type: str, tour_id: int):
 
     # Existing line (unchanged)
     is_company_tour = getattr(tour, 'is_company_tour', False)
-    logger.info(f"Proposal for tour {tour_id}: is_company_tour={is_company_tour}")
 
     # Create proposal first, always
     proposal = Proposal.objects.create(
@@ -420,7 +414,7 @@ def render_confirmation(request, tour_type: str, tour_id: int):
             # Safe access to avoid KeyError
             context.update({
                 'tour': tour,
-                'tour_type': session_data.get('tour_type', 'land', 'full', 'day'),
+                'tour_type': session_data.get('tour_type', 'land'),
                 'form_data': session_data,
                 'booking_data': {'tourName': tour.name},
                 'selected_room_config': session_data.get('selected_room_config', {}),

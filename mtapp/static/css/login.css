@@ -1,7 +1,7 @@
 body, html {
     height: 100%;
     margin: 0;
-    background: linear-gradient(135deg, #ead266 0%, #a2864b 100%);
+    background: linear-gradient(135deg, #000000 0%, #545454 100%);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 .login-container {

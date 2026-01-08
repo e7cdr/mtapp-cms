@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 
-{% load static custom_filters %}
-
+{% load static custom_filters i18n allauth account socialaccount %}
+{% block head_title %}
+    {% trans "Login" %}
+{% endblock head_title %}
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'css/login.css' %}"/>
 {% endblock extra_css %}
@@ -38,6 +40,7 @@
                             <!-- Link to real signup page -->
                             <a href="{% url 'account_signup' %}">Signup</a>
                         </div>
+                        <a href="{% provider_login_url "twitter" process="connect" %}">Connect a Twitter account</a>
                     </div>
                 </div>
             </div>

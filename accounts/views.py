@@ -125,7 +125,6 @@ def inspect_ratelimit(request):
 
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
-from captcha.helpers import captcha_image_url
 from captcha.models import CaptchaStore
 
 @csrf_exempt

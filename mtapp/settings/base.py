@@ -63,8 +63,8 @@ INSTALLED_APPS = [
     'axes',  # For login attempt locking
     'allauth',
     'allauth.account',
-    'allauth.socialaccount',  # Optional: for social logins later
-    'django_ratelimit',  # For form throttling
+    'allauth.socialaccount',
+    'django_ratelimit',
     "accounts",
     "home",
     "blog",
@@ -138,11 +138,18 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # Allauth settings
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
-ACCOUNT_EMAIL_VERIFICATION = 'mandatory'  # Users verify email before login
-ACCOUNT_LOGIN_METHODS = {'email'}  # Login with email
+
+ACCOUNT_LOGIN_METHODS = {'username'}
+LOGIN_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL= '/profile/dashboard/'
+ACCOUNT_LOGIN_ON_EMAIL_VERIFICATION = False
+ACCOUNT_LOGOUT_REDIRECT= '/'
+ACCOUNT_USERNAME_MIN_LENGTH = 3
+ACCOUNT_EMAIL_VERIFICATION = 'optional'  # Users verify email before login
 SITE_ID = 1  # Required for allauth
 SITE_NAME = "Milano Travel"
+ACCOUNT_LOGIN_BY_CODE_ENABLED = True
+
 
 # Make Axes much friendlier for admins
 AXES_FAILURE_LIMIT = 5
