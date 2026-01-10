@@ -137,13 +137,20 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!pricingContainer) return;
 
         // Ensure child ages are synced before request
-        if (typeof updateChildAgesJSON === 'function') {
-            updateChildAgesJSON(false);
-        }
+        // if (typeof updateChildAgesJSON === 'function') {
+        //     updateChildAgesJSON(false);
+        // }
+
+        updateChildAgesJSON(false); // sync ages
 
         clearTimeout(pricingTimeout);
         pricingTimeout = setTimeout(() => {
-            const formData = new FormData(document.getElementById('bookingForm'));
+            const form = document.getElementById('bookingForm'); 
+            const formData = new FormData(form);
+            // const formData = new FormData(document.getElementById('bookingForm'));
+            if (!formData.has('captcha_0') || !formData.has('captcha_1')) {
+            console.warn('CAPTCHA fields missing in pricing request');
+            }
             const tourType = document.querySelector('#id_tour_type').value;
             const tourId = document.querySelector('#id_tour_id').value;
             const languagePrefix = BOOKING_DATA.languagePrefix || 'en';
@@ -188,37 +195,25 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // ────────────────────── Submit Proposal (Modal Flow) ──────────────────────
+// ────────────────────── Submit Proposal (Save to Session & Open Confirmation) ──────────────────────
     document.getElementById('submitProposal')?.addEventListener('click', function (e) {
         e.preventDefault();
-        const form = document.getElementById('bookingForm');
-        const formData = new FormData(form);
-        const tourId = parseInt(document.getElementById('id_tour_id').value);
-        const saveUrl = form.action;
 
-        function showError(message, title = 'Oops!') {
-            let container = document.getElementById('errorToastContainer');
-            if (!container) {
-                container = document.createElement('div');
-                container.id = 'errorToastContainer';
-                container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
-                container.style.zIndex = '9999';
-                document.body.appendChild(container);
-            }
-            const html = `
-                <div class="toast align-items-center text-white bg-danger border-0" role="alert">
-                    <div class="d-flex">
-                        <div class="toast-body">
-                            <strong>${title}</strong><br>${message}
-                        </div>
-                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-                    </div>
-                </div>`;
-            container.innerHTML = html;
-            new bootstrap.Toast(container.firstElementChild).show();
+        const form = document.getElementById('bookingForm');
+        if (!form) {
+            console.error('Booking form not found');
+            return;
         }
 
-        document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-        document.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+        // Use the entire form — this automatically includes ALL fields + CAPTCHA
+        const formData = new FormData(form);
+
+        console.log('Submitting first step with FormData:');
+        for (let [key, value] of formData.entries()) {
+            console.log(key, ':', value);
+        }
+
+        const saveUrl = form.action;
 
         fetch(saveUrl, {
             method: 'POST',
@@ -228,14 +223,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 'X-CSRFToken': getCookie('csrftoken')
             }
         })
-        .then(r => {
-            if (!r.ok) return r.json().then(data => { throw { errors: data.errors || data }; });
-            return r.json();
+        .then(response => {
+            console.log('First step response status:', response.status);
+            if (!response.ok) {
+                return response.json().then(err => { throw err; });
+            }
+            return response.json();
         })
         .then(data => {
-            if (!data.success) throw { errors: data.errors || { __all__: ['Please correct the errors below.'] } };
+            console.log('First step success:', data);
+            if (!data.success) throw data;
 
             const tourType = document.querySelector('#id_tour_type').value;
+            const tourId = document.getElementById('id_tour_id').value;
+
             return fetch(`/bookings/confirm/${tourType}/${tourId}/`, {
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
@@ -245,120 +246,155 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .then(r => r.text())
         .then(html => {
+            console.log('Confirmation partial loaded');
             document.getElementById('confirmationContent').innerHTML = html;
             new bootstrap.Modal(document.getElementById('confirmationModal')).show();
         })
         .catch(err => {
-            const errors = err.errors || {};
-            const messages = [];
-
-            Object.keys(errors).forEach(field => {
-                const fieldErrors = errors[field];
-                if (Array.isArray(fieldErrors)) {
-                    fieldErrors.forEach(msg => {
-                        let text = typeof msg === 'object' && msg.message ? msg.message : msg;
-                        if (field === 'captcha' || String(text).toLowerCase().includes('captcha')) {
-                            messages.push('Please complete the CAPTCHA correctly');
-                        } else {
-                            messages.push(text);
-                        }
-
-                        if (field === 'captcha') {
-                            document.querySelector('input[name="captcha_1"]')?.classList.add('is-invalid');
-                            document.querySelector('.captcha-section')?.classList.add('border', 'border-danger', 'border-2');
-                        } else {
-                            const input = document.querySelector(`[name="${field}"]`) || document.getElementById(`id_${field}`);
-                            if (input) {
-                                input.classList.add('is-invalid');
-                                const fb = document.createElement('div');
-                                fb.className = 'invalid-feedback';
-                                fb.textContent = text;
-                                input.parentNode.appendChild(fb);
-                            }
-                        }
-                    });
-                }
-            });
-
-            if (messages.length === 0) messages.push('Please check all fields and try again.');
-            showError(messages.join('<br>'), 'Validation Error');
+            console.error('First step failed:', err);
+            alert('Failed to save booking data. See console for details.');
         });
     });
 
     // ────────────────────── Confirm Submit in Modal ──────────────────────
-    document.addEventListener('click', function (e) {
+    document.addEventListener('click', async function (e) {
         if (e.target.id !== 'confirmSubmit') return;
 
+        console.log('=== CONFIRM SUBMIT BUTTON CLICKED ===');
+        console.log('Target element:', e.target);
+
         const modalForm = document.querySelector('#confirmationForm');
-        if (!modalForm) return alert('Error: No form found.');
+        if (!modalForm) {
+            console.error('Confirmation form not found in DOM');
+            alert('Error: Confirmation form not found.');
+            return;
+        }
+        console.log('Modal form found:', modalForm);
 
         const submitButton = e.target;
         const originalText = submitButton.innerText.trim();
-        submitButton.innerHTML = '<span class="spinner"></span> Loading...';
+        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Loading...';
         submitButton.disabled = true;
 
         const formData = new FormData();
+
         modalForm.querySelectorAll('input[type="hidden"]').forEach(input => {
             formData.append(input.name, input.value);
         });
 
+        // Forward CAPTCHA from main form
+        const mainForm = document.getElementById('bookingForm');
+        if (mainForm) {
+            const captchaHash = mainForm.querySelector('input[name="captcha_0"]');
+            const captchaAnswer = mainForm.querySelector('input[name="captcha_1"]');
+            if (captchaHash) formData.append('captcha_0', captchaHash.value);
+            if (captchaAnswer) formData.append('captcha_1', captchaAnswer.value);
+        }
+
+        console.log('Final submit FormData contents:');
+        for (let [key, value] of formData.entries()) {
+            console.log(key, ':', value);
+        }
+
         const tourType = modalForm.dataset.tourType;
         const tourId = modalForm.dataset.tourId;
-        const url = `/bookings/submit-proposal/${tourType}/${tourId}/`;
+        const languagePrefix = BOOKING_DATA.languagePrefix || 'en';
+        const url = `/${languagePrefix}/bookings/submit-proposal/${tourType}/${tourId}/`.replace(/\/+/g, '/');
 
-        fetch(url, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        console.log('Sending FINAL POST to:', url);
+        console.log('With CSRF header (from cookie):', getCookie('csrftoken'));
+        console.log('FormData has csrfmiddlewaretoken:', formData.has('csrfmiddlewaretoken'));
+
+        try {
+            console.log('Attempting to send POST fetch...');
+
+            // Build URL-encoded body (most reliable for Django POST parsing)
+            const bodyParams = new URLSearchParams();
+            for (let [key, value] of formData.entries()) {
+                bodyParams.append(key, value);
             }
-        })
-        .then(r => r.json())
-        .then(data => {
+            console.log('Final body (urlencoded):', bodyParams.toString());
+
+            const response = await fetch(url, {
+                method: 'POST',
+                body: bodyParams.toString(),
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                credentials: 'same-origin'
+            });
+
+            console.log('Fetch completed with status:', response.status);
+
+            if (!response.ok) {
+                const errData = await response.json();
+                console.log('Error response data:', errData);
+                throw errData;
+            }
+
+            const data = await response.json();
+            console.log('Final submit success:', data);
+
             if (data.success) {
                 window.location.href = `/bookings/proposal-success/${data.proposal_id}/`;
             } else {
-                alert(data.error);
+                alert(data.error || 'Submission failed. Please try again.');
                 submitButton.innerText = originalText;
                 submitButton.disabled = false;
             }
-        })
-        .catch(() => {
-            alert('Error submitting. Please try again.');
+        } catch (fetchError) {
+            console.error('FETCH THREW ERROR BEFORE OR DURING NETWORK:', fetchError);
+            console.error('Full stack trace:', fetchError.stack);
+            alert('Fetch failed — check console for details.');
             submitButton.innerText = originalText;
             submitButton.disabled = false;
-        });
+        }
     });
 
     // ────────────────────── CAPTCHA Refresh ──────────────────────
     document.addEventListener('click', function (e) {
-        if (e.target.id !== 'refresh-captcha') return;
-        e.preventDefault();
+    if (e.target.id !== 'refresh-captcha') return;
+    e.preventDefault();
 
-        const section = e.target.closest('.captcha-section');
-        if (!section) return;
+    const section = e.target.closest('.captcha-section');
+    if (!section) return;
 
-        const img = section.querySelector('img[src*="/captcha/image/"]');
-        const hidden = section.querySelector('input[name="captcha_0"]');
-        const input = section.querySelector('input[name="captcha_1"]');
+    const img = section.querySelector('img[src*="/captcha/image/"]');
+    const hidden = section.querySelector('input[name="captcha_0"]');
+    const input = section.querySelector('input[name="captcha_1"]');
 
-        if (!img || !hidden || !input) return;
+    if (!img || !hidden || !input) return;
 
-        fetch('/api/captcha-refresh/')
-            .then(r => r.ok ? r.json() : Promise.reject())
-            .then(data => {
-                hidden.value = data.hash;
-                img.src = `/captcha/image/${data.hash}/?v=${Date.now()}`;
-                input.value = '';
-                e.target.textContent = 'Refreshed!';
-                e.target.disabled = true;
-                setTimeout(() => {
-                    e.target.textContent = 'Refresh Image';
-                    e.target.disabled = false;
-                }, 1000);
-                input.focus();
-            })
-            .catch(() => { });
-    });
+    const button = e.target;
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.textContent = 'Refreshing...';
+
+    fetch('/api/captcha-refresh/', { credentials: 'same-origin' })
+        .then(r => {
+            if (!r.ok) throw new Error('Refresh failed');
+            return r.json();
+        })
+        .then(data => {
+            hidden.value = data.hash;
+            img.src = `/captcha/image/${data.hash}/?v=${Date.now()}`;
+            input.value = '';
+            input.focus();
+            button.textContent = 'Refreshed!';
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.disabled = false;
+            }, 1200);
+        })
+        .catch(err => {
+            console.error(err);
+            button.textContent = 'Refresh failed';
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.disabled = false;
+            }, 2000);
+        });
+});
 });

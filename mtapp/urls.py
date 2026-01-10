@@ -48,6 +48,7 @@ urlpatterns += i18n_patterns(
     path('profile/', include('profiles.urls')),
     path('accounts/', include('accounts.urls')),
     path("", include("allauth.urls")),
+    
     path("", include(wagtail_urls)),
 )
 

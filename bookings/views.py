@@ -203,11 +203,38 @@ class BookingStartView(FormView):
                     'success': False,
                     'errors': form.errors
                 }, status=400)
-            # return self.form_invalid(form)
+            return self.form_invalid(form)
 
+from django.views.decorators.csrf import csrf_exempt
+
+
+@csrf_exempt
 def submit_proposal(request, tour_type: str, tour_id: int):
+    print("\n=== SUBMIT_PROPOSAL CALLED ===")
+    print(f"Request method: {request.method}")
+    print(f"Full path: {request.get_full_path()}")
+    print(f"Content-Type: {request.headers.get('Content-Type')}")
+    print(f"X-Requested-With: {request.headers.get('X-Requested-With')}")
+    print(f"User-Agent: {request.headers.get('User-Agent')}")
+    print(f"Remote addr: {request.META.get('REMOTE_ADDR')}")
+    print("================================\n")
+    print(f"CSRF token from header: {request.headers.get('X-CSRFToken', 'NONE')}")
+    print(f"CSRF token from body: {request.POST.get('csrfmiddlewaretoken', 'NONE')}")
+    print(f"CSRF cookie: {request.COOKIES.get('csrftoken', 'NONE')}")
+
     if request.method != 'POST':
+        print("→ Early return: Not POST → 405")
         return JsonResponse({'error': 'Invalid method'}, status=405)
+
+    # Manual CSRF check using only header (bypass body parsing failure)
+    sent_token = request.headers.get('X-CSRFToken', '')
+    cookie_token = request.COOKIES.get('csrftoken', '')
+
+    if not sent_token or sent_token != cookie_token:
+        print("CSRF header mismatch - cookie:", cookie_token, "header:", sent_token)
+        return JsonResponse({'error': 'CSRF verification failed'}, status=403)
+
+    print("CSRF check passed: header matches cookie")
 
     session_data = request.session.get('proposal_data')
     if not session_data:
@@ -292,7 +319,6 @@ def submit_proposal(request, tour_type: str, tour_id: int):
 
     # Optional: attach for email templates
     proposal.duration_days = duration_days
-    proposal.save(update_fields=['duration_days'])
 
     email_success = True  # Flag for email status
 
@@ -345,9 +371,9 @@ def submit_proposal(request, tour_type: str, tour_id: int):
         'prop_id': proposal.prop_id,
         'message': message,
         'redirect_url': f"/bookings/proposal-success/{proposal.id}/",
-        'is_company_tour': is_company_tour,  # CRITICAL — THIS WAS MISSING
+        'is_company_tour': is_company_tour,
     }
-
+    print("→ Reaching end of view — returning success JsonResponse")
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return JsonResponse(response_data)
     else:
@@ -421,6 +447,8 @@ def render_confirmation(request, tour_type: str, tour_id: int):
                 'tour_duration': getattr(tour, 'duration_days', 0),
                 'selected_configuration_index': session_data.get('selected_configuration', 0),
             })
+    from django.middleware.csrf import get_token
+    get_token(request)  # This updates the cookie if needed
 
     return render(request, 'bookings/partials/confirm_proposal.html', context)
 
@@ -785,7 +813,7 @@ def proposal_status(request, proposal_id: int) -> JsonResponse:
     try:
         proposal = Proposal.objects.get(id=proposal_id)
         return JsonResponse({
-            'status': proposal.get_status_display(),
+            'current_status': proposal.status,
             'payment_link': proposal.payment_link if proposal.status == 'SUPPLIER_CONFIRMED' else ''
         })
     except Proposal.DoesNotExist:

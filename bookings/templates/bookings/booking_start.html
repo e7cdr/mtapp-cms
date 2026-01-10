@@ -2,6 +2,15 @@
 {% load static i18n wagtailimages_tags wagtailcore_tags custom_filters model_extras %}
 
 {% block title %}Booking Form{% endblock title %}
+
+{% block extra_css %}
+<style>
+    .navbar { position: relative; }
+
+</style>
+
+{% endblock extra_css %}
+
 {% block content %}
 <section class="booking-section">
     <div class="container">
@@ -274,11 +283,11 @@
     document.addEventListener("DOMContentLoaded", function() {
         const bookingData = {{ booking_data_json|safe }};
 
-        flatpickr("#id_travel_date", {  // or your input selector
+        flatpickr("#id_travel_date", {
             dateFormat: "Y-m-d",
             minDate: bookingData.tour_start_date || "today",
             maxDate: bookingData.tour_end_date || null,
-            disableMobile: true,  // Crucial for custom disable on phones
+            disableMobile: true,
 
             disable: [
                 {% for date_str in tour.blackout_dates_list %}

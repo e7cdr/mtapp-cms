@@ -1,75 +1,128 @@
 {% extends "base.html" %}
 {% load static i18n %}
 
-{% block extra_head %}
-<style>
-    .navbar {
-        position: relative !important;
-    }
-</style>
-{% endblock extra_head %}
-
 {% block title %}{% trans "Your Dashboard" %} User Profile {% endblock title %}
 
+{% block extra_css %}
+<style>
+    .pd-section {
+        margin-top: 5rem;
+    }
+
+    /* Increased border radius for a softer, more modern feel */
+    .dashboard-card {
+        border-radius: 1.75rem;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Yellow accent header for sections */
+    .dashboard-header {
+        background-color: var(--yellow-dark-10); /* #E5C100 – a rich gold that works well on dark */
+        color: #000;
+    }
+
+    /* Gold accent text for key numbers and titles */
+    .text-accent {
+        color: var(--yellow-0); /* #FFD700 */
+    }
+
+    /* Rounded, separated list items with subtle hover glow */
+    .dashboard-list .list-group-item {
+        background-color: rgba(255, 255, 255, 0.03);
+        border: none;
+        border-radius: 1rem;
+        margin: 0.5rem 1rem;
+        padding: 1rem 1.5rem;
+        transition: background-color 0.3s ease;
+    }
+
+    .dashboard-list .list-group-item:hover {
+        background-color: var(--yellow-transp, rgba(255, 193, 7, 0.15));
+    }
+
+    .dashboard-list .list-group-item-action:hover {
+        background-color: var(--yellow-transp, rgba(255, 193, 7, 0.25));
+    }
+</style>
+{% endblock extra_css %}
+
 {% block content %}
+<section class="pd-section container">
+    <header class="text-center mb-5">
+        <h1 class="display-4 fw-bold">
+            {% trans "Welcome" %}, {{ user.get_full_name|default:user.username }}!
+        </h1>
+        <p class="lead text-white-50">{% trans "Your Dashboard" %}</p>
+    </header>
 
-<!-- TODO: Fine tune Dashboard. Remove Tailwind. Add Vanilla CSS -->
-<section class="my-10 px-4 sm:px-6 lg:px-8">
-    <h2 class="text-3xl font-bold text-center mb-6 text-white text-shadow dark:text-gray-100">
-        {% trans "Welcome" %}, {{ user.get_full_name|default:user.username }}!
-    </h2>
-    <h3 class="text-xl font-semibold text-center mb-8 text-white text-shadow dark:text-gray-200">
-        {% trans "Your Dashboard" %}
-    </h3>
-    <hr>
     <!-- Summary Cards -->
-    <div class="flex grid-cols-1 sm:grid-cols-2  my-4 gap-6 mb-8">
-        <div class="bg-darkBg p-6 rounded-lg shadow-md white-shadow text-center">
-            <h4 class="text-lg font-medium text-gray-700 px-4 dark:text-gray-200 mb-2">{% trans "Total Bookings" %}</h4>
-            <p class="text-2xl font-bold mb-2 text-yellow-400">{{ total_bookings }}</p>
+    <div class="row row-cols-1 row-cols-md-2 g-5 mb-5">
+        <div class="col">
+            <div class="card bg-dark text-white h-100 dashboard-card">
+                <div class="card-body text-center py-5">
+                    <h5 class="card-title text-white-50 mb-3">{% trans "Total Bookings" %}</h5>
+                    <p class="display-3 fw-bold text-accent mb-0">{{ total_bookings }}</p>
+                </div>
+            </div>
         </div>
-        <div class="light:bg-gray-100 dark:bg-darkBg p-6 rounded-lg shadow-md white-shadow text-center">
-            <h4 class="text-lg font-medium text-gray-700 px-4 dark:text-gray-200 mb-2">{% trans "Total Commission" %}</h4>
-            <p class="text-2xl font-bold mb-2 text-yellow-400">${{ total_commission|floatformat:2 }}</p>
+        <div class="col">
+            <div class="card bg-dark text-white h-100 dashboard-card">
+                <div class="card-body text-center py-5">
+                    <h5 class="card-title text-white-50 mb-3">{% trans "Total Commission" %}</h5>
+                    <p class="display-3 fw-bold text-accent mb-0">${{ total_commission|floatformat:2 }}</p>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Recent Bookings -->
-    <div class="bg-darkBg p-6 rounded-lg shadow-md white-shadow mb-8">
-        <h3 class="text-xl font-semibold mb-2 p-2 dark:text-gray-200">{% trans "Recent Bookings" %}</h3>
-        <hr class="pb-2">
-        <ul class="space-y-4">
-            {% for booking in bookings %}
-                <li class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition">
-                    <span class="text-gray-800 dark:text-gray-200">
-                        {{ booking.booking_date|date:"Y-m-d H:i" }} - {% trans "Booking" %} #{{ booking.book_id }}
-                    </span>
-                    <span class="text-yellow-400 font-medium">${{ booking.total_price|floatformat:2 }}</span>
-                </li>
-            {% empty %}
-                <li class="text-gray-600 dark:text-gray-400">{% trans "No bookings yet." %}</li>
-            {% endfor %}
-        </ul>
-    </div>
+    <!-- Recent Bookings & Notices -->
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-9">
+            <!-- Recent Bookings -->
+            <div class="card bg-dark text-white dashboard-card mb-5">
+                <div class="card-header dashboard-header py-3">
+                    <h5 class="mb-0 fw-bold">{% trans "Recent Bookings" %}</h5>
+                </div>
+                <div class="list-group list-group-flush dashboard-list">
+                    {% for booking in bookings %}
+                        <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <span>{{ booking.booking_date|date:"Y-m-d H:i" }} - {% trans "Booking" %} #{{ booking.book_id }}</span>
+                            <strong class="text-accent">${{ booking.total_price|floatformat:2 }}</strong>
+                        </div>
+                    {% empty %}
+                        <div class="list-group-item text-muted text-center">
+                            {% trans "No bookings yet." %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
 
-    <!-- Notices -->
-    <div class="bg-darkBg my-4 rounded-lg shadow-md white-shadow ">
-        <h3 class="text-xl font-semibold mb-4 text-gray-700 p-2 dark:text-gray-200">{% trans "Notices" %}</h3>
-        <hr class="pb-2">
-        <ul class="space-y-4">
-            {% for notice in notices %}
-                <li class="p-4 bg-gray-50 dark:bg-gray-700 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition">
-                    <span class="text-gray-800 dark:text-gray-200">
-                        {{ notice.title }}: {{ notice.message }}
-                        {% if notice.is_important %}
-                            <span class="text-red-500 font-medium">({% trans "Important" %})</span>
-                        {% endif %}
-                    </span>
-                </li>
-            {% empty %}
-                <li class="text-gray-600 p-2 dark:text-gray-400">{% trans "No notices." %}</li>
-            {% endfor %}
-        </ul>
+            <!-- Notices -->
+            <div class="card bg-dark text-white dashboard-card">
+                <div class="card-header dashboard-header py-3">
+                    <h5 class="mb-0 fw-bold">{% trans "Notices" %}</h5>
+                </div>
+                <div class="list-group list-group-flush dashboard-list">
+                    {% for notice in notices %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong class="text-accent">{{ notice.title }}:</strong> {{ notice.message }}
+                                </div>
+                                {% if notice.is_important %}
+                                    <span class="badge bg-danger rounded-pill">{% trans "Important" %}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="list-group-item text-muted text-center">
+                            {% trans "No notices." %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
     </div>
 </section>
 {% endblock content %}

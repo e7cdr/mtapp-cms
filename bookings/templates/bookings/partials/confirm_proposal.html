@@ -1,4 +1,3 @@
-<!-- Updated confirm_proposal.html (full partial with form inside, fixed trans tags, proper structure) -->
 {% load static i18n wagtailimages_tags custom_filters %}
 
 <!-- Prop ID Preview -->
@@ -99,12 +98,14 @@
 </div>
 {% else %}
 <div id="confirmationForm" 
-     data-tour-type="{{ tour_type }}" 
+     data-tour-type="{{ tour_type }}"
      data-tour-id="{{ tour.id }}">
-     {% csrf_token %}
-<input type="hidden" name="confirm" value="true">
-<input type="hidden" name="form_submission" value="booking">
-<input type="hidden" name="selected_configuration" value="{{ selected_configuration_index|default:'0' }}">
+    <input type="hidden" name="confirm" value="true">
+    <input type="hidden" name="form_submission" value="booking">
+    <input type="hidden" name="selected_configuration" value="{{ selected_configuration_index|default:'0' }}">
+
+    <!-- All your readonly display content here (tour info, customer, pricing, etc.) -->
+
 </div>
 {% endif %}
-]
+

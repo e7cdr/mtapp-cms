@@ -9,7 +9,7 @@
 <div class="band-container">
     <div class="badges-wrapper">
         {% for logo in settings.site_settings.Sponsors_Badges.sponsor_logos.all %}
-            <div class="badge">
+            <div class="footer-badge">
                 {% if logo.url %}
                     <a href="{{ logo.url }}" target="_blank" rel="noopener sponsored">
                         {% image logo.image original format-webp webpquality-80 loading="lazy" alt=logo.caption|default:"Sponsor logo" %}

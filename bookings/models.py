@@ -122,7 +122,7 @@ class Proposal(models.Model):
         APIField('tour.name', serializer=TourFieldSerializer()),
         APIField('tour.destination', serializer=TourFieldSerializer()),
         # # Human-readable choice
-        APIField('status_display', serializer=ReadOnlyField(source='get_status_display')),
+        APIField('status', serializer=ReadOnlyField(source='get_status_display')),
     ]
 
     def clean(self):

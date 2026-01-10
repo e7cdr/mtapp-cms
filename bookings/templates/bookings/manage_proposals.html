@@ -2,9 +2,15 @@
 {% load static i18n custom_filters %}
 
 {% block title %}{% trans "Manage Proposals" %} Proposals Index {% endblock title %}
-
+{% block extra_css %}
+<style>
+    .mp-section {
+        margin-top: 5rem;
+    }
+</style>
+{% endblock extra_css %}
 {% block content %}
-<section class="py-5">
+<section class="mp-section">
     <div class="container">
         <h2 class="text-center mb-4">{% trans "Manage Proposals" %}</h2>
         

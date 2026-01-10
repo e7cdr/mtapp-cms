@@ -175,7 +175,7 @@ footer {
  
 }
 
-.badge {
+.footer-badge {
     width: 100%;
     filter: contrast(0) brightness(100);
 }
