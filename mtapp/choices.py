@@ -18,8 +18,6 @@ DESTINATION_CHOICES = [
     ('Poland', _('Poland')),
 ]
 
-
-
 position = [
     ('top', 'Top Side'),
     ('bottom', 'Bottom Side'),

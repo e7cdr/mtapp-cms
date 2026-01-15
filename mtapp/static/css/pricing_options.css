@@ -1,206 +1,163 @@
-/* pricing_options.css - Pure vanilla, clean and modern */
+/* pricing_options.css - New style: teal selected, high contrast, compact */
 
 .pricing-options-container {
-    max-width: 1200px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 1.25rem;
     font-family: system-ui, -apple-system, sans-serif;
 }
 
 .pricing-header {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 1.75rem;
 }
 
 .pricing-header h2 {
-    font-size: 28px;
+    font-size: 1.8rem;
     font-weight: 600;
-    color: #333;
-    margin-bottom: 10px;
+    color: #111827;
 }
 
 .pricing-summary {
-    background: #f8f9fa;
-    padding: 15px;
+    background: #f1f5f9;
+    padding: 1rem;
     border-radius: 8px;
-    margin-bottom: 30px;
-    font-size: 15px;
-    color: #555;
+    margin-bottom: 1.75rem;
+    font-size: 0.95rem;
+    color: #374151;
+    text-align: center;
 }
 
-.pricing-summary p {
-    margin: 8px 0;
-}
-
+/* Grid */
 .pricing-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 24px;
-    margin-bottom: 40px;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.25rem;
 }
 
+/* Card */
 .pricing-card {
-    background: white;
-    border: 1px solid #e0e0e0;
+    border: 2px solid #d1d5db;
     border-radius: 12px;
+    background: #f9fafb;
+    cursor: pointer;
+    transition: all 0.2s ease;
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    transition: all 0.3s ease;
-    position: relative;
+    color: #111827;
+    max-width: 17rem;
+    min-height: 12rem;
 }
 
 .pricing-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+    border-color: #9ca3af;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
 }
 
-.pricing-card.cheapest {
-    border-color: #10b981;
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
-}
-
-.cheapest-badge {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    background: #10b981;
+/* Selected state - strong teal accent */
+.pricing-card.selected {
+    border-color: #0d9488;
+    background: #0d9488;
     color: white;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: bold;
-    z-index: 10;
+    box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.25);
 }
 
-.card-body {
-    padding: 24px;
+/* Radio */
+.pricing-card input.select-radio {
+    display: none;
+}
+
+/* Content layout */
+.card-content {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* Price */
+.price-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.5rem;
 }
 
 .price-amount {
-    font-size: 36px;
-    font-weight: bold;
-    color: #333;
-    text-align: center;
-    margin-bottom: 8px;
+    font-size: 2.25rem;
+    font-weight: 700;
+    line-height: 1;
 }
 
 .price-currency {
-    font-size: 16px;
-    color: #666;
-    text-align: center;
-    margin-bottom: 20px;
+    font-size: 1.15rem;
+    opacity: 0.9;
 }
 
-.room-details {
-    margin: 20px 0;
-}
-
-.room-row {
+/* Badges - top-left, smaller */
+.badges {
     display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px solid #f0f0f0;
-    font-size: 15px;
+    gap: 0.5rem;
+    align-self: center;
 }
 
-.room-row:last-child {
-    border-bottom: none;
-    font-weight: bold;
-    padding-top: 16px;
-    margin-top: 12px;
-    border-top: 2px solid #eee;
+.badge {
+    font-size: 0.68rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    font-weight: 600;
+    border: 1px solid white;
 }
 
-.select-button {
-    width: 100%;
-    padding: 14px;
-    background: #f59e0b;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.3s;
-    margin-top: 20px;
+.cheapest { background: #059669; color: white; }
+.recommended { background: #7c3aed; color: white; }
+
+/* Room info */
+.room-info {
+    text-align: center;
+    font-size: 0.95rem;
+    font-weight: 500;
+    opacity: 0.95;
 }
 
-.select-button:hover {
-    background: #d97706;
-}
-
-.select-button.selected {
-    background: #16a34a;
-}
-
-.select-button.selected:hover {
-    background: #15803d;
-}
-
+/* Pagination */
 .pagination {
     display: flex;
     justify-content: center;
-    align-items: center;
-    gap: 16px;
-    margin-top: 40px;
-    font-size: 16px;
+    gap: 1rem;
+    margin-top: 2rem;
 }
 
 .pagination button {
-    padding: 10px 20px;
-    border: 1px solid #ddd;
+    padding: 0.6rem 1.25rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
     background: white;
-    border-radius: 8px;
     cursor: pointer;
-    font-weight: 500;
-    transition: all 0.2s;
 }
 
-.pagination button:hover:not(:disabled) {
-    background: #f0f0f0;
-}
-
-.pagination button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.pagination button.prev {
-    background: #f3f4f6;
-}
-
-.pagination button.next {
-    background: #f59e0b;
-    color: white;
-}
-
-.pagination button.next:hover:not(:disabled) {
-    background: #d97706;
-}
-
-.no-results {
-    grid-column: 1 / -1;
-    text-align: center;
-    padding: 60px 20px;
-    color: #666;
-    font-size: 18px;
-}
-
-.room-note {
-    background: #f0fdf4;
-    color: #166534;
-    border-radius: 8px;
-    padding: 10px;
-}
+.pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+.pagination button.next { background: #0d9488; color: white; border-color: #0d9488; }
 
 /* Responsive */
-@media (max-width: 768px) {
-    .pricing-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .pagination {
-        flex-direction: column;
-        gap: 12px;
-    }
+@media (max-width: 640px) {
+    .pricing-grid { grid-template-columns: 1fr; }
+    .card-content { padding: 1.1rem; }
+}
+
+/* Show selected indicator only when radio is checked */
+.pricing-card input[type="radio"]:checked ~ .card-content .selected-indicator {
+    display: block !important;
+}
+
+/* Style the selected card */
+.pricing-card input[type="radio"]:checked ~ .card-content {
+    background-color: #d1fae5;  /* light green background */
+    border-color: #059669;
+    box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.2);
+    color: #064e3b;  /* dark green text for contrast */
+}
+
+/* Optional: Make price bolder when selected */
+.pricing-card input[type="radio"]:checked ~ .card-content .price-amount {
+    font-size: 2.3rem;
+    color: #065f46;
 }

@@ -1,10 +1,18 @@
 {% extends "base.html" %}
-{% load static i18n %}
+{% load static i18n booking_tags %}   <!-- ← important: load your custom tags -->
 
-{% block title %}{% trans "Customer Portal" %} Customer Portal {% endblock title %}
+{% block title %}{% trans "Customer Portal" %}{% endblock title %}
+
 {% block extra_css %}
 <style>
-    .c-section {margin-top: 5rem;}
+    .c-section { margin-top: 5rem; }
+    .notice-box {
+        background-color: #f8f9fa;
+        border-left: 4px solid #6c757d;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        border-radius: 0.25rem;
+    }
 </style>
 {% endblock extra_css %}
 
@@ -12,68 +20,92 @@
 <section class="c-section">
     <div class="container">
         <h2 class="text-center mb-4">{% trans "Your Proposals and Bookings" %}</h2>
+
+        <!-- Optional subtle hint (like admin notice, but softer) -->
+        <div class="notice-box text-center">
+            <small>{% trans "Showing only your own records — enter email or ID to search" %}</small>
+        </div>
+
         <form method="get" class="mb-4">
-            <div class="row">
+            <div class="row g-3">
                 <div class="col-md-4">
-                    <label for="email" class="form-label">{% trans "Enter Your Email" %}</label>
-                    <input type="email" name="email" id="email" class="form-control" value="{{ email }}">
+                    <label for="email" class="form-label">{% trans "Your Email" %}</label>
+                    <input type="email" name="email" id="email" class="form-control" 
+                           value="{{ email }}" placeholder="your@email.com" required>
                 </div>
                 <div class="col-md-4">
-                    <label for="id" class="form-label">{% trans "Enter Booking or Proposal ID" %}</label>
-                    <input type="text" name="id" id="id" class="form-control" value="{{ id }}">
+                    <label for="id" class="form-label">{% trans "Proposal / Booking ID" %}</label>
+                    <input type="text" name="id" id="id" class="form-control" 
+                           value="{{ id }}" placeholder="PROP123 or BK456">
                 </div>
                 <div class="col-md-4 align-self-end">
-                    <button type="submit" class="btn btn-primary">{% trans "Search" %}</button>
+                    <button type="submit" class="btn btn-primary w-100">
+                        {% trans "Search" %}
+                    </button>
                 </div>
             </div>
         </form>
-        
-        {% if proposals or bookings %}
-            <!-- Filter Buttons -->
-            <div class="mb-3">
-                <a href="?status=all&{{ request.GET.urlencode|cut:'status=' }}" class="btn btn-outline-primary btn-sm {% if current_status == 'all' %}active{% endif %}">{% trans "All" %}</a>
-                <a href="?status=pending&{{ request.GET.urlencode|cut:'status=' }}" class="btn btn-primary btn-sm {% if current_status == 'pending' %}active{% endif %}">{% trans "Pending" %}</a>
-                <a href="?status=confirmed&{{ request.GET.urlencode|cut:'status=' }}" class="btn btn-primary btn-sm {% if current_status == 'confirmed' %}active{% endif %}">{% trans "Confirmed" %}</a>
-                <a href="?status=rejected&{{ request.GET.urlencode|cut:'status=' }}" class="btn btn-primary btn-sm {% if current_status == 'rejected' %}active{% endif %}">{% trans "Rejected" %}</a>
-                <a href="?status=paid&{{ request.GET.urlencode|cut:'status=' }}" class="btn btn-primary btn-sm {% if current_status == 'paid' %}active{% endif %}">{% trans "Paid" %}</a>
+
+        <!-- Status filter buttons – using same clean pattern as management view -->
+        <div class="mb-4">
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{% query_transform request 'status' 'all' %}"
+                   class="btn btn-outline-primary btn-sm {% if current_status == 'all' %}active{% endif %}">
+                    {% trans "All" %}
+                </a>
+
+                <a href="{% query_transform request 'status' 'PENDING_SUPPLIER' %}"
+                   class="btn btn-warning btn-sm {% if current_status == 'PENDING_SUPPLIER' %}active{% endif %}">
+                    {% trans "Pending Supplier" %}
+                </a>
+
+                <a href="{% query_transform request 'status' 'PENDING_INTERNAL' %}"
+                   class="btn btn-warning btn-sm {% if current_status == 'PENDING_INTERNAL' %}active{% endif %}">
+                    {% trans "Pending Internal" %}
+                </a>
+
+                <a href="{% query_transform request 'status' 'CONFIRMED' %}"
+                   class="btn btn-info btn-sm {% if current_status == 'CONFIRMED' %}active{% endif %}">
+                    {% trans "Confirmed" %}
+                </a>
+
+                <a href="{% query_transform request 'status' 'SUPPLIER_CONFIRMED' %}"
+                   class="btn btn-info btn-sm {% if current_status == 'SUPPLIER_CONFIRMED' %}active{% endif %}">
+                    {% trans "Supplier Confirmed" %}
+                </a>
+
+                <a href="{% query_transform request 'status' 'REJECTED' %}"
+                   class="btn btn-outline-danger btn-sm {% if current_status == 'REJECTED' %}active{% endif %}">
+                    {% trans "Rejected" %}
+                </a>
+
+                <a href="{% query_transform request 'status' 'PAID' %}"
+                   class="btn btn-success btn-sm {% if current_status == 'PAID' %}active{% endif %}">
+                    {% trans "Paid" %}
+                </a>
             </div>
-            
-            <h3>{% trans "Proposals" %}</h3>
-            {% include "bookings/partials/proposal_list_customer.html" %}  <!-- FIXED: Customer partial (no actions) -->
-            
-            <h3>{% trans "Bookings" %}</h3>
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>{% trans "ID" %}</th>
-                        <th>{% trans "Tour" %}</th>
-                        <th>{% trans "Travel Date" %}</th>
-                        <th>{% trans "Adults" %}</th>
-                        <th>{% trans "Children" %}</th>
-                        <th>{% trans "Total Price" %}</th>
-                        <th>{% trans "Status" %}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for booking in bookings %}
-                        <tr>
-                            <td>{{ booking.book_id|default:booking.id }}</td>
-                            <td>{{ booking.tour }}</td>
-                            <td>{{ booking.travel_date|date:"M d, Y" }}</td>
-                            <td>{{ booking.number_of_adults }}</td>
-                            <td>{{ booking.number_of_children }}</td>
-                            <td>{{ booking.currency }} {{ booking.total_price|floatformat:2 }}</td>
-                            <td>{{ booking.status }}</td>
-                        </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="7">{% trans "No bookings found." %}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        </div>
+
+        {% if proposals or bookings %}
+            <h3 class="mt-5 mb-3">{% trans "Proposals" %}</h3>
+            {% include "bookings/partials/proposal_list_customer.html" %}
+
+            <h3 class="mt-5 mb-3">{% trans "Bookings" %}</h3>
+            {% include "bookings/partials/booking_list_customer.html" %}
+            <!-- 
+                Recommendation: 
+                If you still have the inline table here, consider moving it to a separate partial 
+                like booking_list_customer.html for better maintainability
+            -->
+
         {% elif email or id %}
-            <p class="text-center">{% trans "No records found for" %} {{ email|default:"" }} {{ id|default:"" }}.</p>
+            <div class="alert alert-info text-center mt-4">
+                {% trans "No records found for your search." %}
+            </div>
+        {% else %}
+            <div class="alert alert-secondary text-center mt-4">
+                {% trans "Enter your email or ID above to view your proposals and bookings." %}
+            </div>
         {% endif %}
     </div>
 </section>

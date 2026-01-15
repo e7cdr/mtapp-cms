@@ -10,6 +10,8 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.auth.models import User  # or CustomUser if used
+from django_countries.fields import CountryField
+
 
 from wagtail.snippets.models import register_snippet
 from wagtail.admin.panels import FieldPanel
@@ -46,6 +48,31 @@ class Proposal(models.Model):
     selected_config = models.JSONField(default=dict, blank=True, help_text="Selected room configuration from pricing options.")
     travel_date = models.DateField(help_text=_("Preferred start date for the tour"))
     estimated_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    referral_code_used = models.CharField(
+        max_length=16,
+        blank=True,
+        null=True,
+        editable=False,
+        help_text="Referral code used during creation (if any)"
+    )
+
+    promo_code_used = models.CharField(
+        max_length=16,
+        blank=True,
+        null=True,
+        editable=False,
+        help_text="Discount/promo code used during creation (if any)"
+    )
+
+    discount_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        editable=False,
+        help_text="Discount amount actually applied (in proposal currency)"
+    )
+
+
     supplier_email = models.EmailField(blank=True, help_text=_("Supplier contact email"))
     payment_link = models.URLField(blank=True, help_text=_("Payment link for customer"))
     currency = models.CharField(max_length=3, default='USD', help_text=_("Currency used for pricing (ISO 4217 code)"))
@@ -86,6 +113,9 @@ class Proposal(models.Model):
         FieldPanel('children_ages'),  # JSON editor in Wagtail
         FieldPanel('travel_date'),
         FieldPanel('estimated_price'),
+        FieldPanel('promo_code_used', read_only=True),
+        FieldPanel('referral_code_used', read_only=True),
+        FieldPanel('discount_amount', read_only=True),
         FieldPanel('currency'),
         FieldPanel('supplier_email'),
         FieldPanel('payment_link'),
@@ -246,6 +276,7 @@ class Booking(models.Model):
     tour = GenericForeignKey('content_type', 'object_id')
     number_of_adults = models.PositiveIntegerField(default=1)
     number_of_children = models.PositiveIntegerField(default=0)
+    number_of_infants = models.PositiveIntegerField(default=0)
     children_ages = models.JSONField(default=list, blank=True, help_text="List of ages for children")
     booking_date = models.DateTimeField(default=timezone.now)
     travel_date = models.DateField(help_text=_("Preferred start date for the tour"))
@@ -490,6 +521,9 @@ class AccommodationBooking(models.Model):
     customer_name = models.CharField(max_length=200)
     customer_email = models.EmailField()
     customer_phone = models.CharField(max_length=30, blank=True, null=True,)
+    country = models.CharField(max_length=100, null=True, blank=True)
+
+
     notes = models.TextField(blank=True)
 
     # Pricing & Status
@@ -517,7 +551,7 @@ class AccommodationBooking(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.accommodation} • {self.check_in} → {self.check_out}"
+        return f"{self.accommodation} - {self.customer_name} • {self.check_in} → {self.check_out} • {self.status} → {self.total_price}"
 
     def get_nights(self):
         return (self.check_out - self.check_in).days

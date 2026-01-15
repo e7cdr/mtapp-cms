@@ -8,6 +8,8 @@ from tours.models import DayTourPage, FullTourPage, LandTourPage
 from django.utils.translation import gettext_lazy as _
 from django.contrib.contenttypes.models import ContentType
 from captcha.fields import CaptchaField
+from django_countries.fields import CountryField
+from django_countries.widgets import CountrySelectWidget
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +24,10 @@ class ProposalForm(forms.ModelForm):  # Changed to ModelForm
     customer_name = forms.CharField(max_length=200, required=False)
     customer_email = forms.EmailField(required=False)
     customer_phone = forms.CharField(max_length=20, required=False)
-    nationality = forms.CharField(max_length=100, required=False)
+    nationality = CountryField(
+    blank=True,
+    blank_label="(Select Country)"
+        ).formfield()
     customer_address = forms.CharField(widget=forms.Textarea, required=False)
     notes = forms.CharField(widget=forms.Textarea, required=False)
     form_submission = forms.CharField(max_length=20, required=False, initial='pricing')
@@ -35,13 +40,25 @@ class ProposalForm(forms.ModelForm):  # Changed to ModelForm
     )
     captcha = CaptchaField()
 
+    referral_code = forms.CharField(
+        max_length=16,
+        required=False,
+        widget=forms.HiddenInput(),
+    )
+
+    promo_code = forms.CharField(           # using 'promo_code' as internal name
+        max_length=16,
+        required=False,
+        widget=forms.HiddenInput(),
+    )
+
     class Meta:
         model = Proposal
         fields = [
             'tour_type', 'tour_id', 'customer_name', 'customer_email', 'customer_phone',
             'customer_address', 'nationality', 'number_of_adults', 'number_of_children',
             'travel_date', 'notes', 'child_ages', 'selected_configuration', 'selected_config',
-            'captcha',
+            'captcha', 'referral_code', 'promo_code',
         ]
         widgets = {
             'travel_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'text'}),
@@ -49,7 +66,7 @@ class ProposalForm(forms.ModelForm):  # Changed to ModelForm
             'customer_email': forms.EmailInput(attrs={'class': 'form-control'}),
             'customer_phone': forms.TextInput(attrs={'class': 'form-control'}),
             'customer_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
-            'nationality': forms.TextInput(attrs={'class': 'form-control'}),
+            'nationality': forms.Select(attrs={'class': 'form-control'}),
             'number_of_adults': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
             'number_of_children': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),

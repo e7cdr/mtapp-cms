@@ -20,7 +20,7 @@ from paypalserversdk.models.purchase_unit_request import PurchaseUnitRequest
 from paypalserversdk.exceptions.error_exception import ErrorException
 import requests
 import urllib
-from bookings.models import AccommodationBooking, Proposal
+from bookings.models import AccommodationBooking, Booking, Proposal
 from decouple import config
 
 from decimal import Decimal, ROUND_HALF_UP
@@ -50,33 +50,28 @@ class PayPalClientTokenView(View):
         client_secret = config("PAYPAL_SANDBOX_CLIENT_SECRET")
 
         auth = base64.b64encode(f"{client_id}:{client_secret}".encode()).decode()
-        domain = request.build_absolute_uri("/")[:-1]  # e.g. http://127.0.0.1:8000
-
-        payload = {
-            "grant_type": "client_credentials",
-            "response_type": "client_token",
-            "domains[]": [domain]  # ← list = repeated param
-        }
 
         headers = {
             "Authorization": f"Basic {auth}",
-            "Content-Type": "application/x-www-form-urlencoded",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
         }
 
         response = requests.post(
-            "https://api-m.sandbox.paypal.com/v1/oauth2/token",
+            "https://api-m.sandbox.paypal.com/v1/identity/generate-token",
             headers=headers,
-            data=urllib.parse.urlencode(payload, doseq=True),  # ← this sends domains[]=url correctly
+            json={},  # empty body is required for basic client token
             timeout=15
         )
 
         if response.status_code != 200:
+            logger.error(f"PayPal client-token request failed {response.status_code}: {response.text}")
             return JsonResponse({"error": f"PayPal error: {response.text}"}, status=500)
 
         data = response.json()
-        # This access_token IS the v6 client token
         return JsonResponse({
-            "access_token": data["access_token"],
+            "access_token": data["client_token"],  # keeps old integrations happy
+            "client_token": data["client_token"],  # standard for most examples
             "expires_in": data.get("expires_in", 32400)
         })
 
@@ -86,7 +81,7 @@ class PayPalOrdersCreateView(View):
             # Parse incoming JSON request body
             body_data = json.loads(request.body) if request.body else {}
             print("PARSED BODY:", body_data)     # ← AND THIS ONE
-            intent_str = body_data.get('intent', 'CAPTURE')
+            intent = body_data.get('intent', 'CAPTURE')
             purchase_units_data = body_data.get('purchase_units', [{}])
 
             if not purchase_units_data:
@@ -94,59 +89,94 @@ class PayPalOrdersCreateView(View):
 
             # Process the first purchase_unit (assuming single unit for simplicity)
             pu_data = purchase_units_data[0]
+            amount_data = pu_data.get('amount', {})
+            currency_code = amount_data.get('currency_code', 'USD')
+            value_str = amount_data.get('value')
+
             items_data = pu_data.get('items', [])
 
-            if not items_data:
-                raise ValueError("No items provided in purchase_units")
+            if items_data:
+                # Existing detailed flow: calculate from items
+                total_amount = Decimal('0.00')
+                for item_data in items_data:
+                    unit_value = item_data.get('unit_amount', {}).get('value', '0')
+                    unit_amount = Decimal(str(unit_value))
+                    quantity = int(item_data.get('quantity', 1))
+                    total_amount += unit_amount * quantity
 
-            # FIXED: Calculate total from items to avoid null values
-            total_amount = Decimal('0.00')
-            currency_code = 'USD'  # Default; override if provided
-            for item_data in items_data:
-                unit_amount = Decimal(str(item_data.get('unit_amount', {}).get('value', '0')))
-                quantity = int(item_data.get('quantity', 1))
-                total_amount += unit_amount * quantity
-                # Use first item's currency
-                if not currency_code or currency_code == 'USD':  # FIXED: Simple override
-                    currency_code = item_data['unit_amount'].get('currency_code', 'USD')
+                    # Use first item's currency if not already set
+                    if currency_code == 'USD':
+                        currency_code = item_data.get('unit_amount', {}).get('currency_code', 'USD')
 
-            # Round to 2 decimals
-            total_amount = total_amount.quantize(Decimal('0.00'), rounding=ROUND_HALF_UP)
-            total_str = str(total_amount)
+                total_amount = total_amount.quantize(Decimal('0.00'), rounding=ROUND_HALF_UP)
+                value_str = str(total_amount)
 
-            # FIXED: Ensure item names are clean (remove problematic quotes)
-            for item_data in items_data:
-                name = item_data.get('name', '')
-                item_data['name'] = name.replace("'", "")  # Strip single quotes to avoid JSON issues
+                # Clean names (keep your existing fix)
+                for item_data in items_data:
+                    name = item_data.get('name', '')
+                    item_data['name'] = name.replace("'", "")
 
-            # FIXED: Direct enum access for intent
-            intent = CheckoutPaymentIntent.CAPTURE  # Hardcoded for 'CAPTURE'; add mapping if needed for 'AUTHORIZE'
+                items = [
+                    Item(
+                        name=item_data['name'],
+                        unit_amount=Money(
+                            currency_code=currency_code,
+                            value=str(item_data['unit_amount']['value'])
+                        ),
+                        quantity=item_data['quantity'],
+                        description=item_data.get('description', ''),
+                        category=ItemCategory.DIGITAL_GOODS
+                    ) for item_data in items_data
+                ]
+
+                breakdown = AmountBreakdown(
+                    item_total=Money(currency_code=currency_code, value=value_str)
+                )
+            else:
+                # Simple amount-only flow (standard Buttons)
+                items = None
+                breakdown = None
+
+            if not value_str or Decimal(value_str) <= 0:
+                raise ValueError("Invalid or missing amount value")
+            
+            description = "Milano Travel Booking"
+
+            # Try to make it more specific using context from the request (optional but recommended)
+            # If you pass booking_id or proposal_id in the createOrder body, you can fetch them here.
+            # For now, we'll use a simple fallback; improve later if needed.
+            if 'booking_id' in body_data:
+                try:
+                    from bookings.models import AccommodationBooking
+                    booking = AccommodationBooking.objects.get(id=body_data['booking_id'])
+                    description = f"{booking.accommodation.name} • Adults: {booking.adults} - Children: {booking.children}. From {booking.check_in} to {booking.check_out}"
+                except AccommodationBooking.DoesNotExist:
+                    pass
+            elif 'proposal_id' in body_data:
+                try:
+                    from bookings.models import Proposal
+                    proposal = Proposal.objects.get(id=body_data['proposal_id'])
+                    description = f"Tour: {proposal.tour.name} ~ Travel Date: {proposal.travel_date} -- Adults: {proposal.number_of_adults} + Children: {proposal.number_of_children} + Infrants: {proposal.number_of_infants}. Room Configuration:{proposal.selected_config}"
+                except Proposal.DoesNotExist:
+                    pass
+
+            # Build purchase unit
+            pu = PurchaseUnitRequest(
+                amount=AmountWithBreakdown(
+                    currency_code=currency_code,
+                    value=value_str,
+                    breakdown=breakdown
+                ) if breakdown else AmountWithBreakdown(
+                    currency_code=currency_code,
+                    value=value_str
+                ),
+                items=items,
+                description=description
+            )
 
             order_request = OrderRequest(
                 intent=intent,
-                purchase_units=[
-                    PurchaseUnitRequest(
-                        amount=AmountWithBreakdown(
-                            currency_code=currency_code,
-                            value=total_str,  
-                            breakdown=AmountBreakdown(
-                                item_total=Money(currency_code=currency_code, value=total_str)  # FIXED: Matches sum
-                            )
-                        ),
-                        items=[
-                            Item(
-                                name=item_data['name'],
-                                unit_amount=Money(
-                                    currency_code=currency_code,
-                                    value=str(item_data['unit_amount']['value'])
-                                ),
-                                quantity=item_data['quantity'],
-                                description=item_data.get('description', ''),
-                                category=ItemCategory.DIGITAL_GOODS  # FIXED: Direct enum access—no () or string arg
-                            ) for item_data in items_data
-                        ]
-                    )
-                ]
+                purchase_units=[pu]
             )
 
             # Create the order
@@ -181,14 +211,55 @@ class PayPalOrdersCaptureView(View):
             logger.info(f"Order {order_id} captured: {order.body.status}")
 
             if order.body.status == 'COMPLETED':
+                success_url = None  # ← initialize here
+
                 if proposal_id:
-                    success_url = reverse('bookings:payment_success', args=[int(proposal_id)])
+                    proposal = get_object_or_404(Proposal, id=proposal_id)
+                    if proposal.status != 'PAID':
+                        proposal.status = 'PAID'
+                        proposal.save(update_fields=['status'])
+
+                    # Create Booking from Proposal if none exists
+                    from django.contrib.contenttypes.models import ContentType
+
+                    tour_page = proposal.tour  # assuming Proposal has FK to tour page
+                    if not tour_page:
+                        raise ValueError("Proposal missing linked tour page")
+
+                    booking, created = Booking.objects.get_or_create(
+                        proposal=proposal,
+                        defaults={
+                            'travel_date': proposal.travel_date,
+                            'number_of_adults': proposal.number_of_adults,
+                            'number_of_children': proposal.number_of_children or 0,
+                            'number_of_infants': proposal.number_of_infants or 0,
+                            'children_ages': proposal.children_ages or [],
+                            'customer_name': proposal.customer_name,
+                            'customer_email': proposal.customer_email,
+                            'customer_phone': proposal.customer_phone or '',
+                            'nationality': proposal.nationality or '',
+                            'customer_address': proposal.customer_address or '',
+                            'notes': proposal.notes or '',
+                            'total_price': proposal.estimated_price,
+                            'status': 'PAID',
+                            'content_type': ContentType.objects.get_for_model(tour_page),
+                            'object_id': tour_page.id,
+                        }
+                    )
+                    if created:
+                        logger.info(f"Created Booking {booking.id} from paid Proposal {proposal.id}")
+
+                    success_url = reverse('bookings:payment_success', args=[proposal_id])
+
                 elif booking_id:
-                    success_url = reverse('bookings:payment_success', args=[int(booking_id)])
+                    success_url = reverse('bookings:payment_success', args=[booking_id])
+
                 else:
                     return JsonResponse({'error': 'No proposal or booking ID provided'}, status=400)
-                
-                # FIXED: Return redirect URL for JS to handle (avoids direct view call issues)
+
+                if success_url is None:
+                    return JsonResponse({'error': 'Failed to determine success URL'}, status=500)
+
                 return JsonResponse({'status': 'COMPLETED', 'redirect': success_url})
 
         except json.JSONDecodeError:
@@ -214,7 +285,7 @@ class PayPalCheckoutView(View):
             context = {
                 'amount': str(booking.total_price.quantize(Decimal('0.01'))),
                 'currency': 'USD',
-                'item_name': f"{booking.accommodation.name} • {booking.check_in} to {booking.check_out}",
+                'item_name': f"{booking.accommodation.name} • Adults: {booking.adults} - Children: {booking.children}. From {booking.check_in} to {booking.check_out}",
                 'custom_id': f"ACC_{booking.id}",
                 'booking_id': booking.id,
             }
@@ -227,7 +298,7 @@ class PayPalCheckoutView(View):
                 'proposal': proposal,
                 'amount': str(proposal.estimated_price.quantize(Decimal('0.01'))),
                 'currency': 'USD',
-                'item_name': f"Tour: {proposal.tour.name}",
+                'item_name': f"{proposal.tour.name} ~ {proposal.travel_date} - Ad: {proposal.number_of_adults} + Chd: {proposal.number_of_children} + In: {proposal.number_of_infants}. {proposal.selected_config}",
                 'custom_id': f"PROP_{proposal.id}",
                 'proposal_id': proposal.id,
             }

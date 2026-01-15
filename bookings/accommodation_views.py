@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from .utils.pricing import calculate_accommodation_price
-from .AccommodationBookingForm import AccommodationBookingForm
+from .accommodation_booking_form import AccommodationBookingForm
 from bookings.models import AccommodationBooking  # ← we’ll create this next
 from bookings.utils.emails import send_accommodation_booking_email
 from django.contrib.contenttypes.models import ContentType

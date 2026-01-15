@@ -1,4 +1,6 @@
-{% load static i18n %}
+{% load static i18n countries %}
+
+<link rel="stylesheet" href="{% static 'css/acc_bookingModal.css' %}"/>
 
 <div id="bookingModal" class="booking-modal" role="dialog" aria-modal="true" aria-labelledby="bookingModalTitle">
   <div class="booking-modal-overlay" data-close-modal></div>
@@ -75,6 +77,18 @@
             <input type="tel" name="phone" class="w-full" placeholder="+593 99 999 9999">
           </div>
           <div class="form-group">
+              <label for="{{ form.country.id_for_label }}" class="form-label">
+                  {% trans "Country" %}
+              </label>
+              
+              {{ form.country }}
+              
+              <div class="invalid-feedback"></div>
+              {% if form.country.errors %}
+                  <div class="text-danger small">{{ form.country.errors|join:", " }}</div>
+              {% endif %}
+          </div>
+           <div class="form-group">
             <label>{% trans "Special Requests" %}</label>
             <textarea name="notes" rows="3" class="w-full"></textarea>
           </div>
@@ -100,183 +114,7 @@
     </div>
   </div>
 </div>
-<style>
-  /* MODAL — HIDDEN BY DEFAULT, PERFECTLY CENTERED */
-  .booking-modal {
-    display: none; /* ← THIS IS THE KEY */
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
-  }
 
-  .booking-modal.active {
-    display: flex; /* ← SHOWS WHEN ACTIVE */
-  }
-
-  .booking-modal-overlay {
-    position: absolute;
-    inset: 0;
-  }
-
-  .booking-modal-content {
-    position: relative;
-    background: white;
-    border-radius: 1rem;
-    max-width:  : 560px;
-    width        : 100%;
-    max-height   : 95vh;
-    overflow-y   : auto;
-    box-shadow   : 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    animation    : modalFadeIn 0.3s ease-out;
-  }
-
-  @keyframes modalFadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .booking-modal-close {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    background: none;
-    border: none;
-    font-size: 1.75rem;
-    cursor: pointer;
-    color: #666;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: all 0.2s;
-    z-index: 10;
-  }
-
-  .booking-modal-close:hover {
-    background: #f3f4f6;
-    color: #000;
-  }
-
-  .booking-modal-header {
-    padding: 2rem 2rem 1rem;
-    text-align: center;
-    border-bottom: 1px solid #e5e7eb;
-  }
-
-  .booking-modal-title {
-    font-size: 1.875rem;
-    font-weight: 700;
-    margin: 0;
-    color: #111;
-  }
-
-  .booking-modal-subtitle {
-    color: #6b7280;
-    margin: 0.5rem 0 0;
-    font-size: 1.1rem;
-  }
-
-  .booking-modal-body {
-    padding: 1.5rem 2rem 2rem;
-  }
-
-  /* FORM GRID */
-  .form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.25rem;
-  }
-
-  @media (max-width: 640px) {
-    .form-grid { grid-template-columns: 1fr; }
-  }
-
-  .form-group {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .form-group label {
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    color: #374151;
-  }
-
-  .form-group input,
-  .form-group select,
-  .form-group textarea {
-    padding: 0.75rem 1rem;
-    border: 1px solid #d1d5db;
-    border-radius: 0.5rem;
-    font-size: 1rem;
-    transition: border 0.2s;
-  }
-
-  .form-group input:focus,
-  .form-group select:focus,
-  .form-group textarea:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  }
-
-  /* FLATPICKR INPUTS */
-  .flatpickr-input {
-    background: white;
-  }
-
-  /* PRICE SUMMARY */
-  .price-summary {
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
-  }
-
-  /* BUTTON */
-  .btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 1rem;
-    border: none;
-    border-radius: 0.5rem;
-    font-weight: 600;
-    font-size: 1.1rem;
-    cursor: pointer;
-    transition: transform 0.2s;
-  }
-
-  .btn-primary:hover {
-    transform: translateY(-2px);
-  }
-
-  .btn-primary:disabled {
-    background: #9ca3af;
-    cursor: not-allowed;
-    transform: none;
-  }
-
-  .hidden { display: none; }
-
-  /* RESPONSIVE */
-  @media (max-width: 480px) {
-    .booking-modal-content {
-      margin: 1rem;
-      border-radius: 0.75rem;
-    }
-    .booking-modal-header {
-      padding: 1.5rem 1.5rem 1rem;
-    }
-    .booking-modal-body {
-      padding: 1rem 1.5rem 1.5rem;
-    }
-  }
-</style>
 <script type="module">
   document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('bookingModal');
@@ -464,15 +302,42 @@
         if (data.success && data.redirect_url) {
           window.location.href = data.redirect_url;
         } else {
-          let msg = "{% trans 'Please fix' %}:\n\n";
-          for (const field in data.errors) {
-            msg += `• ${data.errors[field].join('\n• ')}\n`;
+  // Reset previous errors
+  document.querySelectorAll('.text-danger.field-error').forEach(el => el.remove());
+  document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+
+  let hasShownAlert = false;
+
+  for (const field in data.errors) {
+    const messages = data.errors[field];
+    const input = form.querySelector(`[name="${field}"]`);
+
+    if (input) {
+      // Add Bootstrap invalid class
+      input.classList.add('is-invalid');
+
+      // Create error message element
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'text-danger small field-error mt-1';
+      errorDiv.textContent = messages.join(', ');
+      input.parentElement.appendChild(errorDiv);
+        } else {
+          // Fallback for hidden/special fields or if input not found
+          if (!hasShownAlert) {
+            let msg = "{% trans 'Please fix the following:' %}\n\n";
+            for (const f in data.errors) {
+              msg += `• ${f}: ${data.errors[f].join(', ')}\n`;
+            }
+            alert(msg);
+            hasShownAlert = true;
           }
-          alert(msg);
-          text.classList.remove('hidden');
-          loading.classList.add('hidden');
-          submitBtn.disabled = false;
         }
+      }
+
+      text.classList.remove('hidden');
+      loading.classList.add('hidden');
+      submitBtn.disabled = false;
+    }
       } catch (err) {
         alert("{% trans 'Connection failed. Try again.' %}");
         text.classList.remove('hidden');

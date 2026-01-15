@@ -9,6 +9,7 @@ from wagtailseo.models import SeoMixin
 from django.forms import ValidationError
 from wagtail.models import Page
 
+from bookings.accommodation_booking_form import AccommodationBookingForm
 from mtapp.choices import GLOBAL_ICON_CHOICES, DESTINATION_CHOICES
 from mtapp.utils import convert_pdf_to_images, generate_code_id
 from mtapp.utils_blocks import PricingTierBlock
@@ -434,6 +435,7 @@ class AbstractAccommodationPage(SeoMixin, Page):
 
         context['amenity_labels'] = amenity_labels  # Or ', '.join(amenity_labels) for a single string
         context['blackout_dates_list'] = self.blackout_entries # For JS
+        context['form'] = AccommodationBookingForm(accommodation=self)
         return context
 
     def clean(self):

@@ -230,7 +230,7 @@
     </div>
 </div>
 {% endif %}
-{% include "accommodation/includes/booking_modal.html" %}
+{% include "accommodation/includes/booking_modal.html" with page=self form=form %}
 {% endblock content %}
 
 {% block extra_js %}

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n humanize %}
+{% load i18n %}
 
 {% block title %}{% trans "Payment Successful" %} - Milano Travel{% endblock title %}
 
@@ -34,7 +34,7 @@
                     <tr><th>Date</th><td>{{ booking.travel_date|date:"F j, Y" }}</td></tr>
                     <tr><th>Guests</th>
                         <td>
-                            {{ booking.number_of_adults }} Adult{{ booking.number_of_adults|plural }} 
+                            {{ booking.number_of_adults }} Adult{{ booking.number_of_adults|pluralize }} 
                             {% if booking.number_of_children %} + {{ booking.number_of_children }} Child{{ booking.number_of_children|pluralize }}{% endif %}
                         </td>
                     </tr>
@@ -49,7 +49,7 @@
                     <tr><th>Nights</th><td>{{ nights }}</td></tr>
                     <tr><th>Guests</th>
                         <td>
-                            {{ booking.adults }} Adult{{ booking.adults|plural }} 
+                            {{ booking.adults }} Adult{{ booking.adults|pluralize }} 
                             {% if booking.children %} + {{ booking.children }} Child{{ booking.children|pluralize }}{% endif %}
                         </td>
                     </tr>

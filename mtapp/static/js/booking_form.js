@@ -32,6 +32,42 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+        function updateSelection(index) {
+            const pricingGrid = document.getElementById('pricing-grid');
+            if (!pricingGrid) return; // safety
+
+            // Visual reset - only pricing cards
+            pricingGrid.querySelectorAll('.card').forEach(card => {
+                card.classList.remove('text-bg-success');
+                card.classList.add('text-bg-light');
+                
+                const indicator = card.querySelector('.mt-auto span');
+                if (indicator) {
+                    indicator.innerHTML = '<span class="text-muted small">Click to select</span>';
+                }
+            });
+
+            // Highlight selected - only within pricing grid
+            const cards = pricingGrid.querySelectorAll('.card');
+            if (cards[index]) {
+                const selected = cards[index];
+                selected.classList.remove('text-bg-light');
+                selected.classList.add('text-bg-success');
+                
+                const indicator = selected.querySelector('.mt-auto span');
+                if (indicator) {
+                    indicator.innerHTML = '<span class="badge bg-white text-success fw-bold">Selected</span>';
+                }
+            }
+
+        // Update hidden field
+        const hidden = document.getElementById('selected_configuration');
+        if (hidden) {
+            hidden.value = index;
+            console.log('Selected config updated to:', index); // Debug
+        }
+    }
+
     // ────────────────────── Child Ages Management ──────────────────────
     const childrenInput = document.querySelector('input[name="number_of_children"]');
     const agesGroup = document.getElementById('children-ages-group');
@@ -168,13 +204,45 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .then(response => response.ok ? response.text() : '')
             .then(html => {
-                if (pricingContainer) {
-                    pricingContainer.innerHTML = html;
-                    setTimeout(() => {
-                    }, 50);
+            if (pricingContainer) {
+                const currentValue = document.getElementById('selected_configuration')?.value || '0';
+                pricingContainer.innerHTML = html;
+                const hidden = document.getElementById('selected_configuration');
+                if (hidden) {
+                    hidden.value = currentValue;
+                    console.log('Preserved manual selection after reload:', currentValue);
+                    updateSelection(parseInt(currentValue, 10));  // Also restore visual
                 }
-            })
-            .catch(error => console.error('Pricing fetch error:', error));
+                console.log('Pricing grid re-rendered – current hidden value:', 
+                    document.getElementById('selected_configuration')?.value || 'not found');
+
+                // NEW: Attach selection listener after grid is rendered
+                const grid = document.getElementById('pricing-grid');
+                if (grid) {
+                    // Auto-select first card (visual + hidden field)
+                    const firstRadio = grid.querySelector('input[name="pricing_config"]:checked');
+                    if (firstRadio) {
+                        const index = parseInt(firstRadio.value, 10);
+                        updateSelection(index);
+                        console.log('Auto-selected index after render:', index);
+                    }
+
+                    // Listen for future changes
+                    grid.addEventListener('change', function(e) {
+                        const radio = e.target;
+                        if (!radio.matches('input[name="pricing_config"]')) return;
+
+                        const index = parseInt(radio.value, 10);
+                        updateSelection(index);
+                    });
+                }
+
+                setTimeout(() => {
+                    // Your existing timeout code...
+                }, 50);
+            }
+        })
+        .catch(error => console.error('Pricing fetch error:', error));
         }, 300);
     }
 
@@ -252,7 +320,44 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .catch(err => {
             console.error('First step failed:', err);
-            alert('Failed to save booking data. See console for details.');
+
+            if (err.errors) {
+                // Build alert message (keep this for overview)
+                let errorMessage = 'Please correct the following errors:\n\n';
+                for (const [field, messages] of Object.entries(err.errors)) {
+                    errorMessage += `- ${field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${messages.join(', ')}\n`;
+                }
+                alert(errorMessage.trim());
+
+                // NEW: Apply visual feedback to fields
+                Object.entries(err.errors).forEach(([fieldName, messages]) => {
+                    // Find input/select/textarea by name
+                    const input = document.querySelector(`[name="${fieldName}"]`);
+                    if (input) {
+                        input.classList.add('is-invalid');
+
+                        // Create or update invalid-feedback div
+                        let feedback = input.nextElementSibling;
+                        if (!feedback || !feedback.classList.contains('invalid-feedback')) {
+                            feedback = document.createElement('div');
+                            feedback.className = 'invalid-feedback';
+                            input.parentNode.insertBefore(feedback, input.nextSibling);
+                        }
+
+                        feedback.textContent = messages.join(', ');
+                        feedback.style.display = 'block';
+                    }
+                });
+
+                // Focus first invalid field
+                const firstInvalid = document.querySelector('.is-invalid');
+                if (firstInvalid) firstInvalid.focus();
+            } else {
+                alert('Failed to save booking data. Please check your inputs and try again.');
+            }
+
+            submitButton.innerText = originalText;
+            submitButton.disabled = false;
         });
     });
 

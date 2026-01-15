@@ -5,7 +5,7 @@ from decimal import Decimal, InvalidOperation
 
 from django.urls import reverse
 from django.conf import settings
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
@@ -194,7 +194,7 @@ def send_internal_confirmation_email(proposal: Proposal, tour=None, end_date=Non
             'end_date': end_date,
             'tour': tour or 'Unknown Tour',
             'site_url': settings.SITE_URL,
-            'portal_url': f"{settings.SITE_URL}/bookings/manage/proposals/",  # Link to confirm
+            'portal_url': f"{settings.SITE_URL}/bookings/management/",  # Link to confirm
             'configuration_details': proposal.room_config if proposal.room_config else [],
         }
 
@@ -212,6 +212,56 @@ def send_internal_confirmation_email(proposal: Proposal, tour=None, end_date=Non
     except Exception as e:
         logger.error(f"Failed to send internal email for proposal {proposal.id}: {e}")
         return False
+
+@login_required
+def booking_management(request):
+    # Base querysets – optimized prefetch/select
+    proposals_qs = Proposal.objects.select_related('content_type', 'user').prefetch_related('confirmation_tokens')
+    bookings_qs  = Booking.objects.select_related('content_type', 'user')   # adjust if you need tour/translations
+
+    # ── Shared filters (same as customer_portal) ───────────────────────────────
+    email      = request.GET.get('email', '').strip()
+    id_filter  = request.GET.get('id', '').strip()
+    status     = request.GET.get('status', 'all')
+
+    if email:
+        proposals_qs = proposals_qs.filter(customer_email__icontains=email)
+        bookings_qs  = bookings_qs.filter(customer_email__icontains=email)
+        logger.info(f"Admin filter - email: {email}")
+
+    if id_filter:
+        proposals_qs = proposals_qs.filter(
+            Q(prop_id__icontains=id_filter) | Q(id__icontains=id_filter)
+        )
+        bookings_qs = bookings_qs.filter(
+            Q(book_id__icontains=id_filter) | Q(id__icontains=id_filter)
+        )
+        logger.info(f"Admin filter - ID: {id_filter}")
+
+    if status != 'all':
+        proposals_qs = proposals_qs.filter(status=status)
+        bookings_qs  = bookings_qs.filter(status=status)
+        logger.info(f"Admin filter - status: {status}")
+
+    # ── Pagination – independent for each list ────────────────────────────────
+    prop_paginator = Paginator(proposals_qs, 10)
+    book_paginator = Paginator(bookings_qs, 10)
+
+    proposals = prop_paginator.get_page(request.GET.get('proposals_page', 1))
+    bookings  = book_paginator.get_page(request.GET.get('bookings_page', 1))
+
+    context = {
+        'proposals': proposals,
+        'bookings': bookings,
+        'email': email,
+        'id': id_filter,
+        'current_status': status,
+
+        # Optional: helps template know we're in admin mode
+        'is_admin_view': True,
+    }
+
+    return render(request, 'bookings/booking_management.html', context)
 
 @login_required
 def manage_proposals(request) -> HttpResponse:
@@ -247,6 +297,20 @@ def manage_proposals(request) -> HttpResponse:
         'current_status': status or 'all',  # For template highlighting active button
     })
 
+@login_required
+def manage_bookings(request) -> HttpResponse:
+    bookings = Booking.objects.prefetch_related('translations', 'tour').all()
+    paginator = Paginator(bookings, 10)
+    page_obj = paginator.get_page(request.GET.get('page', 1))
+    if request.htmx:
+        status = request.GET.get('status')
+        if status:
+            bookings = bookings.filter(status=status)
+            paginator = Paginator(bookings, 10)
+            page_obj = paginator.get_page(request.GET.get('page', 1))
+        return render(request, 'bookings/partials/booking_list.html', {'bookings': page_obj})
+    return render(request, 'bookings/manage_bookings.html', {'bookings': page_obj})
+
 def reject_proposal(request, proposal_id: int) -> HttpResponse:
     try:
         proposal = Proposal.objects.get(id=proposal_id)
@@ -256,6 +320,7 @@ def reject_proposal(request, proposal_id: int) -> HttpResponse:
     except Proposal.DoesNotExist:
         messages.error(request, "Proposal not found.")
     return redirect('bookings:manage_proposals')
+
 
 # @login_required  # Uncomment for login enforcement
 # @user_passes_test(lambda u: u.is_staff)  # Or staff-only
@@ -382,6 +447,31 @@ def proposal_detail(request, proposal_id: int):
     }
 
     return render(request, 'bookings/proposal_detail.html', context)
+
+@login_required
+def booking_detail(request, booking_id: int):
+    booking = get_object_or_404(
+        Booking.objects.select_related(
+            'content_type', 'user'  # add 'tour' if it's a direct FK
+        ),
+        id=booking_id
+    )
+
+    # Optional: prefetch more if needed
+    # booking = booking.prefetch_related('confirmation_tokens')  # if exists
+
+    context = {
+        'booking': booking,
+        'tour': getattr(booking, 'tour', None),  # may be None or Generic relation
+        # Add more fields progressively as needed
+        'customer_name': booking.customer_name or booking.customer_email or "—",
+        'travel_date_formatted': booking.travel_date.strftime("%b %d, %Y") if booking.travel_date else "—",
+        'total_pax': booking.number_of_adults + booking.number_of_children,
+        'currency': booking.currency or "USD",
+        'status_display': booking.get_status_display(),
+    }
+
+    return render(request, 'bookings/booking_detail.html', context)
 
 def payment_success(request, proposal_id: int) -> HttpResponse:
     try:
@@ -607,7 +697,6 @@ def get_remaining_capacity(tour_id, travel_date, tour_model, duration_days=1):
         'per_day': per_day,
         'is_full': is_full_any or not has_available_date
     }
-
 
 def get_exchange_rate(currency_code: str) -> Decimal:
     """

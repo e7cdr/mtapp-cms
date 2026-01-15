@@ -2,13 +2,19 @@
 {% load i18n %}
 
 {% block title %}{% trans "Proposal Details" %} - {{ proposal.prop_id|default:proposal.id }} Review proposal {% endblock title %}
-
+{% block extra_css %}
+<style>
+    .pd-section {
+        margin-block: 5rem;
+    }
+</style>
+{% endblock extra_css %}
 {% block content %}
-<section class="py-5">
+<section class="pd-section">
     <div class="container">
         <div class="row justify-content-between align-items-center mb-4">
             <h2>{% trans "Proposal Details" %} - {{ proposal.prop_id|default:proposal.id }}</h2>
-            <a href="{% url "bookings:manage_proposals" %}" class="btn btn-secondary">{% trans "Back to Proposals" %}</a>
+            <a href="{% url 'bookings:booking_management' %}" class="btn btn-secondary">{% trans "Back to Management" %}</a>
         </div>
         
         <div class="row">
@@ -105,7 +111,7 @@
         
         <div class="row mt-4">
             <div class="col-12">
-                <a href="{% url 'bookings:manage_proposals' %}" class="btn btn-secondary">{% trans "Back to Proposals" %}</a>
+                <a href="{% url 'bookings:booking_management' %}" class="btn btn-secondary">{% trans "Back to Management" %}</a>
                 {% if proposal.status in 'PENDING_SUPPLIER,PENDING_INTERNAL' %}
                     <a href="{% url 'bookings:confirm_proposal' proposal.id %}" class="btn btn-success">{% trans "Confirm" %}</a>
                     <a href="{% url 'bookings:reject_proposal' proposal.id %}" class="btn btn-danger">{% trans "Reject" %}</a>

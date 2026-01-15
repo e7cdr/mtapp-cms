@@ -59,3 +59,27 @@ def to_json(value):
     Convert a Python object to a JSON string.
     """
     return json.dumps(value)
+
+
+@register.simple_tag(takes_context=True)
+def query_transform(context, request, key, value):
+    """
+    Returns current URL with only one change: set key=value
+    Removes the key completely if value is empty/None
+    """
+    getvars = request.GET.copy()
+
+    if value:
+        getvars[key] = value
+    else:
+        getvars.pop(key, None)
+
+    # Clean pagination params if you want (optional but recommended)
+    getvars.pop('proposals_page', None)
+    getvars.pop('bookings_page', None)
+    getvars.pop('page', None)
+
+    if not getvars:
+        return request.path
+
+    return f"{request.path}?{getvars.urlencode()}"

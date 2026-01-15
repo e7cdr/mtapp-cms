@@ -52,6 +52,19 @@ class BookingStartView(FormView):
     # @method_decorator(ratelimit(key='user:ip', rate='8/h', method='POST', block=True))
     # @method_decorator(never_cache)
     def dispatch(self, request, *args, **kwargs):
+        # Preserve referral/promo codes from first GET into session
+        if request.method == 'GET':
+            ref = request.GET.get('ref', '').strip().upper()
+            promo = request.GET.get('promo', '').strip().upper()
+            
+            if ref or promo:
+                if 'referral_info' not in request.session:
+                    request.session['referral_info'] = {}
+                if ref:
+                    request.session['referral_info']['ref_code'] = ref
+                if promo:
+                    request.session['referral_info']['promo_code'] = promo
+                request.session.modified = True  # force save
         return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
@@ -137,6 +150,11 @@ class BookingStartView(FormView):
         if form.is_valid():
             cleaned_data = form.cleaned_data
 
+            # ──────── NEW: Read referral & promo codes from URL ────────
+            referral_info = request.session.get('referral_info', {})
+            ref_code = referral_info.get('ref_code') or request.GET.get('ref', '').strip().upper()
+            promo_code = referral_info.get('promo_code') or request.GET.get('promo', '').strip().upper()
+
             # ────────────────────── RECOMPUTE PRICING (same as old working version) ──────────────────────
             configs = compute_pricing(
                 cleaned_data['tour_type'],
@@ -178,6 +196,9 @@ class BookingStartView(FormView):
                     1 for age in cleaned_data.get('child_ages', [])
                     if age < getattr(self.tour, 'child_age_min', 7)
                 ),
+                # ──────── NEW fields ────────
+                'referral_code': ref_code if ref_code else None,
+                'promo_code': promo_code if promo_code else None,
             }
 
             # ────────────────────── INQUIRY-ONLY: FORCE PRICE = 0 ──────────────────────
@@ -207,20 +228,8 @@ class BookingStartView(FormView):
 
 from django.views.decorators.csrf import csrf_exempt
 
-
 @csrf_exempt
 def submit_proposal(request, tour_type: str, tour_id: int):
-    print("\n=== SUBMIT_PROPOSAL CALLED ===")
-    print(f"Request method: {request.method}")
-    print(f"Full path: {request.get_full_path()}")
-    print(f"Content-Type: {request.headers.get('Content-Type')}")
-    print(f"X-Requested-With: {request.headers.get('X-Requested-With')}")
-    print(f"User-Agent: {request.headers.get('User-Agent')}")
-    print(f"Remote addr: {request.META.get('REMOTE_ADDR')}")
-    print("================================\n")
-    print(f"CSRF token from header: {request.headers.get('X-CSRFToken', 'NONE')}")
-    print(f"CSRF token from body: {request.POST.get('csrfmiddlewaretoken', 'NONE')}")
-    print(f"CSRF cookie: {request.COOKIES.get('csrftoken', 'NONE')}")
 
     if request.method != 'POST':
         print("→ Early return: Not POST → 405")
@@ -234,7 +243,6 @@ def submit_proposal(request, tour_type: str, tour_id: int):
         print("CSRF header mismatch - cookie:", cookie_token, "header:", sent_token)
         return JsonResponse({'error': 'CSRF verification failed'}, status=403)
 
-    print("CSRF check passed: header matches cookie")
 
     session_data = request.session.get('proposal_data')
     if not session_data:
@@ -283,7 +291,52 @@ def submit_proposal(request, tour_type: str, tour_id: int):
     # Existing line (unchanged)
     is_company_tour = getattr(tour, 'is_company_tour', False)
 
-    # Create proposal first, always
+    # ──────── NEW: Resolve referrer and discount from session ────────
+    from accounts.models import ReferralCode, DiscountCode, get_mtweb_user
+    from decimal import Decimal, InvalidOperation
+
+    ref_code = session_data.get('referral_code')
+    promo_code = session_data.get('promo_code')
+
+    # 1. Determine the user (referrer → MTWEB fallback)
+    referrer_user = None
+    if ref_code:
+        referrer_user = ReferralCode.get_user_by_code(ref_code)
+
+    final_user = (
+        request.user if request.user.is_authenticated else
+        referrer_user if referrer_user else
+        get_mtweb_user()
+    )
+
+    # 2. Handle discount (only if collect_price == True)
+    discount_amount = Decimal('0.00')
+    applied_promo_code = None
+
+    if collect_price and promo_code:
+        try:
+            original_price = Decimal(session_data.get('estimated_price', '0'))
+            discount_obj = DiscountCode.objects.filter(
+                code=promo_code,
+                active=True
+            ).first()
+
+            if discount_obj and discount_obj.is_valid_for(original_price):
+                final_price, discount_amount = discount_obj.apply_to(original_price)
+                session_data['estimated_price'] = str(final_price)
+                applied_promo_code = promo_code
+                discount_obj.used_count += 1
+                discount_obj.save(update_fields=['used_count'])
+                logger.info(f"Applied discount {promo_code} → {discount_amount} off")
+            else:
+                logger.info(f"Promo code {promo_code} invalid or expired")
+        except (InvalidOperation, ValueError) as e:
+            logger.warning(f"Discount calculation failed: {e}")
+            # Keep original price on error
+
+    # ────────────────────────────────────────────────────────────────
+
+    # Now create the proposal with resolved values
     proposal = Proposal.objects.create(
         customer_name=session_data['customer_name'],
         customer_email=session_data['customer_email'],
@@ -300,11 +353,14 @@ def submit_proposal(request, tour_type: str, tour_id: int):
         supplier_email=session_data['supplier_email'],
         currency=session_data.get('currency', 'USD'),
         estimated_price=Decimal(session_data.get('estimated_price', '0')),
-        user=request.user if request.user.is_authenticated else None,
+        user=final_user,                           # ← resolved here
         status='PENDING_SUPPLIER',
         room_config=session_data.get('room_config', {'options': []}),
         selected_config=session_data.get('selected_room_config', {}),
         number_of_infants=session_data.get('number_of_infants', 0),
+        referral_code_used=ref_code,               # optional — if you add field
+        promo_code_used=applied_promo_code,        # optional — if you add field
+        discount_amount=discount_amount,           # optional — if you add field
     )
 
     if tour_type_str == 'day':
@@ -409,6 +465,12 @@ def render_confirmation(request, tour_type: str, tour_id: int):
         ),  # Pre-compute here
     }
     session_data = request.session.get('proposal_data')
+    # ──────── NEW DEBUG LINES (temporary) ────────
+    if session_data:
+        print("DEBUG [render_confirmation]:")
+        print(f"  referral_code from session: {session_data.get('referral_code')}")
+        print(f"  promo_code from session:    {session_data.get('promo_code')}")
+    # ───────────────────────────────────────────── 
     print(f"DEBUG: session_data exists? {bool(session_data)}")  # Keep for now
     if not session_data:
         context['error'] = _("No booking data found. Please start over.")
@@ -452,6 +514,47 @@ def render_confirmation(request, tour_type: str, tour_id: int):
 
     return render(request, 'bookings/partials/confirm_proposal.html', context)
 
+def customer_portal(request):
+    proposals = Proposal.objects.select_related('content_type', 'user').prefetch_related('confirmation_tokens')
+    bookings = Booking.objects.select_related('content_type', 'user')
+
+    # Search/filter logic (email/ID/status)
+    email = request.GET.get('email', '').strip()
+    id_filter = request.GET.get('id', '').strip()
+    status = request.GET.get('status', 'all')
+
+    if email:
+        proposals = proposals.filter(customer_email__icontains=email)
+        bookings = bookings.filter(customer_email__icontains=email)
+        logger.info(f"Filtering by email: {email}")
+    if id_filter:
+        proposals = proposals.filter(
+            Q(prop_id__icontains=id_filter) | Q(id__icontains=id_filter)
+        )
+        bookings = bookings.filter(
+            Q(book_id__icontains=id_filter) | Q(id__icontains=id_filter)
+        )
+        logger.info(f"Filtering by ID: {id_filter}")
+    if status != 'all':
+        proposals = proposals.filter(status=status)
+        bookings = bookings.filter(status=status)
+        logger.info(f"Filtering by status: {status}")
+
+    # Pagination (separate—10 each)
+    proposals_paginator = Paginator(proposals, 10)
+    bookings_paginator = Paginator(bookings, 10)
+    proposals = proposals_paginator.get_page(request.GET.get('proposals_page', 1))
+    bookings = bookings_paginator.get_page(request.GET.get('bookings_page', 1))
+
+    context = {
+        'proposals': proposals,
+        'bookings': bookings,
+        'email': email,
+        'id': id_filter,
+        'current_status': status,
+    }
+    return render(request, 'bookings/customer_portal.html', context)
+
 def confirm_proposal(request, proposal_id: int) -> HttpResponse:
     # Scoped to single object
     proposal = get_object_or_404(
@@ -462,14 +565,14 @@ def confirm_proposal(request, proposal_id: int) -> HttpResponse:
     tour = proposal.tour
     if not tour:
         messages.error(request, "Tour not found for this proposal.")
-        return redirect('bookings:manage_proposals')
+        return redirect('bookings:booking_management')
 
     is_company_tour = getattr(tour, 'is_company_tour', False)
     pending_status = 'PENDING_INTERNAL' if is_company_tour else 'PENDING_SUPPLIER'
 
     if proposal.status != pending_status:
         messages.error(request, f"Proposal not pending {'internal' if is_company_tour else 'supplier'} confirmation.")
-        return redirect('bookings:manage_proposals')
+        return redirect('bookings:booking_management')
 
     # Placeholder payment link (PayPal placeholder—update later)
     proposal.payment_link = f"{settings.SITE_URL}/p-methods/paypal/checkout/{proposal.id}/"
@@ -488,7 +591,7 @@ def confirm_proposal(request, proposal_id: int) -> HttpResponse:
     msg = f"Proposal {proposal.prop_id or proposal.id} confirmed ({'internally' if is_company_tour else 'by supplier'}). Payment link sent to {proposal.customer_email}."
     messages.success(request, msg)
 
-    return redirect('bookings:manage_proposals')
+    return redirect('bookings:booking_management')
 
 def confirm_proposal_by_token(request, token: str) -> HttpResponse:
     try:
@@ -504,7 +607,7 @@ def confirm_proposal_by_token(request, token: str) -> HttpResponse:
         # For company tours: Redirect to portal (no token support)
         if getattr(proposal.tour, 'is_company_tour', False):
             messages.info(request, "Company tour proposals must be confirmed via the internal portal.")
-            return redirect('bookings:manage_proposals')
+            return redirect('bookings:booking_management')
 
         # Normal supplier flow
         proposal.payment_link = f"{settings.SITE_URL}/p-methods/paypal/checkout/{proposal.id}/"  # FIXED: Checkout page        proposal.status = 'SUPPLIER_CONFIRMED'
@@ -705,7 +808,7 @@ def payment_success(request, pk):
                 'type': 'tour',
                 'booking': booking,
                 'proposal': proposal,
-                'tour': booking.get_tour_object(),
+                'tour': booking.tour,
             }
             return render(request, 'bookings/payment_success.html', context)
 
@@ -718,15 +821,15 @@ def payment_success(request, pk):
             acc_booking.status = 'PAID'
             acc_booking.save(update_fields=['status'])
             # Optional: send confirmation email again
-            from bookings.utils.emails import send_accommodation_confirmation_email
-            send_accommodation_confirmation_email(acc_booking)
+            from bookings.utils.emails import send_accommodation_booking_email
+            send_accommodation_booking_email(acc_booking)
         else:
             raise Http404("Invalid booking state")
 
     context = {
         'type': 'accommodation',
         'booking': acc_booking,
-        'accommodation': acc_booking.get_accommodation_object(),
+        'accommodation': acc_booking.accommodation_page,
         'nights': (acc_booking.check_out - acc_booking.check_in).days,
     }
     return render(request, 'bookings/payment_success.html', context)
@@ -738,19 +841,6 @@ def get_bookings(request) -> JsonResponse:
 def get_partners(request) -> JsonResponse:
     partners = [{'id': p.pk, 'name': p.name} for p in Partner.objects.all()]
     return JsonResponse({'partners': partners})
-
-def manage_bookings(request) -> HttpResponse:
-    bookings = Booking.objects.prefetch_related('translations', 'tour').all()
-    paginator = Paginator(bookings, 10)
-    page_obj = paginator.get_page(request.GET.get('page', 1))
-    if request.htmx:
-        status = request.GET.get('status')
-        if status:
-            bookings = bookings.filter(status=status)
-            paginator = Paginator(bookings, 10)
-            page_obj = paginator.get_page(request.GET.get('page', 1))
-        return render(request, 'bookings/partials/booking_list.html', {'bookings': page_obj})
-    return render(request, 'bookings/manage_bookings.html', {'bookings': page_obj})
 
 def get_default_user(request):
     from django.contrib.auth.models import User
@@ -767,47 +857,6 @@ def get_default_user(request):
             email="mtweb@yourdomain.com",  # Replace with a valid email
             password="securepassworde7c"  # Use a secure password
         )
-
-def customer_portal(request):
-    proposals = Proposal.objects.select_related('content_type', 'user').prefetch_related('confirmation_tokens')
-    bookings = Booking.objects.select_related('content_type', 'user')
-
-    # Search/filter logic (email/ID/status)
-    email = request.GET.get('email', '').strip()
-    id_filter = request.GET.get('id', '').strip()
-    status = request.GET.get('status', 'all')
-
-    if email:
-        proposals = proposals.filter(customer_email__icontains=email)
-        bookings = bookings.filter(customer_email__icontains=email)
-        logger.info(f"Filtering by email: {email}")
-    if id_filter:
-        proposals = proposals.filter(
-            Q(prop_id__icontains=id_filter) | Q(id__icontains=id_filter)
-        )
-        bookings = bookings.filter(
-            Q(book_id__icontains=id_filter) | Q(id__icontains=id_filter)
-        )
-        logger.info(f"Filtering by ID: {id_filter}")
-    if status != 'all':
-        proposals = proposals.filter(status=status)
-        bookings = bookings.filter(status=status)
-        logger.info(f"Filtering by status: {status}")
-
-    # Pagination (separate—10 each)
-    proposals_paginator = Paginator(proposals, 10)
-    bookings_paginator = Paginator(bookings, 10)
-    proposals = proposals_paginator.get_page(request.GET.get('proposals_page', 1))
-    bookings = bookings_paginator.get_page(request.GET.get('bookings_page', 1))
-
-    context = {
-        'proposals': proposals,
-        'bookings': bookings,
-        'email': email,
-        'id': id_filter,
-        'current_status': status,
-    }
-    return render(request, 'bookings/customer_portal.html', context)
 
 def proposal_status(request, proposal_id: int) -> JsonResponse:
     try:

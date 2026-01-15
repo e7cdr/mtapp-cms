@@ -2,9 +2,15 @@
 {% load i18n wagtailimages_tags %}
 
 {% block title %}{% trans "Proposal Submitted Successfully" %} Proposal Successfully submitted {% endblock title %}
-
+{% block extra_css %}
+<style>
+    .prs-section {
+        margin-block: 5rem;
+    }
+</style>
+{% endblock extra_css %}
 {% block content %}
-<section class="py-5">
+<section class="prs-section">
     <div class="container">
         <h2 class="text-center mb-4">{% trans "Proposal Submitted Successfully" %}</h2>
         <div class="alert alert-success text-center mb-4">

@@ -4,7 +4,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from wagtail.models import Page
-
+from django_countries.fields import CountryField
 
 class AccommodationBookingForm(forms.Form):
     # Hidden fields
@@ -56,6 +56,15 @@ class AccommodationBookingForm(forms.Form):
         label=_("Phone"),
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+593 99 999 9999'})
     )
+
+    country = CountryField(
+    blank=True,
+    blank_label=_("(Select country)"),
+        ).formfield(
+            label=_("Country"),
+            required=False,
+            widget=forms.Select(attrs={'class': 'w-full'}),
+        )
     notes = forms.CharField(
         label=_("Special Requests"),
         required=False,

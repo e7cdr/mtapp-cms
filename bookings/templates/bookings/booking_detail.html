@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Booking Details" %} - {{ booking.book_id|default:booking.id }}{% endblock title %}
+{% block extra_css %}
+<style>
+    .bd-section {
+        margin-block: 5rem;
+    }
+</style>
+{% endblock extra_css %}
+{% block content %}
+<section class="bd-section">
+    <div class="container">
+        <div class="row justify-content-between align-items-center mb-4">
+            <h2>{% trans "Booking Details" %} - {{ booking.book_id|default:booking.id }}</h2>
+            <a href="{% url 'bookings:booking_management' %}" class="btn btn-secondary">{% trans "Back to Management" %}</a>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <h4>{% trans "Customer Information" %}</h4>
+                <table class="table table-borderless">
+                    <tr><th>{% trans "Name" %}</th><td>{{ booking.customer_name|default:"—" }}</td></tr>
+                    <tr><th>{% trans "Email" %}</th><td>{{ booking.customer_email|default:"—" }}</td></tr>
+                    <tr><th>{% trans "Phone" %}</th><td>{{ booking.customer_phone|default:"N/A" }}</td></tr>
+                    <tr><th>{% trans "Nationality" %}</th><td>{{ booking.nationality|default:"N/A" }}</td></tr>
+                    <tr><th>{% trans "Address" %}</th><td>{{ booking.customer_address|default:"N/A" }}</td></tr>
+                </table>
+            </div>
+
+            <div class="col-md-6">
+                <h4>{% trans "Tour Information" %}</h4>
+                <table class="table table-borderless">
+                    <tr><th>{% trans "Tour" %}</th><td>{{ booking.tour|default:"N/A" }}</td></tr>
+                    <tr><th>{% trans "Travel Date" %}</th><td>{{ booking.travel_date|date:"F j, Y"|default:"—" }}</td></tr>
+                    <tr><th>{% trans "Status" %}</th>
+                        <td>
+                            <span class="badge bg-{% if booking.status in 'PENDING,PENDING_PAYMENT,PENDING_SUPPLIER' %}warning
+                                                     {% elif booking.status in 'CONFIRMED,SUPPLIER_CONFIRMED' %}info
+                                                     {% elif booking.status == 'PAID' %}success
+                                                     {% elif booking.status in 'CANCELLED,REJECTED' %}danger
+                                                     {% else %}secondary {% endif %}">
+                                {{ booking.get_status_display|default:booking.status }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr><th>{% trans "Total Price" %}</th><td>{{ booking.currency|default:"USD" }} {{ booking.total_price|floatformat:2|default:"0.00" }}</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <h4>{% trans "Party Size" %}</h4>
+                <ul class="list-unstyled">
+                    <li>{% trans "Adults" %}: {{ booking.number_of_adults|default:0 }}</li>
+                    <li>{% trans "Children" %}: {{ booking.number_of_children|default:0 }}</li>
+                    {% if booking.children_ages %}
+                        <li>{% trans "Children ages" %}: {{ booking.children_ages|join:", "|default:"—" }}</li>
+                    {% endif %}
+                </ul>
+            </div>
+
+            <div class="col-md-6">
+                <h4>{% trans "Pricing Summary" %}</h4>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Type" %}</th>
+                            <th>{% trans "Quantity" %}</th>
+                            <th>{% trans "Subtotal" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{% trans "Adults" %}</td>
+                            <td>{{ booking.number_of_adults|default:0 }}</td>
+                            <td>{{ booking.currency|default:"USD" }} {{ booking.adult_subtotal|floatformat:2|default:"—" }}</td>
+                        </tr>
+                        {% if booking.number_of_children > 0 %}
+                        <tr>
+                            <td>{% trans "Children" %}</td>
+                            <td>{{ booking.number_of_children }}</td>
+                            <td>{{ booking.currency|default:"USD" }} {{ booking.child_subtotal|floatformat:2|default:"—" }}</td>
+                        </tr>
+                        {% endif %}
+                        <tr class="table-success fw-bold">
+                            <td colspan="2">{% trans "Total" %}</td>
+                            <td>{{ booking.currency|default:"USD" }} {{ booking.total_price|floatformat:2|default:"0.00" }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% if booking.notes %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <h4>{% trans "Notes" %}</h4>
+                <div class="border p-3 bg-light">
+                    {{ booking.notes|linebreaks }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="row mt-5">
+            <div class="col-12">
+                <a href="{% url 'bookings:booking_management' %}" class="btn btn-secondary me-2">{% trans "Back to Management" %}</a>
+
+                {% if booking.status in 'PENDING,PENDING_PAYMENT,PENDING_SUPPLIER' %}
+                    <a href="{% url 'bookings:confirm_booking' booking.id %}" 
+                       class="btn btn-success me-2"
+                       onclick="return confirm('{% trans "Confirm this booking?" %}');">
+                        {% trans "Confirm" %}
+                    </a>
+                {% endif %}
+
+                {% if booking.status in 'PENDING,PENDING_PAYMENT,PENDING_SUPPLIER,CONFIRMED' %}
+                    <a href="{% url 'bookings:cancel_booking' booking.id %}" 
+                       class="btn btn-warning"
+                       onclick="return confirm('{% trans "Cancel this booking?" %}');">
+                        {% trans "Cancel" %}
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock content %}

@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% load static i18n booking_tags %}
+
+{% block title %}{% trans "Booking & Proposal Management" %} — Admin{% endblock title %}
+
+{% block extra_css %}
+<style>
+    .c-section { margin-top: 5rem; }
+    .admin-notice {
+        background-color: #fff3cd;
+        border: 1px solid #ffeeba;
+        padding: 0.75rem 1.25rem;
+        border-radius: 0.25rem;
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<section class="c-section">
+    <div class="container">
+        <h2 class="text-center mb-4">{% trans "Booking & Proposal Management" %}</h2>
+
+        <!-- Optional small hint that this is admin view -->
+        <div class="admin-notice text-center">
+            <small>Staff view — full actions available</small>
+        </div>
+
+        <form method="get" class="mb-4">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label for="email" class="form-label">{% trans "Customer Email" %}</label>
+                    <input type="email" name="email" id="email" class="form-control" 
+                           value="{{ email }}" placeholder="customer@example.com">
+                </div>
+                <div class="col-md-4">
+                    <label for="id" class="form-label">{% trans "Booking / Proposal ID" %}</label>
+                    <input type="text" name="id" id="id" class="form-control" 
+                           value="{{ id }}" placeholder="BK123 or PROP456">
+                </div>
+                <div class="col-md-4 align-self-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        {% trans "Search / Filter" %}
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Status filter buttons -->
+        <div class="mb-4">
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{% query_transform request 'status' 'all' %}"
+                class="btn btn-outline-primary btn-sm {% if current_status == 'all' %}active{% endif %}">
+                    {% trans "All" %}
+                </a>
+
+                <a href="{% query_transform request 'status' 'PENDING_SUPPLIER' %}"
+                class="btn btn-warning btn-sm {% if current_status == 'PENDING_SUPPLIER' %}active{% endif %}">
+                    {% trans "Pending Supplier" %}
+                </a>
+
+                <a href="{% query_transform request 'status' 'PENDING_INTERNAL' %}"
+                class="btn btn-warning btn-sm {% if current_status == 'PENDING_INTERNAL' %}active{% endif %}">
+                    {% trans "Pending Internal" %}
+                </a>
+
+                <a href="{% query_transform request 'status' 'CONFIRMED' %}"
+                class="btn btn-info btn-sm {% if current_status == 'CONFIRMED' %}active{% endif %}">
+                    {% trans "Confirmed" %}
+                </a>
+
+                <a href="{% query_transform request 'status' 'REJECTED' %}"
+                class="btn btn-outline-danger btn-sm {% if current_status == 'REJECTED' %}active{% endif %}">
+                    {% trans "Rejected" %}
+                </a>
+
+                <a href="{% query_transform request 'status' 'PAID' %}"
+                class="btn btn-success btn-sm {% if current_status == 'PAID' %}active{% endif %}">
+                    {% trans "Paid" %}
+                </a>
+            </div>
+        </div>
+
+        {% if proposals or bookings %}
+            <h3 class="mt-5 mb-3">{% trans "Proposals" %}</h3>
+            {% include "bookings/partials/proposal_list.html" %}  <!-- ← admin version with actions -->
+
+            <h3 class="mt-5 mb-3">{% trans "Bookings" %}</h3>
+            {% include "bookings/partials/booking_list.html" %}  
+            <!-- 
+                Important: 
+                Use the ADMIN version of the booking partial here!
+                If you only have customer version, create booking_list_admin.html 
+                with action buttons (confirm/reject/refund/notes/etc)
+            -->
+
+        {% elif email or id %}
+            <div class="alert alert-info text-center mt-4">
+                {% trans "No records found matching your search criteria." %}
+            </div>
+        {% else %}
+            <div class="alert alert-secondary text-center mt-4">
+                {% trans "Use the filters above to find proposals and bookings." %}
+            </div>
+        {% endif %}
+
+        <!-- Optional debug info (can be removed later) -->
+        <!-- 
+        <div class="mt-5 small text-muted">
+            <pre>DEBUG: status={{ current_status }} | email={{ email }} | id={{ id }}</pre>
+        </div>
+        -->
+    </div>
+</section>
+{% endblock content %}

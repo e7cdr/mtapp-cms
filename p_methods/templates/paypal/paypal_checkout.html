@@ -10,64 +10,80 @@
     <meta charset="UTF-8">
     <title>{% trans "Secure Payment" %} - Milano Travel</title>
 
+    <script src="https://www.paypal.com/sdk/js?client-id={{ client_id }}&currency=USD&intent=capture&components=buttons"></script>
     <script>
-        async function getBrowserSafeClientToken() {
-            const res = await fetch("{% url 'p_methods:paypal_client_token' %}");
-            if (!res.ok) throw new Error("Token fetch failed");
-            const data = await res.json();
-            return data.access_token;  // This is the v6 client token
-        }
+        paypal.Buttons({
+            style: {
+                shape: 'rect',
+                color: 'gold',
+                layout: 'vertical',
+                label: 'paypal'
+            },
 
-        async function onPayPalWebSdkLoaded() {
-            try {
-                const clientToken = await getBrowserSafeClientToken();
-                const sdk = await window.paypal.createInstance({
-                    clientToken,
-                    components: ["paypal-payments"],
-                    pageType: "checkout"
-                });
+            createOrder: function(data, actions) {
+                return fetch("{% url 'p_methods:paypal_orders_create' %}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+                    body: JSON.stringify({
+                        intent: "CAPTURE",
+                        purchase_units: [{
+                            amount: {
+                                currency_code: "USD",
+                                value: "{{ amount }}"
+                            },
+                            items: [{
+                                name: "{{ item_name|escapejs }}",   // e.g. "Cabañas Qumir • 2026-01-31 to 2026-02-03"
+                                description: "{{ item_name|escapejs }}",  // optional, repeats for extra visibility
+                                unit_amount: {
+                                    currency_code: "USD",
+                                    value: "{{ amount }}"
+                                },
+                                quantity: "1"
+                            }]
+                        }]
+                    })
+                }).then(res => {
+                    if (!res.ok) throw new Error("Order creation failed");
+                    return res.json();
+                }).then(orderData => orderData.id);
+            },
 
-                const methods = await sdk.findEligibleMethods({ currencyCode: "USD" });
+            onApprove: function(data, actions) {
+                return fetch(`/p-methods/api/orders/${data.orderID}/capture/`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+                    body: JSON.stringify({
+                        proposal_id: {{ proposal_id|default:"null" }},
+                        booking_id: {{ booking_id|default:"null" }}
+                    })
+                }).then(res => res.json())
+                  .then(result => {
+                      if (result.status === "COMPLETED" && result.redirect) {
+                          window.location.href = result.redirect;
+                      } else {
+                          alert("Payment completed but redirect failed.");
+                      }
+                  });
+            },
+
+            onError: function(err) {
+                console.error(err);
+                document.getElementById("result-message").innerHTML =
+                    `<div class="alert alert-danger">PayPal error. Please try again.</div>`;
+            },
+
+            onInit: function(data, actions) {
+                // Hide loader once buttons are ready
                 document.querySelector(".loader").style.display = "none";
-
-                if (methods.isEligible("paypal")) {
-                    const session = sdk.createPayPalOneTimePaymentSession({
-                        async onApprove(data) {
-                            const res = await fetch(`/p-methods/api/orders/${data.orderId}/capture/`, {
-                                method: "POST",
-                                headers: { "X-CSRFToken": "{{ csrf_token }}" },
-                                body: JSON.stringify({ proposal_id: {{ proposal_id|default:"null" }}, booking_id: {{ booking_id|default:"null" }} })
-                            });
-                            const result = await res.json();
-                            if (result.redirect) window.location.href = result.redirect;
-                        }
-                    });
-                    const btn = document.querySelector("paypal-button");
-                    btn.removeAttribute("hidden");
-                    btn.onclick = () => session.start({}, createOrder());
-                }
-
-            } catch (e) {
-                console.error(e);
-                document.getElementById("result-message").innerHTML = 
-                    `<div class="alert alert-danger">PayPal failed. Refresh page.</div>`;
             }
-        }
-
-        async function createOrder() {
-            const res = await fetch("{% url 'p_methods:paypal_orders_create' %}", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "X-CSRFToken": "{{ csrf_token }}" },
-                body: JSON.stringify({
-                    intent: "CAPTURE",
-                    purchase_units: [{ amount: { currency_code: "USD", value: "{{ amount }}" } }]
-                })
-            });
-            const data = await res.json();
-            return { orderId: data.id };
-        }
+        }).render("#paypal-button-container");
     </script>
-    <script async src="https://www.sandbox.paypal.com/web-sdk/v6/core" onload="onPayPalWebSdkLoaded()"></script>
     <style>
         :root {
             --primary: #003087;
@@ -299,13 +315,11 @@
                 <div class="total-currency">{{ currency }} • {% trans "One-time payment" %}</div>
             </div>
 
-            <div class="payment-options">
-                <div class="loader">{% trans "Loading secure payment options…" %}</div>
-
-                <paypal-button type="pay" hidden></paypal-button>
-                <paypal-pay-later-button hidden></paypal-pay-later-button>
-                <paypal-credit-button hidden></paypal-credit-button>
-            </div>
+                <div class="payment-options">
+                    <div class="loader">{% trans "Loading secure payment options…" %}</div>
+                    <div id="paypal-button-container"></div>
+                    <div id="result-message"></div>
+                </div>
 
             <div id="result-message"></div>
         </div>

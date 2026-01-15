@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'rest_framework',
     "rest_framework.authtoken",
     'wagtail.api.v2',
+    'django_countries',
 
 
     'axes',  # For login attempt locking

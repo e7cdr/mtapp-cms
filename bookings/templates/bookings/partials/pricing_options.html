@@ -4,136 +4,83 @@
 <link rel="stylesheet" href="{% static 'css/pricing_options.css' %}">
 {% endblock extra_css %}
 
-{% block content %}
 <div class="pricing-options-container">
-    <div class="pricing-header">
-        <h2>{% trans "Pricing Options" %}</h2>
-    </div>
+  <div class="pricing-header">
+    <h2>{% trans "Pricing Options" %}</h2>
+  </div>
 
-    <div class="pricing-summary">
-        <p><strong>{% trans "Number of Adults" %}:</strong> {{ number_of_adults }}</p>
-        <p><strong>{% trans "Number of Children" %}:</strong> {{ number_of_children }}</p>
-        <p><strong>{% trans "Number of Infants" %}:</strong> {{ number_of_infants }}</p>
-        {% if child_ages %}
-        <p><strong>{% trans "Child Ages" %}:</strong> {{ child_ages|join:", " }}</p>
-        {% endif %}
-        {% if tour.pricing_type == 'Per_room' or tour.pricing_type == 'Combined' %}
-        <p><strong>{% trans "Max Children per Room" %}:</strong> {{ max_children_per_room }}</p>
-        {% endif %}
-    </div>
+  <div class="pricing-summary">
+    <p><strong>{% trans "Adults" %}:</strong> {{ number_of_adults }} •
+       <strong>{% trans "Children" %}:</strong> {{ number_of_children }} •
+       <strong>{% trans "Infants" %}:</strong> {{ number_of_infants }}</p>
+  </div>
 
-    <div id="pricing-grid" class="pricing-grid">
-        {% for config in configurations %}
-        <div class="pricing-card {% if config.cheapest %}cheapest{% endif %}" data-index="{{ forloop.counter0 }}">
-            {% if config.cheapest %}
-            <div class="cheapest-badge">{% trans "Cheapest" %}</div>
-            {% endif %}
+    <p class="text-muted small mt-3 mb-4 text-center">
+      <strong class="badge cheapest">Cheapest</strong> = lowest total price for your group.<br>
+      <strong class="badge recommended">Recommended</strong> = best balance: good value, minimal extra rooms, and efficient use of beds.
+  </p>
 
-            <div class="card-body">
-                <div class="price-amount">{{ config.total_price|floatformat:2 }}</div>
-                <div class="price-currency">{{ config.currency|default:"USD" }}</div>
-                <div class="room-note text-center font-medium mb-4 px-4 py-2 rounded-lg bg-blue-50 text-blue-800 border border-blue-200">
-                    {% if config.cheapest %}
-                        {% trans "Best value — recommended!" %}
-                    {% elif config.singles == number_of_adults %}
-                        {% trans "Maximum privacy — all single rooms" %}
-                    {% elif config.triples > 0 %}
-                        {% trans "Great space efficiency with triples" %}
-                    {% elif config.doubles > 3 %}
-                        {% trans "Good sharing with mostly doubles" %}
-                    {% else %}
-                        {% trans "Balanced configuration" %}
-                    {% endif %}
-                    {% if config.recommended and not config.cheapest %}
-                    <div class="absolute top-4 left-4 bg-blue-500 px-4 py-2 rounded-full text-sm font-bold z-10">
-                        {% trans "Recommended" %}
-                    </div>
-                    {% endif %}
-                </div>
-                <div class="room-details">
-                    {% if config.singles > 0 %}
-                    <div class="room-row">
-                        <span>{% trans "Single Rooms" %}</span>
-                        <span>{{ config.singles }}</span>
-                    </div>
-                    {% endif %}
-                    {% if config.doubles > 0 %}
-                    <div class="room-row">
-                        <span>{% trans "Double Rooms" %}</span>
-                        <span>{{ config.doubles }}</span>
-                    </div>
-                    {% endif %}
-                    {% if config.triples > 0 %}
-                    <div class="room-row">
-                        <span>{% trans "Triple Rooms" %}</span>
-                        <span>{{ config.triples }}</span>
-                    </div>
-                    {% endif %}
-                    <div class="room-row">
-                        <span>{% trans "Total Rooms" %}</span>
-                        <span>{{ config.total_rooms }}</span>
-                    </div>
-                </div>
+  <div id="pricing-grid" class="pricing-grid">
+    {% for config in configurations %}
+    <label class="pricing-card {% if config.cheapest %}cheapest{% endif %} {% if config.recommended %}recommended{% endif %} {% if forloop.first %}selected{% endif %}"
+           data-index="{{ forloop.counter0 }}">
 
-                <button class="select-button {% if config.cheapest %}selected{% endif %}" 
-                        onclick="selectConfiguration({{ forloop.counter0 }})">
-                    {% trans "Select this option" %}
-                </button>
-            </div>
+      <input type="radio" name="pricing_config" id="config-{{ forloop.counter0 }}"
+             class="select-radio" value="{{ forloop.counter0 }}"
+             {% if forloop.first %}checked{% endif %}>
+
+      <div class="card-content">
+        <!-- Price row -->
+        <div class="price-row">
+          <span class="price-amount">{{ config.total_price|floatformat:0 }}</span>
+          <span class="price-currency">{{ config.currency|default:"USD" }}</span>
         </div>
-        {% empty %}
-        <div class="no-results">
-            {% trans "No pricing options available for the selected criteria." %}
-        </div>
-        {% endfor %}
-    </div>
 
-    <!-- Pagination -->
-    <div class="pagination" id="pagination-controls" style="display: none;">
-        <button class="prev" id="prev-page" disabled>{% trans "Previous" %}</button>
-        <span id="page-info">Page 1 of 1</span>
-        <button class="next" id="next-page" disabled>{% trans "Next" %}</button>
-    </div>
-</div>
+        <!-- Badges -->
+        <div class="badges">
+          {% if config.cheapest %}
+            <span class="badge cheapest">{% trans "Cheapest" %}</span>
+          {% endif %}
+          {% if config.recommended and not config.cheapest %}
+            <span class="badge recommended">{% trans "Recommended" %}</span>
+          {% endif %}
+        </div>
+
+        <!-- Compact room info -->
+        <div class="room-info">
+          Total Rooms: {{ config.total_rooms }}  <br>
+          {% if config.singles > 0 %}{{ config.singles }}× Single{% endif %}
+          {% if config.doubles > 0 %}{{ config.doubles }}× Double{% endif %}
+          {% if config.triples > 0 %}{{ config.triples }}× Triple{% endif %}
+        </div>
+
+        <!-- Visual selected indicator (CSS-only) -->
+        <div class="selected-indicator text-center mt-2 small fw-bold text-success" style="display: none;">
+          {% trans "Selected" %}
+        </div>
+      </div>
+    </label>
+    {% empty %}
+    <p class="text-center py-6 text-gray-500">{% trans "No options available" %}</p>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination" id="pagination-controls" style="display: none;">
+    <button class="prev" id="prev-page" disabled>{% trans "Previous" %}</button>
+    <span id="page-info">Page 1 of 1</span>
+    <button class="next" id="next-page" disabled>{% trans "Next" %}</button>
+  </div>
+</div>  
+
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const grid = document.getElementById('pricing-grid');
-    const cards = grid.querySelectorAll('.pricing-card');
-    const pagination = document.getElementById('pagination-controls');
-    const pageInfo = document.getElementById('page-info');
-    const prevBtn = document.getElementById('prev-page');
-    const nextBtn = document.getElementById('next-page');
-
-    if (cards.length <= 6) return; // No pagination needed
-
-    const cardsPerPage = 6;
-    let currentPage = 1;
-    const totalPages = Math.ceil(cards.length / cardsPerPage);
-
-    function showPage(page) {
-        cards.forEach((card, i) => {
-            const cardPage = Math.floor(i / cardsPerPage) + 1;
-            card.style.display = cardPage === page ? 'block' : 'none';
+document.addEventListener('DOMContentLoaded', function() {
+    const radios = document.querySelectorAll('input[name="pricing_config"]');
+    radios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.getElementById('selected_configuration').value = this.value;
         });
-
-        currentPage = page;
-        pageInfo.textContent = `Page ${page} of ${totalPages}`;
-        prevBtn.disabled = page === 1;
-        nextBtn.disabled = page === totalPages;
-        pagination.style.display = 'flex';
-    }
-
-    prevBtn.onclick = () => currentPage > 1 && showPage(currentPage - 1);
-    nextBtn.onclick = () => currentPage < totalPages && showPage(currentPage + 1);
-
-    showPage(1);
+    });
 });
-
-function selectConfiguration(index) {
-    document.querySelectorAll('.select-button').forEach(btn => btn.classList.remove('selected'));
-    document.querySelectorAll('.pricing-card')[index].querySelector('.select-button').classList.add('selected');
-    document.getElementById('selected_configuration').value = index;
-}
 </script>
-{% endblock content %}
