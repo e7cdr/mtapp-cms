@@ -1,9 +1,9 @@
 {% extends "base.html" %} {% load static wagtailcore_tags %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
-<link rel="stylesheet" href="{% static 'vendor/leaflet-routing-machine/leaflet-routing-machine.css' %}">
-<link rel="stylesheet" href="{% static 'vendor/leaflet-control-geocoder/Control.Geocoder.css' %}">
+<link rel="stylesheet" href="{% static 'routify/leaflet/leaflet.css' %}">
+<link rel="stylesheet" href="{% static 'routify/leaflet/leaflet-routing-machine.css' %}">
+<link rel="stylesheet" href="{% static 'routify/leaflet/Control.Geocoder.css' %}">
 
 <style>
  * {
@@ -144,17 +144,10 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
-<script src="{% static 'vendor/leaflet-routing-machine/leaflet-routing-machine.js' %}"></script>
-<script src="{% static 'vendor/leaflet-control-geocoder/Control.Geocoder.js' %}"></script>
-<script>
-    // Fix Leaflet default marker icons in production (after collectstatic)
-    L.Icon.Default.mergeOptions({
-        iconUrl: '{% static "vendor/leaflet/images/marker-icon.png" %}',
-        iconRetinaUrl: '{% static "vendor/leaflet/images/marker-icon-2x.png" %}',
-        shadowUrl: '{% static "vendor/leaflet/images/marker-shadow.png" %}'
-    });
-</script>
+<script src="{% static 'routify/leaflet/leaflet.js' %}"></script>
+<script src="{% static 'routify/leaflet/leaflet-routing-machine.js' %}"></script>
+<script src="{% static 'routify/leaflet/Control.Geocoder.js' %}"></script>
+
 <script>
   const routesData = {{ routes_json|safe }};
 
