@@ -1,9 +1,5 @@
 {% extends "base.html" %} {% load static wagtailcore_tags %}
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
-
 {% block extra_css %}
 <style>
  * {
@@ -142,9 +138,9 @@
  <input type="hidden" name="route_id" id="delete-route-id" />
 </form>
 {% endblock %}
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
-<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+{% block extra_js %}
+
 <script>
   const routesData = {{ routes_json|safe }};
 
@@ -403,4 +399,4 @@
       }
   });
 </script>
-
+{% endblock %}
