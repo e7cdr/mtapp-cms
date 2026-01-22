@@ -1,9 +1,6 @@
 {% extends "base.html" %} {% load static wagtailcore_tags %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'routify/leaflet/leaflet.css' %}">
-<link rel="stylesheet" href="{% static 'routify/leaflet/leaflet-routing-machine.css' %}">
-<link rel="stylesheet" href="{% static 'routify/leaflet/Control.Geocoder.css' %}">
 
 <style>
  * {
@@ -144,10 +141,6 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'routify/leaflet/leaflet.js' %}"></script>
-<script src="{% static 'routify/leaflet/leaflet-routing-machine.js' %}"></script>
-<script src="{% static 'routify/leaflet/Control.Geocoder.js' %}"></script>
-
 <script>
   const routesData = {{ routes_json|safe }};
 
@@ -406,5 +399,4 @@
       }
   });
 </script>
-
 {% endblock extra_js %}
