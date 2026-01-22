@@ -45,6 +45,7 @@ class HomePage(WagtailCacheMixin, SeoMixin, Page):
         max_num=1,
         use_json_field=True,
     )
+    parent_page_types = ['wagtailcore.Page']
 
     content = StreamField(
         [

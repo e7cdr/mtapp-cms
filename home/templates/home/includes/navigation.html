@@ -1,5 +1,5 @@
 
-{% load static i18n dict_tags navbar_tags wagtailcore_tags wagtailadmin_tags lang_filters %}
+{% load static i18n dict_tags navbar_tags custom_filters wagtailcore_tags wagtailadmin_tags lang_filters %}
 
 {% get_navbar_pages as navbar_pages %}
 {% wagtail_site as current_site %}
@@ -68,7 +68,25 @@
         <a href="{% url "login" %}">Login</a>
         {% endif %}
       </li>
+      {% if request.user.is_authenticated and request.user.is_staff %}
+          <div class="notification-wrapper">
+              <button id="notification-bell" class="notification-bell" aria-label="Notifications">
+                  <i class="icon-bell"></i>
+                  <span id="unread-count" class="badge">{% unread_notifications_count %}</span>
+              </button>
 
+              <div id="notification-dropdown" class="notification-dropdown hidden">
+                  <div class="dropdown-header">
+                      <h4>Notifications</h4>
+                      <span id="dropdown-unread">0 unread</span>
+                  </div>
+                  <ul id="notification-list"></ul>
+                  <div class="dropdown-footer">
+                      <a href="{% url 'notifications:frontend_list' %}">View all Notifications</a>
+                  </div>
+              </div>
+          </div>
+      {% endif %}
     </ul>
   </nav>
 </header>

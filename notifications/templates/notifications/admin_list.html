@@ -1,0 +1,11 @@
+{% extends "wagtailadmin/base.html" %} 
+{% block content %}
+<h1>Notifications</h1>
+<ul>
+ {% for notification in notifications %}
+ <li>{{ notification.message }} ({{ notification.created_at }})</li>
+ {% empty %}
+ <li>No notification</li>
+ {% endfor %}
+</ul>
+{% endblock content %}

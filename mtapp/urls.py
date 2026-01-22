@@ -30,6 +30,8 @@ urlpatterns = [
     path('robots.txt', RobotsView.as_view(), name='robots'),
     path("documents/", include(wagtaildocs_urls)),
     path('api/available-dates/', AvailableDatesView.as_view(), name='available_dates_api'),
+    path("notifications/", include('notifications.urls'), name='notifications'),
+    path('routify/', include('routify.urls')),
     
     # FUNCTIONAL APPS — NO LANGUAGE PREFIX, BUT TEMPLATES ARE TRANSLATED
     path('p-methods/', include('p_methods.urls', namespace='p_methods')),

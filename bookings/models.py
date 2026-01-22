@@ -9,8 +9,7 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.auth.models import User  # or CustomUser if used
-from django_countries.fields import CountryField
+from django.contrib.auth.models import User 
 
 
 from wagtail.snippets.models import register_snippet
@@ -180,6 +179,7 @@ class Proposal(models.Model):
                 raise ValidationError(_("Invalid content type."), code='invalid_content_type')
     
     def save(self, *args, **kwargs):
+        print(f"DEBUG: Proposal.save() called for prop_id={self.prop_id or 'NEW'}, created={not self.pk}")
         if not self.prop_id:
             self.prop_id = generate_code_id("P")
             while Proposal.objects.filter(prop_id=self.prop_id).exists():
@@ -191,7 +191,7 @@ class Proposal(models.Model):
 
             if not self.estimated_price:
                 self.estimated_price = self.calculate_estimated_price()
-
+        print(f"DEBUG: About to call super().save() for Proposal {self.prop_id or 'NEW'}")
         super().save(*args, **kwargs)
 
         if self.content_type_id and self.object_id:
@@ -396,6 +396,7 @@ class Booking(models.Model):
                 raise ValidationError(_("Invalid content type."), code='invalid_content_type')
 
     def save(self, *args, **kwargs):
+        print(f"DEBUG: Booking.save() called for book_id={self.book_id or 'NEW'}, created={not self.pk}")
         from revenue_management.models import Commission  # Avoid circular import
 
         if not self.book_id:
@@ -409,7 +410,7 @@ class Booking(models.Model):
         # Set user from related Proposal if not set and Proposal exists
         if not self.user and self.proposal:
             self.user = self.proposal.user
-
+        print(f"DEBUG: About to call super().save() for Booking {self.book_id or 'NEW'}")
         super().save(*args, **kwargs)
 
         # Create or update Commission record
@@ -474,6 +475,7 @@ class ProposalConfirmationToken(models.Model):
                 self.token = self.generate_token()
         if not self.expires_at:
             self.expires_at = timezone.now() + timezone.timedelta(hours=48)
+            
         super().save(*args, **kwargs)
 
     def is_valid(self):
@@ -540,7 +542,14 @@ class AccommodationBooking(models.Model):
         default='PENDING_PAYMENT'
     )
     supplier_notified = models.BooleanField(default=False)
-
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name=_('User'),
+        help_text=_('The user who created the reservation. Defaults to MTWEB for non-authenticated users.')
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     paid_at = models.DateTimeField(null=True, blank=True)
 

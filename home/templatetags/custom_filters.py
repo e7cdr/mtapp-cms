@@ -7,6 +7,8 @@ from django.utils.safestring import mark_safe
 from django.utils.formats import number_format
 from django.utils.translation import get_language
 
+from notifications.models import Notification
+
 register = template.Library()
 
 @register.filter
@@ -126,6 +128,16 @@ def locale_slugurl(slug):
     except:
         return '#'
     
+@register.simple_tag(takes_context=True)
+def unread_notifications_count(context):
+    request = context.get('request')
+    if not request or not request.user.is_authenticated:
+        return 0
+    return Notification.objects.filter(
+        recipient=request.user,
+        is_read=False
+    ).count()
+
 @register.filter(name='add_class')
 def add_class(field, css_class):
     if not field:

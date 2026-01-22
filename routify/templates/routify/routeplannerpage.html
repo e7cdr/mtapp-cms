@@ -1,0 +1,404 @@
+{% extends "base.html" %} {% load static wagtailcore_tags %} {% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+<style>
+ * {
+  font-family: Cambria;
+ }
+ .section-map {
+  margin-top: 5rem;
+ }
+ #map {
+  height: 80vh;
+  margin-bottom: 20px;
+ }
+ .summary-box {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+ }
+ .instructions {
+  max-height: 300px;
+  overflow-y: auto;
+ }
+ .control-bar {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+ }
+
+ .leaflet-top {
+  z-index: 999;
+ }
+ @media print {
+  .no-print {
+   display: none !important;
+  }
+  body {
+   padding: 10mm;
+  }
+  #map {
+   height: 50vh;
+   page-break-after: always;
+  }
+  h2 {
+   page-break-after: avoid;
+  }
+ }
+</style>
+{% endblock %} {% block content %}
+<div class="container section-map">
+ <h1 class="mb-4 text-center">Routify</h1>
+
+ <div class="alert alert-info no-print" role="alert">
+  <strong>How to build a route:</strong><br />
+  • Click on the map to add waypoints in order (markers appear).<br />
+  • The purple route line, total distance, driving time, and step-by-step instructions update live.<br />
+  • Drag markers to reposition or reorder.<br />
+  • Type place names manually in the panel on the right (e.g., "Cuenca Cathedral").<br />
+  • Click "Save Route" when done – names are preserved.
+ </div>
+
+ {% if messages %}
+ <div class="messages mt-3">
+  {% for message in messages %}
+  <div
+   class="alert alert-{% if message.tags == 'success' %}success{% else %}danger{% endif %} alert-dismissible fade show"
+   role="alert"
+  >
+   {{ message }}
+   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+  {% endfor %}
+ </div>
+ {% endif %}
+
+ <!-- Control bar: route selection, name, notes, buttons – all on top -->
+ <div class="control-bar no-print">
+  <div class="row align-items-end g-3">
+   <!-- Route selection -->
+   <div class="col-md-3">
+    <label for="route-select" class="form-label">Select or create route</label>
+    <select id="route-select" class="form-select">
+     <option value="">-- Create New Route --</option>
+     {% for route in routes %}
+     <option value="{{ route.id }}">{{ route.name }}</option>
+     {% endfor %}
+    </select>
+   </div>
+
+   <!-- Route name -->
+   <div class="col-md-3">
+    <label for="route-name" class="form-label">Route Name</label>
+    <input type="text" id="route-name" class="form-control" placeholder="Required for new routes" />
+   </div>
+
+   <!-- Notes -->
+   <div class="col-md-3">
+    <label for="route-notes" class="form-label">Notes</label>
+    <textarea id="route-notes" class="form-control" rows="2" placeholder="Optional notes or description"></textarea>
+   </div>
+
+   <!-- Buttons -->
+   <div class="col-md-3 d-flex align-items-end gap-2">
+    <button id="save-btn" class="btn btn-success">Save Route</button>
+    <button id="delete-btn" class="btn btn-danger" style="display: none">Delete Route</button>
+   </div>
+  </div>
+ </div>
+
+ <h2 id="current-route-name" class="mt-4"></h2>
+
+ <div id="map"></div>
+ 
+ <div class="summary-box text-center mt-4">
+     <strong>Total Distance:</strong> <span id="distance">-</span> km<br />
+     <strong>Estimated Driving Time:</strong> <span id="duration">-</span>
+    </div>
+    <button class="btn btn-outline-primary" onclick="window.print()">Print / Save as PDF</button>
+    
+    <h4 class="mt-4">Step-by-step Instructions</h4>
+    <ul id="instructions" class="list-group instructions"></ul>
+</div>
+
+<!-- Hidden forms -->
+<form id="save-form" method="post" style="display: none">
+ {% csrf_token %}
+ <input type="hidden" name="route_data" id="hidden-route-data" />
+ <input type="hidden" name="route_name" id="hidden-route-name" />
+ <input type="hidden" name="route_notes" id="hidden-route-notes" />
+ <input type="hidden" name="route_id" id="hidden-route-id" />
+</form>
+
+<form id="delete-form" method="post" style="display: none">
+ {% csrf_token %}
+ <input type="hidden" name="action" value="delete" />
+ <input type="hidden" name="route_id" id="delete-route-id" />
+</form>
+{% endblock %} {% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+<script>
+  const routesData = {{ routes_json|safe }};
+
+  let control;
+  let lastSummary = {};
+
+  document.addEventListener("DOMContentLoaded", function () {
+      const map = L.map('map').setView([-2.9, -79.0], 8);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(map);
+
+      // Dummy geocoder – creates editable inputs, shows lat/lng fallback, no network calls, user types manual names
+      const dummyGeocoder = {
+          geocode: function(query, cb, context) {
+              cb.call(context, []);
+          },
+          reverse: function(location, scale, cb, context) {
+              cb.call(context, []);
+          }
+      };
+
+      control = L.Routing.control({
+          waypoints: [null, null],  // Start with Start and End empty
+          router: L.Routing.osrmv1({
+              serviceUrl: 'https://router.project-osrm.org/route/v1'
+          }),
+          createMarker: function(i, wp) {
+              return L.marker(wp.latLng, { draggable: true });
+          },
+          addWaypoints: true,
+          draggableWaypoints: true,
+          routeWhileDragging: true,
+          autoRoute: true,
+          show: true,
+          showAlternatives: false,
+          lineOptions: {
+              styles: [{color: 'purple', opacity: 0.8, weight: 7}]
+          },
+          geocoder: dummyGeocoder
+      }).addTo(map);
+
+      // Global listener for "x" button – remove waypoint, stop propagation (no new marker)
+      document.addEventListener('click', function(e) {
+      if (e.target.classList.contains('leaflet-routing-remove-waypoint')) {
+          L.DomEvent.stopPropagation(e);  // Prevent map click from firing
+          L.DomEvent.preventDefault(e);   // Extra safety
+
+          // Find the index from the DOM structure
+          const geocoderContainer = e.target.parentNode;  // div.leaflet-routing-geocoder
+          if (!geocoderContainer) return;
+
+          const geocodersList = geocoderContainer.parentNode;  // div.leaflet-routing-geocoders
+          if (!geocodersList) return;
+
+          const index = Array.from(geocodersList.children).indexOf(geocoderContainer);
+          if (index !== -1) {
+              control.spliceWaypoints(index, 1);
+              console.log('Removed waypoint at index:', index);
+          } else {
+              console.warn('Could not find index for remove button');
+          }
+      }
+  }, true);
+
+      // Force route calculation on waypoint change (safety net)
+      control.on('waypointschanged', function() {
+          console.log('Waypoints changed – triggering route');
+          control.route();
+      });
+
+      // Map click: add waypoint in order (fill empty first)
+      map.on('click', function(e) {
+          console.log('Map clicked → adding waypoint at:', e.latlng);
+          let current = control.getWaypoints().slice();
+          const emptyIndex = current.findIndex(wp => !wp.latLng);
+          console.log('Empty slot index:', emptyIndex);
+          if (emptyIndex !== -1) {
+              current[emptyIndex] = e.latlng;  // Fill the empty slot (Start or End)
+          } else {
+              current.splice(current.length - 1, 0, e.latlng);  // Add as new Via before End
+          }
+          control.setWaypoints(current);
+          console.log('Updated waypoints:', current);
+      });
+
+      // Route success
+      control.on('routesfound', function(e) {
+          console.log('ROUTE SUCCESS:', e);
+          const route = e.routes[0];
+          const distanceKm = (route.summary.totalDistance / 1000).toFixed(1);
+          const durationMin = Math.round(route.summary.totalTime / 60);
+
+          lastSummary = {
+              total_distance_km: parseFloat(distanceKm),
+              total_duration_min: durationMin
+          };
+
+          document.getElementById('distance').textContent = distanceKm;
+          document.getElementById('duration').textContent = durationMin + ' minutes';
+
+          const list = document.getElementById('instructions');
+          list.innerHTML = '';
+          route.instructions.forEach(inst => {
+              const li = document.createElement('li');
+              li.className = 'list-group-item';
+              li.textContent = `${inst.text} – ${(inst.distance / 1000).toFixed(1)} km, ${Math.round(inst.time / 60)} min`;
+              list.appendChild(li);
+          });
+
+          updateHiddenData();
+      });
+
+      // Routing error
+      control.on('routingerror', function(e) {
+          console.error('ROUTING ERROR:', e.error);
+          document.getElementById('instructions').innerHTML = '<li class="list-group-item text-danger">Routing failed – check console.</li>';
+      });
+
+      // Load saved route
+      const select = document.getElementById('route-select');
+      const nameInput = document.getElementById('route-name');
+      const notesInput = document.getElementById('route-notes');
+      const hiddenId = document.getElementById('hidden-route-id');
+      const deleteBtn = document.getElementById('delete-btn');
+      const titleEl = document.getElementById('current-route-name');
+
+      function clearForm() {
+          select.value = '';
+          nameInput.value = '';
+          notesInput.value = '';
+          hiddenId.value = '';
+          titleEl.textContent = '';
+          deleteBtn.style.display = 'none';
+          control.setWaypoints([]);
+          document.getElementById('distance').textContent = '-';
+          document.getElementById('duration').textContent = '-';
+          document.getElementById('instructions').innerHTML = '';
+      }
+
+      select.addEventListener('change', function () {
+          const id = this.value;
+          if (id === '') {
+              clearForm();
+              return;
+          }
+          const route = routesData.find(r => r.id == id);
+          if (route) {
+              nameInput.value = route.name;
+              hiddenId.value = id;
+              titleEl.textContent = route.name;
+              document.getElementById('route-notes').value = route.notes || '';
+              deleteBtn.style.display = 'inline-block';
+
+              const latlngs = route.waypoints
+                  .filter(wp => wp.lat && wp.lng)
+                  .map(wp => {
+                      const ll = L.latLng(wp.lat, wp.lng);
+                      ll.name = wp.name || '';
+                      return ll;
+                  });
+
+              control.setWaypoints(latlngs);
+              control.route();
+
+              if (route.summary?.total_distance_km) {
+                  document.getElementById('distance').textContent = route.summary.total_distance_km;
+                  document.getElementById('duration').textContent = route.summary.total_duration_min + ' minutes';
+              }
+          }
+      });
+
+ // Save route (AJAX to avoid reload + handle update/create)
+     document.getElementById('save-btn').addEventListener('click', function () {
+         const currentName = nameInput.value.trim();
+         const currentId = hiddenId.value;
+         const notes = notesInput.value.trim();
+
+         if (!currentName) {
+             alert('Please enter a route name');
+             return;
+         }
+
+         updateHiddenData();
+
+         const formData = new FormData();
+         formData.append('route_data', document.getElementById('hidden-route-data').value);
+         formData.append('route_name', currentName);
+         formData.append('route_id', currentId || '');
+         formData.append('route_notes', notes);
+
+         fetch(window.location.href, {
+             method: 'POST',
+             body: formData,
+             headers: {
+                 'X-CSRFToken': '{{ csrf_token }}'
+             }
+         })
+         .then(response => response.json())
+         .then(data => {
+             if (data.success) {
+                 alert(data.message);
+                 // If new route, add to dropdown
+                 if (data.id && !currentId) {
+                     const option = document.createElement('option');
+                     option.value = data.id;
+                     option.text = currentName;
+                     select.appendChild(option);
+                     select.value = data.id;
+                     hiddenId.value = data.id;
+                 }
+             } else {
+                 alert('Error: ' + (data.error || 'Unknown'));
+             }
+         })
+         .catch(error => {
+             console.error('Save failed:', error);
+             alert('Save failed – check console');
+         });
+     });
+
+     deleteBtn.addEventListener('click', function (e) {
+         e.preventDefault();  // Prevent any default behavior
+
+         if (confirm('Permanently delete this route?')) {
+             const routeId = hiddenId.value;
+             if (!routeId) {
+                 alert('No route selected to delete');
+                 return;
+             }
+
+             console.log('Deleting route ID:', routeId);  // Debug
+
+             document.getElementById('delete-route-id').value = routeId;
+             document.getElementById('delete-form').submit();
+
+             // Optional: disable button to prevent double-click
+             deleteBtn.disabled = true;
+         }
+     });
+
+      function updateHiddenData() {
+          const waypoints = control.getWaypoints().map(wp => ({
+              name: wp.name || '',
+              lat: wp.latLng ? wp.latLng.lat : null,
+              lng: wp.latLng ? wp.latLng.lng : null
+          })).filter(wp => wp.lat !== null);
+
+          console.log('Saving waypoints:', waypoints);
+
+          document.getElementById('hidden-route-data').value = JSON.stringify({
+              waypoints: waypoints,
+              summary: lastSummary
+          });
+      }
+  });
+</script>
+{% endblock %}

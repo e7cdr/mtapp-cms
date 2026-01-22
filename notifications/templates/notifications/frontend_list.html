@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load humanize %}  {# for naturaltime filter: "2 hours ago" #}
+
+{% block extra_css %}
+<style>
+    .notification-card {
+        transition: background-color 0.2s ease;
+    }
+    .notification-card:hover {
+        background-color: #f8f9fa;
+    }
+    .notification-card.unread {
+        border-left: 4px solid #0d6efd;  /* Bootstrap primary blue */
+        background-color: #e7f1ff;
+    }
+
+    .n-m {
+        margin-block: 5rem;
+    }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="container n-m">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Notifications</h1>
+        <span class="badge bg-secondary fs-6">
+            {{ notifications|length }} total
+        </span>
+    </div>
+
+    {% if notifications %}
+        <div class="list-group">
+            {% for notification in notifications %}
+                <a href="{% url 'bookings:booking_management' %}" class="text-decoration-none">
+                    <div class="list-group-item list-group-item-action notification-card {% if not notification.is_read %}unread{% endif %}">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">{{ notification.message }}</h5>
+                            <small class="text-muted">{{ notification.created_at|naturaltime }}</small>
+                        </div>
+                        <p class="mb-1 text-muted small">{{ notification.created_at|date:"d M Y • H:i" }}</p>
+                        {% if not notification.is_read %}
+                            <span class="badge bg-primary">New</span>
+                        {% endif %}
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info text-center py-5" role="alert">
+            <i class="bi bi-bell-slash fs-1 d-block mb-3"></i>
+            <h5 class="alert-heading">No notifications yet</h5>
+            <p class="mb-0">When new proposals, bookings or accommodation reservations come in, you'll see them here.</p>
+        </div>
+    {% endif %}
+
+    <!-- Optional: Pagination if you add paginator later -->
+    <!-- {% if is_paginated %} ... Bootstrap pagination ... {% endif %} -->
+</div>
+{% endblock content %}

@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
     'django.contrib.sitemaps',
+    'django.contrib.humanize',
 
     # Third-party – put these early
     # 'import_export',                  # ← regular django-import-export
@@ -85,10 +86,13 @@ INSTALLED_APPS = [
     'revenue_management',
     'captcha',
     'accommodation',
+    'notifications.apps.NotificationsConfig',
+    "routify",
     # "staff_tools",
 ]
 
-
+# Important: this prevents /en/ on default language
+PREFIX_DEFAULT_LANGUAGE = False   # ← Add this (it's False by default in recent Django, but confirm)
 
 MIDDLEWARE = [  # Order matters
     'wagtailcache.cache.UpdateCacheMiddleware',

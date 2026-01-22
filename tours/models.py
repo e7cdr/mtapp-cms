@@ -42,6 +42,196 @@ from streams import blocks
 
 logger = logging.getLogger(__name__)
 
+
+class ToursIndexPage(SeoMixin, RoutablePageMixin, Page):
+    intro = RichTextField(blank=True, null=True, help_text="Text describing what the user can find on the Tours Index", verbose_name="Explanatory Text")
+    max_count = 1
+
+    template = "tours/tours_index_page.html"
+
+    parent_page_types = ['home.HomePage']
+    subpage_types = ['tours.LandTourPage', 'tours.DayTourPage', 'tours.FullTourPage']  # TODO: Add 'tours.DayTourPage', 'tours.FullTourPage'
+
+#
+    body_content = StreamField([
+            ("text_band", blocks.TextBand_Block()),
+            ("flex_images", blocks.Flex_Images_Block()),
+            ("swipers", blocks.Swipers()),
+            ("explore_block", blocks.ExploreBlock()),
+            ("video_text_content", blocks.Video_Text_Block()),
+            ("cta_2B", blocks.CTA_Block_2B()),
+
+    ],  blank=True,
+        null=True,
+        use_json_field=True)
+
+
+    content_panels = Page.content_panels + [
+        FieldPanel('intro'),
+        FieldPanel('body_content'),
+    ]
+
+    search_fields = Page.search_fields + [  # For future search
+        index.SearchField('intro'),
+    ]
+
+    translated_fields = [
+        TranslatableField('title'),
+        TranslatableField('intro'),
+        TranslatableField('seo_title'),
+        TranslatableField('search_description'),
+    ]
+
+    # These stay the same across languages
+    synchronized_fields = [
+        SynchronizedField('body_content'),  # Usually same layout
+    ]
+
+    class Meta:
+        verbose_name = "Tours List Page"
+        verbose_name_plural = "Tours Indices"
+
+    @property
+    def base_price(self):
+        """Fallback to first available price for filtering."""
+        if self.pricing_type == 'Per_room':
+            return self.price_dbl or self.price_sgl or self.price_tpl or 0
+        elif self.pricing_type == 'Per_person':
+            return self.price_adult or self.price_chd or self.price_inf or 0
+        return 0
+
+    #     return context
+    def get_context(self, request: HttpRequest):
+        context = super().get_context(request)
+
+        from tours.models import LandTourPage, DayTourPage, FullTourPage
+
+        tour_models = (LandTourPage, DayTourPage, FullTourPage)
+
+        # ALL TOURS — start with specific descendants
+        base_qs = Page.objects.live().public().descendant_of(self).specific().filter(locale=self.locale)
+
+        # Apply tour type filter first
+        tour_type_filter = request.GET.get('tour_type')
+        if tour_type_filter:
+            type_map = {
+                'land': LandTourPage,
+                'day': DayTourPage,
+                'full': FullTourPage,
+            }
+            if tour_type_filter in type_map:
+                base_qs = base_qs.type(type_map[tour_type_filter])
+
+        # Now get the actual tours (with start_date)
+        tours = []
+        for model in tour_models:
+            qs = base_qs.type(model)
+            tours.extend(list(qs))
+
+        print(f"*** Total tours collected: {len(tours)}")
+
+        # UNIQUE DESTINATIONS
+        unique_destinations = set()
+        for tour in tours:
+            if hasattr(tour, 'destination') and tour.destination:
+                unique_destinations.add(tour.destination)
+        unique_destinations = sorted(list(unique_destinations))
+        print(f"*** Unique destinations: {unique_destinations}")
+
+        # APPLY OTHER FILTERS (status, destination, pricing_type, price)
+        filtered_tours = tours.copy()
+
+        status = request.GET.get('status')
+        if status:
+            status_map = {
+                'on_discount': lambda t: t.is_on_discount,
+                'special_offer': lambda t: t.is_special_offer,
+                'sold_out': lambda t: t.is_sold_out,
+            }
+            if status in status_map:
+                filtered_tours = [t for t in filtered_tours if status_map[status](t)]
+
+        destination = request.GET.get('destination')
+        if destination:
+            filtered_tours = [t for t in filtered_tours if getattr(t, 'destination', '') == destination]
+
+        pricing_type = request.GET.get('pricing_type', '').strip()
+        if pricing_type in ['Per_room', 'Per_person', 'Combined']:
+            filtered_tours = [t for t in filtered_tours if t.pricing_type == pricing_type]
+
+        # Price filter
+        min_price = request.GET.get('min_price')
+        max_price = request.GET.get('max_price')
+        if min_price or max_price:
+            min_dec = Decimal(min_price) if min_price else None
+            max_dec = Decimal(max_price) if max_price else None
+            price_fields = ['price_sgl', 'price_dbl', 'price_tpl', 'price_adult', 'price_chd', 'price_inf']
+
+            def has_price_in_range(t):
+                for field in price_fields:
+                    price = getattr(t, field, None)
+                    if price is not None:
+                        if min_dec and price < min_dec:
+                            continue
+                        if max_dec and price > max_dec:
+                            continue
+                        return True
+                return False
+
+            filtered_tours = [t for t in filtered_tours if has_price_in_range(t)]
+
+        # ORDER BY start_date (now safe — all objects have it)
+        filtered_tours.sort(key=lambda t: getattr(t, 'start_date', date.min), reverse=True)
+
+        print(f"*** Final filtered count: {len(filtered_tours)}")
+
+        # PAGINATE
+        paginator = Paginator(filtered_tours, 12)
+        page_num = request.GET.get('page', 1)
+        try:
+            tours_pag = paginator.page(page_num)
+        except PageNotAnInteger:
+            tours_pag = paginator.page(1)
+        except EmptyPage:
+            tours_pag = paginator.page(paginator.num_pages)
+
+        context.update({
+            'tours_pag': tours_pag,
+            'unique_destinations': unique_destinations,
+            'active_filters': request.GET,
+        })
+
+        return context
+
+    # @path('all/', name='all')
+    # def all_tours(self, request):
+    #     # Reuse get_context logic, but ensure full list
+    #     context = self.get_context(request)
+    #     context['tours'] = context['tours']
+    #     return self.render(request, context_overrides=context)
+
+    # @path('land-tours/', name='land_tours')
+    # def land_tours(self, request):
+    #     # Pre-filter to LandTourPage (redundant now, but future-proof)
+    #     request.GET = request.GET.copy()  # Mutable copy
+    #     request.GET['tour_type'] = 'land'  # Force type for this route
+    #     context = self.get_context(request)
+    #     return self.render(request, context_overrides=context)
+
+    # # TODO: Add routes for other types
+    # @path('day-tours/', name='day_tours')
+    # def day_tours(self, request):
+    #     request.GET['tour_type'] = 'day'
+    #     context = self.get_context(request)
+    #     return self.render(request, context_overrides=context)
+    
+    # @path('full-tours/', name='full_tours')
+    # def full_tours(self, request):
+    #     request.GET['tour_type'] = 'full'
+    #     context = self.get_context(request)
+    #     return self.render(request, context_overrides=context)
+
+
 class AbstractTourPage(SeoMixin, Page):
     # Common content fields
     name = models.CharField(max_length=200, help_text=_("e.g., 'Cuenca Cultural Getaway'"))
@@ -673,278 +863,6 @@ class AbstractTourPage(SeoMixin, Page):
 
     def __str__(self):
         return self.title or self.name or 'Untitled Tour'
-
-class ToursIndexPage(SeoMixin, RoutablePageMixin, Page):
-    intro = RichTextField(blank=True, null=True, help_text="Text describing what the user can find on the Tours Index", verbose_name="Explanatory Text")
-    max_count = 1
-
-    template = "tours/tours_index_page.html"
-
-    parent_page_types = ['home.HomePage']
-    subpage_types = ['tours.LandTourPage', 'tours.DayTourPage', 'tours.FullTourPage']  # TODO: Add 'tours.DayTourPage', 'tours.FullTourPage'
-
-#
-    body_content = StreamField([
-            ("text_band", blocks.TextBand_Block()),
-            ("flex_images", blocks.Flex_Images_Block()),
-            ("swipers", blocks.Swipers()),
-            ("explore_block", blocks.ExploreBlock()),
-            ("video_text_content", blocks.Video_Text_Block()),
-            ("cta_2B", blocks.CTA_Block_2B()),
-
-    ],  blank=True,
-        null=True,
-        use_json_field=True)
-
-
-    content_panels = Page.content_panels + [
-        FieldPanel('intro'),
-        FieldPanel('body_content'),
-    ]
-
-    search_fields = Page.search_fields + [  # For future search
-        index.SearchField('intro'),
-    ]
-
-    translated_fields = [
-        TranslatableField('title'),
-        TranslatableField('intro'),
-        TranslatableField('seo_title'),
-        TranslatableField('search_description'),
-    ]
-
-    # These stay the same across languages
-    synchronized_fields = [
-        SynchronizedField('body_content'),  # Usually same layout
-    ]
-
-    class Meta:
-        verbose_name = "Tours List Page"
-        verbose_name_plural = "Tours Indices"
-
-    @property
-    def base_price(self):
-        """Fallback to first available price for filtering."""
-        if self.pricing_type == 'Per_room':
-            return self.price_dbl or self.price_sgl or self.price_tpl or 0
-        elif self.pricing_type == 'Per_person':
-            return self.price_adult or self.price_chd or self.price_inf or 0
-        return 0
-
-    # def get_context(self, request: HttpRequest):
-    #     context = super().get_context(request)
-
-    #     # Base queryset
-    #     tours_qs = LandTourPage.objects.live().public().filter(locale=self.locale).specific()
-
-    #     # Dynamic unique destinations
-    #     filtered_qs = tours_qs.exclude(destination__exact='')  # Filter blanks first
-    #     unique_destinations = list(filtered_qs.values_list('destination', flat=True).distinct().order_by('destination'))
-
-    #     # Apply filters
-    #     tour_type = request.GET.get('tour_type')
-    #     status = request.GET.get('status')
-    #     min_price = request.GET.get('min_price')
-    #     max_price = request.GET.get('max_price')
-    #     destination = request.GET.get('destination')
-    #     pricing_type = request.GET.get('pricing_type', '').strip()
-
-    #     if tour_type == 'land':
-    #         pass
-
-    #     if status:
-    #         status_map = {
-    #             'on_discount': Q(is_on_discount=True),
-    #             'special_offer': Q(is_special_offer=True),
-    #             'sold_out': Q(is_sold_out=True),
-    #         }
-    #         if status in status_map:
-    #             tours_qs = tours_qs.filter(status_map[status])
-    #             print("*** Applied status", status, "- count:", tours_qs.count())  # TEMP
-
-    #     if destination:
-    #         tours_qs = tours_qs.filter(destination=destination)
-    #         print("*** Applied destination", destination, "- count:", tours_qs.count())  # TEMP
-
-    #     # Pricing type filter (fixed—no .title())
-    #     pricing_type = request.GET.get('pricing_type', '').strip()
-
-    #     if pricing_type and pricing_type != '':
-    #         valid_types = ['Per_room', 'Per_person']
-    #         if pricing_type in valid_types:  # Exact match—no normalize
-    #             tours_qs = tours_qs.filter(pricing_type=pricing_type)
-    #             print("*** Applied pricing_type", pricing_type, "- count:", tours_qs.count())  # TEMP
-    #         else:
-    #             print("*** Invalid pricing_type", pricing_type, "(not in", valid_types, ")")  # TEMP
-    #     else:
-    #         print("*** Skipped pricing_type (empty)")  # TEMP
-
-    #     # Price min/max
-    #     if min_price:
-    #         min_price_dec = Decimal(min_price)
-    #         price_min_q = (
-    #             Q(price_dbl__gte=min_price_dec) | Q(price_sgl__gte=min_price_dec) | Q(price_tpl__gte=min_price_dec) |
-    #             Q(price_adult__gte=min_price_dec) | Q(price_chd__gte=min_price_dec) | Q(price_inf__gte=min_price_dec)
-    #         )
-    #         tours_qs = tours_qs.filter(price_min_q)
-
-    #     if max_price:
-    #         max_price_dec = Decimal(max_price)
-    #         price_max_q = (
-    #             Q(price_dbl__lte=max_price_dec) | Q(price_sgl__lte=max_price_dec) | Q(price_tpl__lte=max_price_dec) |
-    #             Q(price_adult__lte=max_price_dec) | Q(price_chd__lte=max_price_dec) | Q(price_inf__lte=max_price_dec)
-    #         )
-    #         tours_qs = tours_qs.filter(price_max_q)
-
-    #     # Order & Paginate
-    #     tours_qs = tours_qs.order_by('-start_date')
-    #     paginator = Paginator(tours_qs, 12)
-    #     page_num = request.GET.get('page')
-    #     try:
-    #         tours_pag = paginator.page(page_num)
-    #     except PageNotAnInteger:
-    #         tours_pag = paginator.page(1)
-    #     except EmptyPage:
-    #         tours_pag = paginator.page(paginator.num_pages)
-
-    #     # Context
-    #     context['tours'] = tours_qs
-    #     context['tours_pag'] = tours_pag
-    #     context['active_filters'] = request.GET
-    #     context['GLOBAL_ICON_CHOICES'] = blocks.GLOBAL_ICON_CHOICES
-    #     context['unique_destinations'] = unique_destinations
-
-
-    #     return context
-    def get_context(self, request: HttpRequest):
-        context = super().get_context(request)
-
-        from tours.models import LandTourPage, DayTourPage, FullTourPage
-
-        tour_models = (LandTourPage, DayTourPage, FullTourPage)
-
-        # ALL TOURS — start with specific descendants
-        base_qs = Page.objects.live().public().descendant_of(self).specific().filter(locale=self.locale)
-
-        # Apply tour type filter first
-        tour_type_filter = request.GET.get('tour_type')
-        if tour_type_filter:
-            type_map = {
-                'land': LandTourPage,
-                'day': DayTourPage,
-                'full': FullTourPage,
-            }
-            if tour_type_filter in type_map:
-                base_qs = base_qs.type(type_map[tour_type_filter])
-
-        # Now get the actual tours (with start_date)
-        tours = []
-        for model in tour_models:
-            qs = base_qs.type(model)
-            tours.extend(list(qs))
-
-        print(f"*** Total tours collected: {len(tours)}")
-
-        # UNIQUE DESTINATIONS
-        unique_destinations = set()
-        for tour in tours:
-            if hasattr(tour, 'destination') and tour.destination:
-                unique_destinations.add(tour.destination)
-        unique_destinations = sorted(list(unique_destinations))
-        print(f"*** Unique destinations: {unique_destinations}")
-
-        # APPLY OTHER FILTERS (status, destination, pricing_type, price)
-        filtered_tours = tours.copy()
-
-        status = request.GET.get('status')
-        if status:
-            status_map = {
-                'on_discount': lambda t: t.is_on_discount,
-                'special_offer': lambda t: t.is_special_offer,
-                'sold_out': lambda t: t.is_sold_out,
-            }
-            if status in status_map:
-                filtered_tours = [t for t in filtered_tours if status_map[status](t)]
-
-        destination = request.GET.get('destination')
-        if destination:
-            filtered_tours = [t for t in filtered_tours if getattr(t, 'destination', '') == destination]
-
-        pricing_type = request.GET.get('pricing_type', '').strip()
-        if pricing_type in ['Per_room', 'Per_person', 'Combined']:
-            filtered_tours = [t for t in filtered_tours if t.pricing_type == pricing_type]
-
-        # Price filter
-        min_price = request.GET.get('min_price')
-        max_price = request.GET.get('max_price')
-        if min_price or max_price:
-            min_dec = Decimal(min_price) if min_price else None
-            max_dec = Decimal(max_price) if max_price else None
-            price_fields = ['price_sgl', 'price_dbl', 'price_tpl', 'price_adult', 'price_chd', 'price_inf']
-
-            def has_price_in_range(t):
-                for field in price_fields:
-                    price = getattr(t, field, None)
-                    if price is not None:
-                        if min_dec and price < min_dec:
-                            continue
-                        if max_dec and price > max_dec:
-                            continue
-                        return True
-                return False
-
-            filtered_tours = [t for t in filtered_tours if has_price_in_range(t)]
-
-        # ORDER BY start_date (now safe — all objects have it)
-        filtered_tours.sort(key=lambda t: getattr(t, 'start_date', date.min), reverse=True)
-
-        print(f"*** Final filtered count: {len(filtered_tours)}")
-
-        # PAGINATE
-        paginator = Paginator(filtered_tours, 12)
-        page_num = request.GET.get('page', 1)
-        try:
-            tours_pag = paginator.page(page_num)
-        except PageNotAnInteger:
-            tours_pag = paginator.page(1)
-        except EmptyPage:
-            tours_pag = paginator.page(paginator.num_pages)
-
-        context.update({
-            'tours_pag': tours_pag,
-            'unique_destinations': unique_destinations,
-            'active_filters': request.GET,
-        })
-
-        return context
-
-    # @path('all/', name='all')
-    # def all_tours(self, request):
-    #     # Reuse get_context logic, but ensure full list
-    #     context = self.get_context(request)
-    #     context['tours'] = context['tours']
-    #     return self.render(request, context_overrides=context)
-
-    # @path('land-tours/', name='land_tours')
-    # def land_tours(self, request):
-    #     # Pre-filter to LandTourPage (redundant now, but future-proof)
-    #     request.GET = request.GET.copy()  # Mutable copy
-    #     request.GET['tour_type'] = 'land'  # Force type for this route
-    #     context = self.get_context(request)
-    #     return self.render(request, context_overrides=context)
-
-    # # TODO: Add routes for other types
-    # @path('day-tours/', name='day_tours')
-    # def day_tours(self, request):
-    #     request.GET['tour_type'] = 'day'
-    #     context = self.get_context(request)
-    #     return self.render(request, context_overrides=context)
-    
-    # @path('full-tours/', name='full_tours')
-    # def full_tours(self, request):
-    #     request.GET['tour_type'] = 'full'
-    #     context = self.get_context(request)
-    #     return self.render(request, context_overrides=context)
 
 class LandTourPage(AbstractTourPage): # Land Tour Details
     # Land-specific (e.g., duration_days, nights)
