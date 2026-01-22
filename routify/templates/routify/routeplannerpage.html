@@ -1,6 +1,10 @@
 {% extends "base.html" %} {% load static wagtailcore_tags %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
+<link rel="stylesheet" href="{% static 'vendor/leaflet-routing-machine/leaflet-routing-machine.css' %}">
+<link rel="stylesheet" href="{% static 'vendor/leaflet-control-geocoder/Control.Geocoder.css' %}">
+
 <style>
  * {
   font-family: Cambria;
@@ -140,11 +144,6 @@
 {% endblock %}
 
 {% block extra_js %}
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
-    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-
-
 <script>
   const routesData = {{ routes_json|safe }};
 
@@ -403,4 +402,8 @@
       }
   });
 </script>
-{% endblock %}
+<script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
+<script src="{% static 'vendor/leaflet-routing-machine/leaflet-routing-machine.js' %}"></script>
+<script src="{% static 'vendor/leaflet-control-geocoder/Control.Geocoder.js' %}"></script>
+
+{% endblock extra_js %}

@@ -2,7 +2,10 @@
   "dependencies": {
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
-    "flag-icons": "^7.5.0"
+    "flag-icons": "^7.5.0",
+    "leaflet": "^1.9.4",
+    "leaflet-control-geocoder": "^3.3.1",
+    "leaflet-routing-machine": "^3.2.12"
   },
   "name": "mtapp",
   "version": "1.0.0",
