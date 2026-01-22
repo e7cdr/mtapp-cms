@@ -108,6 +108,10 @@ STORAGES = {
     },
 }
 
+WHITENOISE_MIMETYPES = {
+    '.png': 'image/png',
+    '.jpg': 'image/jpg',
+}
 
 
 try:
