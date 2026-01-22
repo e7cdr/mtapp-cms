@@ -144,6 +144,17 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
+<script src="{% static 'vendor/leaflet-routing-machine/leaflet-routing-machine.js' %}"></script>
+<script src="{% static 'vendor/leaflet-control-geocoder/Control.Geocoder.js' %}"></script>
+<script>
+    // Fix Leaflet default marker icons in production (after collectstatic)
+    L.Icon.Default.mergeOptions({
+        iconUrl: '{% static "vendor/leaflet/images/marker-icon.png" %}',
+        iconRetinaUrl: '{% static "vendor/leaflet/images/marker-icon-2x.png" %}',
+        shadowUrl: '{% static "vendor/leaflet/images/marker-shadow.png" %}'
+    });
+</script>
 <script>
   const routesData = {{ routes_json|safe }};
 
@@ -402,8 +413,5 @@
       }
   });
 </script>
-<script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
-<script src="{% static 'vendor/leaflet-routing-machine/leaflet-routing-machine.js' %}"></script>
-<script src="{% static 'vendor/leaflet-control-geocoder/Control.Geocoder.js' %}"></script>
 
 {% endblock extra_js %}
