@@ -91,12 +91,20 @@ class Proposal(models.Model):
         ('PENDING_INTERNAL', _('Pending Internal Confirmation')),  # NEW: For company tours
         ('SUPPLIER_CONFIRMED', _('Supplier Confirmed')),  # Unified: Use this post-internal confirm too
         ('REJECTED', _('Rejected')),
+        ('EXPIRED', _('Expired – time limit reached')),
+        ('CANCELLED', _('Cancelled')),  # keep or add if missing
         ('PAID', _('Paid')),
     ]
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
         default='PENDING_SUPPLIER',
+    )
+
+    expires_at = models.DateTimeField(
+        null=True, 
+        blank=True,
+        help_text="After this time pending proposals auto-expire if not paid"
     )
 
     panels = [
@@ -538,6 +546,7 @@ class AccommodationBooking(models.Model):
             ('SUPPLIER_NOTIFIED', 'Supplier Notified'),
             ('COMPLETED', 'Completed'),
             ('CANCELLED', 'Cancelled'),
+            ('EXPIRED', 'Expired – unpaid after time limit'),
         ],
         default='PENDING_PAYMENT'
     )
@@ -552,6 +561,12 @@ class AccommodationBooking(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     paid_at = models.DateTimeField(null=True, blank=True)
+
+    expires_at = models.DateTimeField(
+        null=True, 
+        blank=True,
+        help_text="After this, pending bookings auto-expire if unpaid"
+    )
 
     class Meta:
         indexes = [

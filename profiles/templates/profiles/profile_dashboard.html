@@ -86,12 +86,12 @@
                 </div>
                 <div class="list-group list-group-flush dashboard-list">
                     {% for booking in bookings %}
-                        <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center text-white">
                             <span>{{ booking.booking_date|date:"Y-m-d H:i" }} - {% trans "Booking" %} #{{ booking.book_id }}</span>
                             <strong class="text-accent">${{ booking.total_price|floatformat:2 }}</strong>
                         </div>
                     {% empty %}
-                        <div class="list-group-item text-muted text-center">
+                        <div class="list-group-item text-muted text-center text-white">
                             {% trans "No bookings yet." %}
                         </div>
                     {% endfor %}
@@ -106,7 +106,7 @@
                 <div class="list-group list-group-flush dashboard-list">
                     {% for notice in notices %}
                         <div class="list-group-item">
-                            <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex justify-content-between align-items-center text-white">
                                 <div>
                                     <strong class="text-accent">{{ notice.title }}:</strong> {{ notice.message }}
                                 </div>
@@ -116,7 +116,7 @@
                             </div>
                         </div>
                     {% empty %}
-                        <div class="list-group-item text-muted text-center">
+                        <div class="list-group-item text-muted text-center text-white">
                             {% trans "No notices." %}
                         </div>
                     {% endfor %}

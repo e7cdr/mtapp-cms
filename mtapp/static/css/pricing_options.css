@@ -97,6 +97,7 @@
     display: flex;
     gap: 0.5rem;
     align-self: center;
+
 }
 
 .badge {
@@ -105,6 +106,11 @@
     border-radius: 999px;
     font-weight: 600;
     border: 1px solid white;
+}
+
+.badges, .badge {
+    position: relative;
+    justify-content: center;
 }
 
 .cheapest { background: #059669; color: white; }

@@ -1,3 +1,4 @@
+from datetime import timedelta
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
@@ -50,6 +51,7 @@ def accommodation_booking_modal(request, accommodation_id):
                 total_price=calculate_accommodation_price(accommodation, form.cleaned_data),
                 status='PENDING_PAYMENT',
                 created_at=timezone.now(),
+                expires_at = timezone.now() + timedelta(days=5),
             )
 
             paypal_url = request.build_absolute_uri(

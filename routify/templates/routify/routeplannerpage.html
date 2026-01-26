@@ -142,7 +142,6 @@
 
 {% block extra_js %}
 <script>
-    // Tell Leaflet exactly where the images live so Whitenoise can find them in manifest
     L.Icon.Default.mergeOptions({
         iconUrl: "{% static 'routify/leaflet/images/marker-icon.png' %}",
         iconRetinaUrl: "{% static 'routify/leaflet/images/marker-icon-2x.png' %}",

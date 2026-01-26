@@ -1,3 +1,52 @@
+
+
+/* Make offcanvas match your style on mobile */
+
+/* Mobile offcanvas full height + scroll */
+.offcanvas-lg {
+  height: 100vh !important;
+  top: 0 !important;          /* ensure starts from top */
+}
+
+.offcanvas-body {
+  overflow-y: auto !important; /* force scroll if content long */
+  padding-bottom: 3rem;        /* extra space at bottom */
+}
+
+/* Desktop menu force visible */
+@media (min-width: 992px) {
+  .navbar-menu.d-none.d-lg-flex {
+    display: flex !important;
+  }
+}
+
+/* Optional: better mobile list spacing */
+.navbar-nav .nav-item {
+  margin-bottom: 1rem;
+    
+
+}
+
+.offcanvas-lg .nav-link,
+.offcanvas-lg .dropdown-item {
+  color: white;
+  justify-content: center;
+}
+
+.offcanvas-lg .nav-link:hover,
+.offcanvas-lg .dropdown-item:hover {
+  color: #ffd500;
+}
+
+/* Hide offcanvas backdrop on desktop if needed */
+@media (min-width: 992px) {
+  .offcanvas-backdrop {
+    display: none !important;
+  }
+}
+
+
+
 /* Main Navbar */
 .navbar {
     background: rgba(0, 0, 0, 0.36);
@@ -246,7 +295,6 @@
 .badge {
     position: absolute;
     top: -8px;
-    right: -8px;
     background: red;
     color: white;
     border-radius: 50%;
@@ -267,6 +315,7 @@
     max-height: 400px;
     overflow-y: auto;
     background-color: #f2f2f2;
+    justify-self: anchor-center;
 }
 
 .hidden { display: none; }
@@ -366,4 +415,129 @@
     .navbar-menu {
         gap: 0.5rem
     }
+}
+
+.offcanvas {
+    background-color: rgba(0, 0, 0, 0.523);
+}
+
+
+/* ── CRITICAL: Disable old desktop hover dropdown logic inside offcanvas ── */
+.offcanvas .dropdown {
+  display: block !important;          /* force visible container */
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  transform: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.offcanvas .dropdown ul {
+  margin: 0;
+  padding: 0;
+}
+
+/* Make sure the Bootstrap-controlled .dropdown-menu is not blocked */
+.offcanvas .dropdown-menu {
+  position: static !important;
+  transform: none !important;
+  width: 100% !important;
+  background: rgba(0, 0, 0, 0.6) !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0.5rem 1rem !important;
+  margin: 0.25rem 0 !important;
+}
+
+.offcanvas .dropdown-menu.show {
+  display: block !important;
+}
+
+
+
+/* Optional: indent children for better hierarchy */
+.offcanvas .dropdown-item {
+  padding-left: 1.5rem;
+}
+
+
+
+/* Ensure offcanvas body doesn't clip children */
+.offcanvas-body {
+  overflow-y: auto !important;
+  overflow-x: visible !important;   /* key for absolute dropdowns if still used */
+  -webkit-overflow-scrolling: touch; /* smooth scroll on iOS */
+}
+
+/* Optional: Make sub-items indented and visible */
+.offcanvas .dropdown-item {
+  padding-left: 1.5rem;
+}
+
+/* Prevent GSAP transforms from breaking dropdown positioning */
+@media (max-width: 991.98px) {
+  .offcanvas .navbar-menu li,
+  .offcanvas .navbar-menu li * {
+    transform: none !important;
+    opacity: 1 !important;
+    translate: none !important;
+  }
+}
+
+/* In navbar.css – add at bottom */
+.offcanvas .dropdown-toggle {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: white;
+  padding: 0.5rem 1rem;
+}
+
+.offcanvas .dropdown-toggle::after {
+  float: right;
+  margin-top: 0.5rem;
+}
+
+/* Make second-level always visible in mobile offcanvas – no hover needed */
+.offcanvas .list-unstyled.ps-4 {
+  display: block !important;
+}
+
+/* Optional: visual hierarchy for nested items */
+.offcanvas .dropdown-item {
+  font-size: 0.95rem;
+}
+
+.offcanvas .list-unstyled.ps-4 .dropdown-item {
+  font-size: 0.9rem;
+  color: #e0e0e0;           /* slightly lighter for nesting */
+  padding-left: 1.75rem;
+}
+
+/* Force visibility of dropdown-menu children in offcanvas (overrides any hidden states) */
+.offcanvas .dropdown-menu li {
+  display: list-item !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 100% !important;
+  padding: 0.5rem 1rem !important; /* adjust your spacing */
+  border: none !important;
+}
+
+.offcanvas .dropdown-menu a.dropdown-item {
+  display: block !important;
+  color: #e5e7eb !important; /* your original child link color */
+  text-decoration: none !important;
+}
+
+.offcanvas .dropdown-menu a.dropdown-item:hover {
+  color: #ffd500 !important;
 }

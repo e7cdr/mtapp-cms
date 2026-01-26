@@ -102,6 +102,12 @@ def send_preconfirmation_email(proposal):
         'price_adult': price_adult,
         'price_child': price_child,
         'price_infant': price_infant,
+        'expires_at': proposal.expires_at,
+        # Optional: pre-formatted for reliability in emails
+        'expires_at_formatted': (
+            proposal.expires_at.strftime("%B %d, %Y at %I:%M %p")
+            if proposal.expires_at else "N/A"
+        ),
     })
 
     send_mail(
@@ -155,7 +161,12 @@ def send_proposal_submitted_email(proposal: Proposal, tour=None, end_date=None) 
             'site_url': settings.SITE_URL,
             'configuration_details': proposal.room_config if proposal.room_config else [],
             'proposal_url': f"{settings.SITE_URL}{reverse('bookings:proposal_success', args=[proposal.id])}",
-            'is_company_tour': getattr(tour, 'is_company_tour', False),  # NEW: Explicit for template
+            'is_company_tour': getattr(tour, 'is_company_tour', False),  
+            'expires_at': proposal.expires_at,
+            'expires_at_formatted': (
+                proposal.expires_at.strftime("%B %d, %Y at %I:%M %p")
+                if proposal.expires_at else "N/A"
+            ),
         }
 
         # Render with error logging

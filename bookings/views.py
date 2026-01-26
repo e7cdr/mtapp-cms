@@ -358,9 +358,10 @@ def submit_proposal(request, tour_type: str, tour_id: int):
         room_config=session_data.get('room_config', {'options': []}),
         selected_config=session_data.get('selected_room_config', {}),
         number_of_infants=session_data.get('number_of_infants', 0),
-        referral_code_used=ref_code,               # optional — if you add field
-        promo_code_used=applied_promo_code,        # optional — if you add field
-        discount_amount=discount_amount,           # optional — if you add field
+        referral_code_used=ref_code,       
+        promo_code_used=applied_promo_code,
+        discount_amount=discount_amount,   
+        expires_at = timezone.now() + timedelta(days=5),
     )
 
     if tour_type_str == 'day':
@@ -465,13 +466,7 @@ def render_confirmation(request, tour_type: str, tour_id: int):
         ),  # Pre-compute here
     }
     session_data = request.session.get('proposal_data')
-    # ──────── NEW DEBUG LINES (temporary) ────────
-    if session_data:
-        print("DEBUG [render_confirmation]:")
-        print(f"  referral_code from session: {session_data.get('referral_code')}")
-        print(f"  promo_code from session:    {session_data.get('promo_code')}")
     # ───────────────────────────────────────────── 
-    print(f"DEBUG: session_data exists? {bool(session_data)}")  # Keep for now
     if not session_data:
         context['error'] = _("No booking data found. Please start over.")
         print("DEBUG: No session_data - error set")

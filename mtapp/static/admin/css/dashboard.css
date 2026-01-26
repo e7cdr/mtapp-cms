@@ -27,3 +27,6 @@ ul.actionlist li {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+.dashboard-list .list-group-item{
+    color: white;
+}

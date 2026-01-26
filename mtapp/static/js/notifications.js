@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Build the clickable link inside the <li>
                     li.innerHTML = `
-                        <a href="bookings/management/" class="text-decoration-none text-dark d-block p-2">
+                        <a href="/bookings/management/" class="text-decoration-none text-dark d-block p-2">
                             ${notif.message}
                             <small class="text-muted">(${notif.created_at})</small>
                         </a>`;

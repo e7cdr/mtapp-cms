@@ -28,15 +28,6 @@ class FrontendNotificationListView(LoginRequiredMixin, UserPassesTestMixin, List
     def test_func(self):
         return self.request.user.is_staff
     
-    # def get_queryset(self):
-    #     qs = super().get_queryset().filter(recipient=self.request.user)
-        
-    #     # Mark all unread as read (even older ones)
-    #     qs.filter(is_read=False).update(is_read=True)
-        
-    #     # Then return only latest 5 for display
-    #     return qs.order_by('-created_at')[:5]
-
     def get_queryset(self):
         # Get base queryset: all notifications for this user, newest first
         base_qs = super().get_queryset().filter(recipient=self.request.user).order_by('-created_at')

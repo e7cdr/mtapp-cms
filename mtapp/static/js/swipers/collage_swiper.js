@@ -81,13 +81,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     if (userHasInteracted) {
                         e.target.unMute();
-                        e.target.setVolume(100);
+                        e.target.setVolume(10);
                     }
                 },
                 onStateChange: (e) => {
                     if (userHasInteracted && e.data !== YT.PlayerState.ENDED) {
                         e.target.unMute();
-                        e.target.setVolume(100);
+                        e.target.setVolume(10);
                     }
                 }
             }
@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if (userHasInteracted) {
                     player.unMute();
-                    player.setVolume(100);
+                    player.setVolume(10);
                 }
             }
 

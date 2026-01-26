@@ -109,12 +109,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 player = players[activeRealIndex] = loadAndPlayYouTubeVideo(youtubeContainer);
             } else {
                 player.playVideo();
-
-                // Unmute if user has interacted
-                if (userHasInteracted) {
-                    player.unMute();
-                    player.setVolume(3);
-                }
             }
 
             // Auto-advance only when video truly ends

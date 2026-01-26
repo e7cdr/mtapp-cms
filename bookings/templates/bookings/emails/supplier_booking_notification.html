@@ -1,23 +1,112 @@
 <!DOCTYPE html>
-<html>
-<body style="font-family: Arial, sans-serif;">
-  <h2>New Booking Received & Paid</h2>
-  <p>A client has booked and paid for your accommodation:</p>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% trans "New Paid Booking Notification" %}</title>
+    <!-- Safe <style> block for dark mode + mobile -->
+    <style type="text/css">
+        @media (prefers-color-scheme: dark) {
+            body { background: #121212 !important; color: #e0e0e0 !important; }
+            .container { background: #1e1e1e !important; color: #e0e0e0 !important; }
+            .header { background: #0d6efd !important; }
+            a { color: #4da6ff !important; }
+        }
+        @media only screen and (max-width: 600px) {
+            .container { width: 100% !important; padding: 10px !important; }
+            .content-padding { padding: 20px 15px !important; }
+        }
+    </style>
+</head>
+<body style="margin:0; padding:0; font-family: Arial, Helvetica, sans-serif; background-color:#f4f4f4; color:#333333;">
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#f4f4f4; padding:20px 0;">
+        <tr>
+            <td align="center">
+                <table role="presentation" class="container" border="0" cellpadding="0" cellspacing="0" width="600" style="background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+                    
+                    <!-- Header -->
+                    <tr>
+                        <td class="header" style="padding:30px 40px 20px; background-color:#0d6efd; color:#ffffff; text-align:center;">
+                            <h2 style="margin:0; font-size:26px;">{% trans "New Paid Booking Received" %}</h2>
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td class="content-padding" style="padding:30px 40px; font-size:16px; line-height:1.5;">
+                            <p style="margin:0 0 25px;">
+                                {% trans "Dear Partner," %}
+                            </p>
+                            <p style="margin:0 0 25px;">
+                                {% trans "A client has completed payment for the following accommodation booking:" %}
+                            </p>
 
-  <h3>{{ accommodation.name }}</h3>
-  <ul>
-    <li><strong>Guest:</strong> {{ booking.customer_name }}</li>
-    <li><strong>Email:</strong> {{ booking.customer_email }}</li>
-    <li><strong>Phone:</strong> {{ booking.customer_phone|default:"Not provided" }}</li>
-    <li><strong>Dates:</strong> {{ booking.check_in }} → {{ booking.check_out }} ({{ nights }} night{{ nights|pluralize }})</li>
-    <li><strong>Guests:</strong> {{ booking.adults }} adult{{ booking.adults|pluralize }}, {{ booking.children }} child{{ booking.children|pluralize }}</li>
-    <li><strong>Amount Paid:</strong> ${{ booking.total_price }}</li>
-    <li><strong>Notes:</strong> {{ booking.notes|default:"None" }}</li>
-  </ul>
+                            <!-- Accommodation & Guest Info -->
+                            <h3 style="margin:0 0 15px; color:#0d6efd; font-size:22px;">{{ accommodation.name }}</h3>
+                            
+                            <table role="presentation" border="0" cellpadding="10" cellspacing="0" width="100%" style="font-size:15px; border-collapse:collapse;">
+                                <tr style="border-bottom:1px solid #eee;">
+                                    <td style="padding:10px; font-weight:bold; width:35%;">{% trans "Guest" %}</td>
+                                    <td style="padding:10px;">{{ booking.customer_name }}</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #eee;">
+                                    <td style="padding:10px; font-weight:bold;">{% trans "Email" %}</td>
+                                    <td style="padding:10px;">{{ booking.customer_email }}</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #eee;">
+                                    <td style="padding:10px; font-weight:bold;">{% trans "Phone" %}</td>
+                                    <td style="padding:10px;">{{ booking.customer_phone|default:"Not provided" }}</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #eee;">
+                                    <td style="padding:10px; font-weight:bold;">{% trans "Dates" %}</td>
+                                    <td style="padding:10px;">
+                                        {{ booking.check_in|date:"F j, Y" }} → {{ booking.check_out|date:"F j, Y" }} 
+                                        <span style="color:#555;">({{ nights }} night{{ nights|pluralize }})</span>
+                                    </td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #eee;">
+                                    <td style="padding:10px; font-weight:bold;">{% trans "Guests" %}</td>
+                                    <td style="padding:10px;">
+                                        {{ booking.adults }} adult{{ booking.adults|pluralize }},
+                                        {{ booking.children }} child{{ booking.children|pluralize }}
+                                        {% if booking.child_ages %}(ages: {{ booking.child_ages|join:", " }}){% endif %}
+                                    </td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #eee;">
+                                    <td style="padding:10px; font-weight:bold;">{% trans "Amount Paid" %}</td>
+                                    <td style="padding:10px; font-weight:bold; font-size:18px; color:#28a745;">
+                                        {{ booking.currency|default:"$" }} {{ booking.total_price|floatformat:2 }}
+                                    </td>
+                                </tr>
+                                {% if booking.notes %}
+                                <tr>
+                                    <td style="padding:10px; font-weight:bold; vertical-align:top;">{% trans "Notes" %}</td>
+                                    <td style="padding:10px;">{{ booking.notes }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
 
-  <p><strong>No action required.</strong> The booking is confirmed and paid.</p>
-  <p>Thank you for your partnership!</p>
+                            <!-- Confirmation message -->
+                            <p style="margin:40px 0 20px; font-size:17px; font-weight:bold; color:#28a745; text-align:center;">
+                                {% trans "No action required — the booking is confirmed and fully paid." %}
+                            </p>
 
-  <small>Milano Travel</small>
+                            <p style="margin:0 0 30px; text-align:center; font-size:15px;">
+                                {% trans "Thank you for your partnership with Milano Travel!" %}
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding:20px; background-color:#f8f9fa; text-align:center; font-size:14px; color:#666;">
+                            <p style="margin:0;">Milano Travel</p>
+                            <p style="margin:5px 0 0;">{% trans "Supporting your business every step of the way" %}</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>

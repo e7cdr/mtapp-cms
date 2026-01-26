@@ -1,48 +1,136 @@
 {% load i18n booking_tags %}
 <!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>{% trans "Your Tour Itinerary" %}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% trans "Your Tour Itinerary – Thank You!" %}</title>
+    <!-- Safe minimal <style> block: dark mode + mobile tweaks -->
+    <style type="text/css">
+        @media (prefers-color-scheme: dark) {
+            body { background: #121212 !important; color: #e0e0e0 !important; }
+            .container { background: #1e1e1e !important; color: #e0e0e0 !important; }
+            a { color: #4da6ff !important; }
+            .alert { background: #442222 !important; color: #ffcccc !important; }
+        }
+        @media only screen and (max-width: 600px) {
+            .container { width: 100% !important; padding: 10px !important; }
+            .content-padding { padding: 20px !important; }
+        }
+    </style>
 </head>
-<body>
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h1>{% trans "Your Tour Itinerary" %}</h1>
-        <p>{% trans "Dear" %} {{ booking.customer_name }},</p>
-        <p>{% trans "Thank you for your booking! Your itinerary is attached as a PDF (itinerary.pdf)." %}</p>
-        <ul>
-            <li>{% trans "Booking ID" %}: {{ booking.book_id }}</li>
-            <li>{% trans "Tour" %}: {{ booking.tour|default:"Unknown Tour" }}</li>
-            <li>{% trans "Travel Date" %}: {{ booking.travel_date|date:"F j, Y" }}</li>
-            <li>{% trans "End Date" %}: {{ end_date|date:"F j, Y" }}</li>
-            <li>{% trans "Adults" %}: {{ booking.number_of_adults }}</li>
-            <li>{% trans "Children" %}: {{ booking.number_of_children }}</li>
-            {% if configuration_details %}
-            <li>{% trans "Room Configuration" %}:
-                <ul>
-                    {% if configuration_details.singles %}
-                    <li>{% trans "Singles" %}: {{ configuration_details.singles }} ({{ configuration_details.singles }} adult{{ configuration_details.singles|pluralize }})</li>
-                    {% endif %}
-                    {% if configuration_details.doubles %}
-                    <li>{% trans "Doubles" %}: {{ configuration_details.doubles }} ({{ configuration_details.doubles|multiply:2 }} adults)</li>
-                    {% endif %}
-                    {% if configuration_details.triples %}
-                    <li>{% trans "Triples" %}: {{ configuration_details.triples }} ({{ configuration_details.triples|multiply:3 }} adults)</li>
-                    {% endif %}
-                    {% if configuration_details.children %}
-                    <li>{% trans "Children" %}: {{ configuration_details.children }}</li>
-                    {% endif %}
-                    {% if configuration_details.infants %}
-                    <li>{% trans "Infants" %}: {{ configuration_details.infants }}</li>
-                    {% endif %}
-                    <li style="color: green">{% trans "Total" %}: {{ booking.currency }} {{ configuration_details.total|default:booking.total_price }}</li>
-                </ul>
-            </li>
-            {% endif %}
-        </ul>
-        <p>
-            {% trans "View your booking details at:" %}
-            <a href="{{ site_url }}/bookings/customer-portal/?email={{ booking.customer_email|urlencode }}">{% trans "Customer Portal" %}</a>
-        </p>
-        <p>{% trans "Thank you for choosing Milano Travel," %}</p>
-        <p>{% trans "Milano Travel Team" %}</p>
-    </div>
+<body style="margin:0; padding:0; font-family: Arial, Helvetica, sans-serif; background-color:#f4f4f4; color:#333333;">
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#f4f4f4; padding:20px 0;">
+        <tr>
+            <td align="center">
+                <table role="presentation" class="container" border="0" cellpadding="0" cellspacing="0" width="600" style="background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+                    
+                    <!-- Header -->
+                    <tr>
+                        <td style="padding:30px 40px 20px; background-color:#28a745; color:#ffffff; text-align:center;">
+                            <h1 style="margin:0; font-size:28px;">{% trans "Your Tour Itinerary" %}</h1>
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td class="content-padding" style="padding:30px 40px; font-size:16px; line-height:1.5;">
+                            <p style="margin:0 0 20px;">{% trans "Dear" %} {{ booking.customer_name }},</p>
+                            
+                            <!-- Expiration warning (if you have expires_at field) -->
+                            {% if booking.expires_at %}
+                            <p style="margin:0 0 25px; padding:15px; background-color:#fff3cd; border:1px solid #ffeeba; border-radius:6px; color:#856404; font-weight:bold; text-align:center;">
+                                {% blocktrans trimmed with expiry=booking.expires_at|date:"F j, Y \a\t P" %}
+                                Important: Please note that unpaid bookings expire on {{ expiry }}. 
+                                Complete any remaining payment soon to keep your reservation confirmed.
+                                {% endblocktrans %}
+                            </p>
+                            {% endif %}
+                            
+                            <p style="margin:0 0 25px;">
+                                {% trans "Thank you for your booking! Your detailed itinerary is attached as a PDF (itinerary.pdf)." %}
+                            </p>
+                            
+                            <!-- Booking Summary -->
+                            <h3 style="margin:30px 0 10px; color:#28a745;">{% trans "Booking Summary" %}</h3>
+                            <table role="presentation" border="0" cellpadding="8" cellspacing="0" width="100%" style="font-size:15px; border-collapse:collapse;">
+                                <tr style="border-bottom:1px solid #eee;">
+                                    <td style="padding:8px; font-weight:bold; width:40%;">{% trans "Booking ID" %}</td>
+                                    <td style="padding:8px;">{{ booking.book_id }}</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #eee;">
+                                    <td style="padding:8px; font-weight:bold;">{% trans "Tour" %}</td>
+                                    <td style="padding:8px;">{{ booking.tour|default:"Unknown Tour" }}</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #eee;">
+                                    <td style="padding:8px; font-weight:bold;">{% trans "Travel Date" %}</td>
+                                    <td style="padding:8px;">{{ booking.travel_date|date:"F j, Y" }}</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #eee;">
+                                    <td style="padding:8px; font-weight:bold;">{% trans "End Date" %}</td>
+                                    <td style="padding:8px;">{{ end_date|date:"F j, Y"|default:"—" }}</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #eee;">
+                                    <td style="padding:8px; font-weight:bold;">{% trans "Adults" %}</td>
+                                    <td style="padding:8px;">{{ booking.number_of_adults }}</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #eee;">
+                                    <td style="padding:8px; font-weight:bold;">{% trans "Children" %}</td>
+                                    <td style="padding:8px;">{{ booking.number_of_children }}</td>
+                                </tr>
+                            </table>
+
+                            <!-- Room Configuration (if present) -->
+                            {% if configuration_details %}
+                            <h4 style="margin:25px 0 10px; color:#555;">{% trans "Room Configuration" %}</h4>
+                            <table role="presentation" border="0" cellpadding="6" cellspacing="0" width="100%" style="font-size:14px;">
+                                {% if configuration_details.singles %}
+                                <tr><td>{% trans "Singles" %}:</td><td>{{ configuration_details.singles }} ({{ configuration_details.singles }} adult{{ configuration_details.singles|pluralize }})</td></tr>
+                                {% endif %}
+                                {% if configuration_details.doubles %}
+                                <tr><td>{% trans "Doubles" %}:</td><td>{{ configuration_details.doubles }} ({{ configuration_details.doubles|multiply:2 }} adults)</td></tr>
+                                {% endif %}
+                                {% if configuration_details.triples %}
+                                <tr><td>{% trans "Triples" %}:</td><td>{{ configuration_details.triples }} ({{ configuration_details.triples|multiply:3 }} adults)</td></tr>
+                                {% endif %}
+                                {% if configuration_details.children %}
+                                <tr><td>{% trans "Children" %}:</td><td>{{ configuration_details.children }}</td></tr>
+                                {% endif %}
+                                {% if configuration_details.infants %}
+                                <tr><td>{% trans "Infants" %}:</td><td>{{ configuration_details.infants }}</td></tr>
+                                {% endif %}
+                                <tr>
+                                    <td style="font-weight:bold; color:#28a745;">{% trans "Total" %}:</td>
+                                    <td style="font-weight:bold; color:#28a745; font-size:18px;">
+                                        {{ booking.currency }} {{ configuration_details.total|default:booking.total_price }}
+                                    </td>
+                                </tr>
+                            </table>
+                            {% endif %}
+
+                            <!-- CTA / Portal link -->
+                            <p style="margin:40px 0 20px; text-align:center;">
+                                <a href="{{ site_url }}/bookings/customer-portal/?email={{ booking.customer_email|urlencode }}" style="background-color:#007BFF; color:#ffffff; padding:14px 35px; text-decoration:none; border-radius:6px; font-size:17px; font-weight:bold; display:inline-block;">
+                                    {% trans "View Booking in Customer Portal" %}
+                                </a>
+                            </p>
+
+                            <p style="font-size:14px; color:#666; text-align:center; margin:0 0 30px;">
+                                {% trans "You can access your booking details, make changes (if allowed), or view status anytime." %}
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding:20px; background-color:#f8f9fa; text-align:center; font-size:14px; color:#666;">
+                            <p style="margin:0;">{% trans "Thank you for choosing Milano Travel" %}</p>
+                            <p style="margin:5px 0 0;">{% trans "Milano Travel Team" %}</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
+</html>

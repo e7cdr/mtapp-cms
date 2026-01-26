@@ -1,6 +1,9 @@
 {% extends "base.html" %} {% load static i18n tour_filters custom_filters wagtailcore_tags wagtailimages_tags %}
 {% block title %}{{ self.title }}
 {% endblock title %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/detail_page.css' %}" type="text/css" charset="utf-8">
+{% endblock extra_css %}
 {% block content %}
 
  <div class="detail-container">

@@ -1,0 +1,212 @@
+
+{% load static i18n dict_tags navbar_tags custom_filters wagtailcore_tags wagtailadmin_tags lang_filters %}
+
+{% get_navbar_pages as navbar_pages %}
+{% wagtail_site as current_site %}
+
+<header>
+  <nav class="navbar">
+    <a href="{% url 'wagtail_serve' '' %}">
+      <img src="{% static 'default_media/logo.png' %}" 
+      alt="navigation bar logo" 
+      class="navbar-logo"
+      loading="lazy"
+      height="auto"
+      width="auto"/>
+    </a>
+    <ul class="navbar-menu">
+      <form action="{% url 'set_language' %}" method="post" id="languageForm" class="lang-toggle">
+          {% csrf_token %}
+          <input type="hidden" name="language" id="languageInput">
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button type="button" id="languageToggle" aria-label="{% trans "Toggle Language" %}">
+              {% comment %} <i class="bi bi-globe"></i> {% endcomment %}
+              <span id="currentLang">
+                  {% load lang_filters %}  <!-- Load your custom filter; adjust app name if needed -->
+                  {% get_language_info for LANGUAGE_CODE as lang %}
+              <span id="flagIcon" class="fi fi-{{ LANGUAGE_CODE|language_to_flag }}" aria-hidden="true"></span>
+              {% comment %} <span id="langName">{{ lang.name_local }}</span> {% endcomment %}
+              </span>
+          </button>
+      </form>
+      {% for navbar_page in navbar_pages %}
+        {% with children=navbar_page.get_children.live.specific %}
+          <li class="{% if children %}has-dropdown{% endif %}">
+            <a href="{{ navbar_page.url }}">{{ navbar_page.title }}</a>
+
+            {% if children %}
+              <div class="dropdown">
+                <ul>
+                  {% for child in children %}
+                    <li>
+                      <a href="{{ child.url }}">{{ child.title }}</a>
+
+                      {# Optional second level #}
+                      {% with grandkids=child.get_children.live.specific %}
+                        {% if grandkids %}
+                          <div class="sub-menu">
+                            <ul>
+                              {% for grand in grandkids %}
+                                <li><a href="{{ grand.url }}">{{ grand.title }}</a></li>
+                              {% endfor %}
+                            </ul>
+                          </div>
+                        {% endif %}
+                      {% endwith %}
+                    </li>
+                  {% endfor %}
+                </ul>
+              </div>
+            {% endif %}
+          </li>
+        {% endwith %}
+      {% endfor %}
+      <li class="auth_option">
+        {% if request.user.is_authenticated %}
+        <a href="{% url "account_logout" %}">Logout</a>
+        {% else %}
+        <a href="{% url "login" %}">Login</a>
+        {% endif %}
+      </li>
+      {% if request.user.is_authenticated and request.user.is_staff %}
+          <div class="notification-wrapper">
+              <button id="notification-bell" class="notification-bell" aria-label="Notifications">
+                  <i class="icon-bell"></i>
+                  <span id="unread-count" class="badge">{% unread_notifications_count %}</span>
+              </button>
+
+              <div id="notification-dropdown" class="notification-dropdown hidden">
+                  <div class="dropdown-header">
+                      <h4>Notifications</h4>
+                      <span id="dropdown-unread">0 unread</span>
+                  </div>
+                  <ul id="notification-list"></ul>
+                  <div class="dropdown-footer">
+                      <a href="{% url 'notifications:frontend_list' %}">View all Notifications</a>
+                  </div>
+              </div>
+          </div>
+      {% endif %}
+    </ul>
+  </nav>
+</header>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const button = document.getElementById('languageToggle');
+    const form = document.getElementById('languageForm');
+    const input = document.getElementById('languageInput');
+    const currentSpan = document.getElementById('currentLang');
+    const flagIcon = document.getElementById('flagIcon');
+    const langName = document.getElementById('langName');
+
+    // Flag mapping (mirrors your Python filter; extend as needed)
+    const flagMapping = {
+        'en-us': 'us',
+        'en-gb': 'gb',
+        'es': 'es',
+        'fr': 'fr',
+        'de': 'de',
+        'it': 'it',
+        'is': 'is',
+        'pl': 'pl',
+        'pt-br': 'br',
+        'pt-pt': 'pt',
+        'ja': 'jp',
+        'zh-hans': 'cn',  // Simplified Chinese
+        'zh-hant': 'tw',  // Traditional Chinese (Taiwan)
+        // Add more: 'ar': 'sa', etc. Default: 'gb'
+    };
+
+    // Current language object
+    const currentLangObj = {
+        code: '{{ LANGUAGE_CODE }}',
+        name: '{% get_language_info for LANGUAGE_CODE as lang %}{{ lang.name_local }}'
+    };
+
+    // Build array from translations (all others)
+    const otherLanguages = [
+        {% if page %}
+            {% for translation in page.get_translations.live %}
+                {
+                    code: '{{ translation.locale.language_code }}',
+                    name: '{% get_language_info for translation.locale.language_code as lang %}{{ lang.name_local }}'
+                },
+                {% endfor %}
+        {% endif %}
+    ];
+
+    // Full array: Current + others (dedupe)
+    let languages = [currentLangObj, ...otherLanguages];
+    const seenCodes = new Set();
+    languages = languages.filter(lang => {
+        if (seenCodes.has(lang.code)) return false;
+        seenCodes.add(lang.code);
+        return true;
+    });
+
+    // FIXED ORDER: Sort by language code (always [en, es, is])
+    languages.sort((a, b) => a.code.localeCompare(b.code));
+
+    // Log for debugging
+    console.log('Current LANGUAGE_CODE:', '{{ LANGUAGE_CODE }}');
+    console.log('Sorted Languages array:', languages);
+
+    if (languages.length <= 1) {
+        button.disabled = true;
+        console.log('Only one language; toggle disabled.');
+        return;
+    }
+
+    // Find current index in sorted array (exact match first)
+    const currentCode = currentLangObj.code;
+    let currentIndex = languages.findIndex(lang => lang.code === currentCode);
+    if (currentIndex === -1) {
+        // Fallback: Normalized (e.g., 'en-us' -> 'en')
+        function normalizeCode(code) {
+            return code.toLowerCase().split('-')[0];
+        }
+        const normalizedCurrent = normalizeCode(currentCode);
+        currentIndex = languages.findIndex(lang => normalizeCode(lang.code) === normalizedCurrent);
+        console.log('Exact match failed; using normalized. Index:', currentIndex);
+    }
+    if (currentIndex === -1) {
+        currentIndex = 0;
+        console.log('No match found; defaulting to index 0.');
+    }
+
+    console.log('Starting index:', currentIndex);
+
+    // Set initial hidden input
+    input.value = languages[currentIndex].code;
+
+  // Update display (now handles flag + name)
+  function updateDisplay() {
+      const lang = languages[currentIndex];
+      input.value = lang.code;
+
+      if (langName) {  // Guard if somehow missing
+          langName.textContent = lang.name;
+      }
+
+      // Update flag: New class format for v6+
+      const flagCode = flagMapping[lang.code] || 'gb';
+      flagIcon.className = `fi fi-${flagCode}`;
+
+      console.log('Previewing:', lang.name, '(Flag:', flagCode, '; Index:', currentIndex, ')');
+  }
+
+    // Initial display update (ensures flag/name sync on load)
+    updateDisplay();
+
+    // Cycle on click
+    button.addEventListener('click', function(e) {
+        e.preventDefault();
+        currentIndex = (currentIndex + 1) % languages.length;
+        updateDisplay();
+
+        setTimeout(() => {
+            form.submit();
+        }, 150);
+    });
+});
+</script>

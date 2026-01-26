@@ -1,62 +1,100 @@
 {% load i18n %}
 <!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>{% trans "Your Tour Proposal" %}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% trans "Your Tour Proposal – Action Required" %}</title>
+    <!-- Minimal <style> block – safe for Gmail/Apple; Outlook mostly ignores -->
+    <style type="text/css">
+        @media (prefers-color-scheme: dark) {
+            body { background: #121212 !important; color: #e0e0e0 !important; }
+            .container { background: #1e1e1e !important; }
+            a { color: #4da6ff !important; }
+        }
+        @media only screen and (max-width: 600px) {
+            .container { width: 100% !important; padding: 10px !important; }
+            .btn { width: 100% !important; text-align: center !important; }
+        }
+    </style>
 </head>
-<body>
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h1>{% trans "Your Tour Proposal" %}</h1>
-        <p>{% trans "Dear" %} {{ proposal.customer_name }},</p>
-        <p>{% trans "Your tour proposal has been confirmed by the supplier. Please complete the payment to finalize your booking:" %}</p>
-        
-        <!-- Basic Summary (mirrors proposal success) -->
-        <ul>
-            <li>{% trans "Tour" %}: {{ tour|default:"Unknown Tour" }}</li>
-            <li>{% trans "Travel Date" %}: {{ proposal.travel_date|date:"F j, Y" }}</li>
-            <li>{% trans "End Date" %}: {{ end_date|date:"F j, Y" }}</li>
-            <li>{% trans "Adults" %}: {{ proposal.number_of_adults }}</li>
-            <li>{% trans "Children" %}: {{ proposal.number_of_children }}</li>
-            <li>{% trans "Infants" %}: {{ proposal.number_of_infants|default:0 }}</li>
-            <li>{% trans "Notes" %}: {{ proposal.notes|default:"None" }}</li>
-        </ul>
-        
-        <!-- Pricing Breakdown (conditional on pricing_type) -->
-        <h3>{% trans "Pricing Details" %}</h3>
-        {% if pricing_type == 'Per_room' %}
-            {% if configuration_details %}
-            <p>{% trans "Room Configuration" %}:</p>
-            <ul>
-                <li>{% trans "Singles" %}: {{ configuration_details.singles|default:0 }}</li>
-                <li>{% trans "Doubles" %}: {{ configuration_details.doubles|default:0 }}</li>
-                <li>{% trans "Triples" %}: {{ configuration_details.triples|default:0 }}</li>
-                <li>{% trans "Children" %}: {{ configuration_details.children|default:0 }}</li>
-                <li>{% trans "Infants" %}: {{ configuration_details.infants|default:0 }}</li>
-                <li><strong>{% trans "Total Estimated Price" %}: {{ proposal.currency }} {{ proposal.estimated_price|default:0 }}</strong></li>
-            </ul>
-            {% else %}
-                <p>{% trans "No room configuration available." %}</p>
-            {% endif %}
-        {% else %}  <!-- Per_person -->
-            <ul>
-                <li>{% trans "Adults" %}: {{ proposal.number_of_adults }} x {{ proposal.currency }} {{ price_adult|default:0 }} = {{ proposal.currency }} {{ per_person_details.adult_subtotal|default:0 }}</li>
-                <li>{% trans "Children" %}: {{ proposal.number_of_children }} x {{ proposal.currency }} {{ price_child|default:0 }} = {{ proposal.currency }} {{ per_person_details.child_subtotal|default:0 }}</li>
-                <li>{% trans "Infants" %}: {{ proposal.number_of_infants|default:0 }} x {{ proposal.currency }} {{ price_infant|default:0 }} = {{ proposal.currency }} {{ per_person_details.infant_subtotal|default:0 }}</li>
-                <li><strong>{% trans "Total Estimated Proposal Price" %}: {{ proposal.currency }} {{ proposal.estimated_price|default:0 }}</strong></li>
-            </ul>
-        {% endif %}
-        
-        <!-- Payment Button (fake for testing—calls payment_success) -->
-        <p>{% trans "Click the button below to proceed with payment:" %}</p>
-        <a href="{{ payment_link }}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; display: inline-block; border-radius: 4px;">
-            {% trans "Pay Now" %}
-        </a>
-        <p class="small text-muted">{% trans "This link is secure and will process your payment." %}</p>
-        
-        <p>
-            {% trans "You can track your proposal status at:" %}
-            <a href="{{ site_url }}/bookings/customer-portal/">{% trans "Customer Portal" %}</a>
-        </p>
-        <p>{% trans "Thank you for choosing Milano Travel," %}</p>
-        <p>{% trans "Milano Travel Team" %}</p>
-    </div>
+<body style="margin:0; padding:0; font-family: Arial, Helvetica, sans-serif; background-color:#f4f4f4; color:#333333;">
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#f4f4f4; padding:20px 0;">
+        <tr>
+            <td align="center">
+                <table role="presentation" class="container" border="0" cellpadding="0" cellspacing="0" width="600" style="background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+                    
+                    <!-- Header -->
+                    <tr>
+                        <td style="padding:30px 40px 20px; background-color:#007BFF; color:#ffffff; text-align:center;">
+                            <h1 style="margin:0; font-size:28px;">{% trans "Your Tour Proposal" %}</h1>
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding:30px 40px; font-size:16px; line-height:1.5;">
+                            <p style="margin:0 0 20px;">{% trans "Dear" %} {{ proposal.customer_name }},</p>
+                            {% if proposal.expires_at %}
+                            <p style="margin:0 0 20px; font-weight:bold; color:#d32f2f; font-size:18px;">
+                                    Important: This proposal expires on 
+                                    <strong>{{ proposal.expires_at|date:"F j, Y \a\t P" }}</strong>.
+                                    Please complete payment before then to secure your dates.
+                                </p>
+                            {% else %}
+                            <p style="margin:0 0 20px;">
+                                    Important: This proposal has a limited validity period — please pay soon.
+                                </p>
+                            {% endif %}
+                            </p>
+                            
+                            <!-- Summary -->
+                            <h3 style="margin:30px 0 10px; color:#007BFF;">{% trans "Proposal Summary" %}</h3>
+                            <table role="presentation" border="0" cellpadding="8" cellspacing="0" width="100%" style="font-size:15px;">
+                                <tr><td><strong>{% trans "Tour" %}:</strong></td><td>{{ tour|default:"—" }}</td></tr>
+                                <tr><td><strong>{% trans "Travel Date" %}:</strong></td><td>{{ proposal.travel_date|date:"F j, Y" }}</td></tr>
+                                <tr><td><strong>{% trans "End Date" %}:</strong></td><td>{{ end_date|date:"F j, Y"|default:"—" }}</td></tr>
+                                <tr><td><strong>{% trans "Adults" %}:</strong></td><td>{{ proposal.number_of_adults }}</td></tr>
+                                <tr><td><strong>{% trans "Children" %}:</strong></td><td>{{ proposal.number_of_children }}</td></tr>
+                                <tr><td><strong>{% trans "Infants" %}:</strong></td><td>{{ proposal.number_of_infants|default:0 }}</td></tr>
+                                <tr><td><strong>{% trans "Notes" %}:</strong></td><td>{{ proposal.notes|default:"—" }}</td></tr>
+                            </table>
+
+                            <!-- Pricing (simplified – adapt as needed) -->
+                            <h3 style="margin:30px 0 10px; color:#007BFF;">{% trans "Total Price" %}</h3>
+                            <p style="font-size:20px; font-weight:bold; margin:0;">
+                                {{ proposal.currency }} {{ proposal.estimated_price|default:"0.00" }}
+                            </p>
+
+                            <!-- Urgent CTA -->
+                            <p style="margin:40px 0 20px; text-align:center;">
+                                <a href="{{ payment_link }}" style="background-color:#28a745; color:#ffffff; padding:16px 40px; text-decoration:none; border-radius:6px; font-size:18px; font-weight:bold; display:inline-block;">
+                                    {% trans "Pay Now & Confirm Booking" %}
+                                </a>
+                            </p>
+
+                            <p style="font-size:14px; color:#666; text-align:center; margin:0 0 30px;">
+                                {% trans "This payment link is secure. Act before" %} {{ proposal.expires_at|date:"F j, Y \a\t P" }} {% trans "to avoid expiration." %}
+                            </p>
+
+                            <!-- Footer links -->
+                            <p style="font-size:14px; text-align:center; margin:30px 0 0;">
+                                {% trans "Track your proposal anytime:" %} 
+                                <a href="{{ site_url }}/bookings/customer-portal/" style="color:#007BFF;">{% trans "Customer Portal" %}</a>
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding:20px; background-color:#f8f9fa; text-align:center; font-size:14px; color:#666;">
+                            <p style="margin:0;">{% trans "Thank you for choosing Milano Travel" %}</p>
+                            <p style="margin:5px 0 0;">{% trans "Milano Travel Team" %}</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
+</html>

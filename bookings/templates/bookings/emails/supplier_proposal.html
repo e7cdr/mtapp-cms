@@ -1,46 +1,129 @@
 {% load i18n %}
 <!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>{% trans "New Tour Proposal" %}</title>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        h2 { color: #e6c558; }
-        ul { list-style-type: none; padding: 0; }
-        li { margin-bottom: 10px; }
-        .button { display: inline-block; padding: 10px 20px; background-color: #e6c558; color: #fff; text-decoration: none; border-radius: 5px; }
-        .button:hover { background-color: #d4b347; }
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% trans "New Tour Proposal – Action Required" %}</title>
+    <!-- Minimal safe <style> block: dark mode + mobile -->
+    <style type="text/css">
+        @media (prefers-color-scheme: dark) {
+            body { background: #121212 !important; color: #e0e0e0 !important; }
+            .container { background: #1e1e1e !important; }
+            .alert { background: #3d2a00 !important; color: #ffdd99 !important; border-color: #664d03 !important; }
+            a.button { background: #d4b347 !important; }
+        }
+        @media only screen and (max-width: 600px) {
+            .container { width: 100% !important; padding: 15px !important; }
+            .content-padding { padding: 20px 15px !important; }
+            .button { width: 100% !important; text-align: center !important; }
+        }
     </style>
 </head>
-<body>
-    <div class="container">
-        <h2>{% trans "New Tour Proposal" %}</h2>
-        <p>{% trans "Dear Supplier," %}</p>
-        <p>{% trans "A new tour proposal has been submitted for your review:" %}</p>
-        <ul>
-            <li><strong>{% trans "Tour" %}:</strong> {{ tour }}</li>
-            <li><strong>{% trans "Customer Name" %}:</strong> {{ proposal.customer_name }}</li>
-            <li><strong>{% trans "Travel Date" %}:</strong> {{ proposal.travel_date }}</li>
-            <li><strong>{% trans "End Date" %}:</strong> {{ end_date }}</li>
-            <li><strong>{% trans "Adults" %}:</strong> {{ proposal.number_of_adults }}</li>
-            <li><strong>{% trans "Children" %}:</strong> {{ proposal.number_of_children }}</li>
-            <li><strong>{% trans "Estimated Price" %}:</strong> ${{ proposal.estimated_price }}</li>
-            <li><strong>{% trans "Email" %}:</strong> {{ proposal.customer_email }}</li>
-            <li><strong>{% trans "Phone" %}:</strong> {{ proposal.customer_phone|default:"N/A" }}</li>
-            <li><strong>{% trans "Notes" %}:</strong> {{ proposal.notes|default:"None" }}</li>
-        </ul>
-        <p>
-            {% trans "Please confirm the proposal by clicking the button below:" %}
-        </p>
-        <p>
-            <a href="{{ confirm_url }}" class="button">{% trans "Confirm Proposal" %}</a>
-        </p>
-        <p>
-            {% trans "Alternatively, manage all proposals at:" %}
-            <a href="{{ site_url }}/bookings/manage/proposals/">{% trans "Manage Proposals" %}</a>
-        </p>
-        <p>{% trans "This link expires in 48 hours." %}</p>
-        <p>{% trans "Thank you," %}</p>
-        <p>{% trans "Milano Travel Team" %}</p>
-    </div>
+<body style="margin:0; padding:0; font-family: Arial, Helvetica, sans-serif; background-color:#f4f4f4; color:#333333;">
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#f4f4f4; padding:20px 0;">
+        <tr>
+            <td align="center">
+                <table role="presentation" class="container" border="0" cellpadding="0" cellspacing="0" width="600" style="background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+                    
+                    <!-- Header -->
+                    <tr>
+                        <td style="padding:30px 40px 20px; background-color:#e6c558; color:#ffffff; text-align:center;">
+                            <h2 style="margin:0; font-size:26px;">{% trans "New Tour Proposal" %}</h2>
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td class="content-padding" style="padding:30px 40px; font-size:16px; line-height:1.5;">
+                            <p style="margin:0 0 20px;">{% trans "Dear Supplier," %}</p>
+                            
+                            <p style="margin:0 0 25px;">
+                                {% trans "A new tour proposal has been submitted for your review and confirmation:" %}
+                            </p>
+
+                            <!-- Alert: Expiration notice -->
+                            <p style="margin:0 0 25px; padding:15px; background-color:#fff3cd; border:1px solid #ffeeba; border-radius:6px; color:#856404; font-weight:bold; text-align:center; font-size:15px;">
+                                {% trans "This confirmation link expires in 48 hours." %}
+                                {% trans "Please review and confirm promptly to secure the dates." %}
+                            </p>
+
+                            <!-- Proposal Details -->
+                            <h3 style="margin:25px 0 15px; color:#e6c558; font-size:22px;">{{ tour }}</h3>
+                            
+                            <table role="presentation" border="0" cellpadding="10" cellspacing="0" width="100%" style="font-size:15px; border-collapse:collapse;">
+                                <tr style="border-bottom:1px solid #eee;">
+                                    <td style="padding:10px; font-weight:bold; width:35%;">{% trans "Customer Name" %}</td>
+                                    <td style="padding:10px;">{{ proposal.customer_name }}</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #eee;">
+                                    <td style="padding:10px; font-weight:bold;">{% trans "Travel Date" %}</td>
+                                    <td style="padding:10px;">{{ proposal.travel_date|date:"F j, Y" }}</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #eee;">
+                                    <td style="padding:10px; font-weight:bold;">{% trans "End Date" %}</td>
+                                    <td style="padding:10px;">{{ end_date|date:"F j, Y"|default:"—" }}</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #eee;">
+                                    <td style="padding:10px; font-weight:bold;">{% trans "Adults" %}</td>
+                                    <td style="padding:10px;">{{ proposal.number_of_adults }}</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #eee;">
+                                    <td style="padding:10px; font-weight:bold;">{% trans "Children" %}</td>
+                                    <td style="padding:10px;">{{ proposal.number_of_children }}</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #eee;">
+                                    <td style="padding:10px; font-weight:bold;">{% trans "Estimated Price" %}</td>
+                                    <td style="padding:10px; font-weight:bold; font-size:18px; color:#28a745;">
+                                        {{ proposal.currency|default:"$" }} {{ proposal.estimated_price|floatformat:2 }}
+                                    </td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #eee;">
+                                    <td style="padding:10px; font-weight:bold;">{% trans "Email" %}</td>
+                                    <td style="padding:10px;">{{ proposal.customer_email }}</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #eee;">
+                                    <td style="padding:10px; font-weight:bold;">{% trans "Phone" %}</td>
+                                    <td style="padding:10px;">{{ proposal.customer_phone|default:"N/A" }}</td>
+                                </tr>
+                                {% if proposal.notes %}
+                                <tr>
+                                    <td style="padding:10px; font-weight:bold; vertical-align:top;">{% trans "Notes" %}</td>
+                                    <td style="padding:10px;">{{ proposal.notes }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+
+                            <!-- CTA -->
+                            <p style="margin:40px 0 20px; text-align:center;">
+                                <a href="{{ confirm_url }}" class="button" style="display:inline-block; padding:14px 40px; background-color:#e6c558; color:#ffffff; text-decoration:none; border-radius:6px; font-size:18px; font-weight:bold;">
+                                    {% trans "Confirm Proposal" %}
+                                </a>
+                            </p>
+
+                            <p style="margin:0 0 25px; text-align:center; font-size:14px; color:#555;">
+                                {% trans "Alternatively, manage all proposals here:" %}
+                                <a href="{{ site_url }}/bookings/manage/proposals/" style="color:#e6c558; font-weight:bold;">{% trans "Manage Proposals" %}</a>
+                            </p>
+
+                            <!-- Repeated expiration reminder -->
+                            <p style="margin:30px 0 0; font-size:14px; color:#856404; text-align:center;">
+                                {% trans "Reminder: This link will expire in 48 hours." %}
+                                {% trans "After that, the proposal may be auto-rejected or dates released." %}
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding:20px; background-color:#f8f9fa; text-align:center; font-size:14px; color:#666;">
+                            <p style="margin:0;">{% trans "Thank you," %}</p>
+                            <p style="margin:5px 0 0;">{% trans "Milano Travel Team" %}</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
+</html>
