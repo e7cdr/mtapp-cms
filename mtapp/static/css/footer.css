@@ -61,7 +61,6 @@ footer {
 
 .footer-links ul, .footer-links h1 {
     list-style-type: circle;
-    place-items: anchor-center;
 }
 
 .footer-container div a img{
