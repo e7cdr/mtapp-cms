@@ -138,19 +138,16 @@
 .fade-swiper-section .swiper,
 .fade-swiper-container {
     width: 100%;
-    height: 100%;                /* ← important for full height fill */
+    height: 100%;
+    /* ← important for full height fill */
 }
 
-.swiper-slide {
-    position: relative;          /* ← ensures absolute children are positioned relative to slide */
-    width: 100% !important;
-    height: 100% !important;
-    overflow: hidden;
-}
+/* */
 
 .fade-image {
     width: 100%;
     height: 100%;
-    object-fit: cover;           /* ← makes images behave like cover too */
+    object-fit: cover;
+    /* ← makes images behave like cover too */
     opacity: 0.6;
 }
