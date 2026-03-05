@@ -12,7 +12,7 @@ footer {
     position: relative;
     box-shadow: inset 0px 0px 0px 1000px rgb(0 0 11 / 90%);
     color: white;
-    text-align: center;
+    /* text-align: center; */
 }
 .footer-background {
     position: absolute;
@@ -25,7 +25,7 @@ footer {
     border-radius: inherit;
 }
 .contact-info-block {
-    flex-basis: 35%;
+    flex-basis: 37%;
 }   
 
 .brand-wrap {
@@ -56,7 +56,7 @@ footer {
 }
 
 .footer-links {
-    flex-basis: 40%;
+    flex-basis: 37%;
 }
 
 .footer-links ul, .footer-links h1 {
@@ -188,7 +188,7 @@ footer {
 
 
 .footer-menu li {
-    font-size: 1.5vw !important;
+    font-size: 1vw !important;
 } 
 
 
@@ -232,6 +232,6 @@ footer {
     }
 
     .footer-menu li {
-        font-size: 1vw
+        font-size: 0.8vw
     }
 }
