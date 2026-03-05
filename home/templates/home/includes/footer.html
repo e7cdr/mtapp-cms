@@ -27,7 +27,7 @@
         <div class="contact-info-block">
             <div class="address">
                 {{ settings.site_settings.BrandSettings.address|richtext }}
-                <p>{{ settings.site_settings.BrandSettings.telephone }}</p>
+                {{ settings.site_settings.BrandSettings.telephone|richtext }}
             </div>
         </div>
         {% else %}
