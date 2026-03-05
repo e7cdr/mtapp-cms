@@ -50,6 +50,9 @@ Icons_List = create_icons_list()  # Exports the default version
 class ExploreBlock(blocks.StructBlock):
     """A Block component to present products or announces with image"""
     title = blocks.RichTextBlock(required=True, help_text='Add title i.e.: Explore this awesome tour')
+    titles_color = blocks.ChoiceBlock(choices=colors, default='--yellow-dark-100')
+    background_color = blocks.ChoiceBlock(choices=colors, default='--yellow-dark-100')
+    text_color = blocks.ChoiceBlock(choices=colors, default='--yellow-dark-100')
     image = ImageChooserBlock(
         required=True
     )
@@ -72,6 +75,8 @@ class ExploreBlock(blocks.StructBlock):
         ('text_4', blocks.RichTextBlock(required=True, max_length=300)),
     ]),
     )
+
+
     def clean(self, value):
         if value.get('image_link') == '':
             value['image_link'] = None

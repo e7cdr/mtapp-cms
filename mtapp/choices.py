@@ -24,22 +24,22 @@ position = [
 ]
 
 colors = [
-    ('--cyan-60', 'Sky Blue'),
+    ('--yellow-100', 'White'),
+    ('--yellow-dark-100', 'Black'),
+    ('--yellow-dark-70', 'Brown'),
     ('--cyan-10', 'Cyan'),
     ('--cyan-dark-70', 'Dark Cyan'),
-    ('--yellow-dark-30', 'Sand'),
-    ('--yellow-0', 'Yellow'),
+    ('--green2-dark-70', 'Dark Green'),
+    ('--red-dark-60', 'Dark Red'),
     ('--yellow-dark-40', 'Dark Yellow'),
-    ('--yellow-dark-70', 'Brown'),
+    ('gray', 'Gray'),
+    ('--green2-10', 'Green'),
+    ('--cyan-60', 'Sky Blue'),
+    ('--yellow-dark-30', 'Sand'),
     ('--red-10', 'Red'),
     ('--red-dark-20', 'Red Blood'),
-    ('--red-dark-60', 'Dark Red'),
     ('--red-50', 'Pink'),
-    ('--green2-10', 'Green'),
-    ('--green2-dark-70', 'Dark Green'),
-    ('--yellow-dark-100', 'Black'),
-    ('gray', 'Gray'),
-    ('--yellow-100', 'White'),
+    ('--yellow-0', 'Yellow'),
 
 ]
 

@@ -1,6 +1,31 @@
-{% load static wagtailimages_tags custom_filters wagtailcore_tags %}
-{% block extra_css %}
+{% load static wagtailimages_tags custom_filters wagtailcore_tags %} {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/explore_block.css' %}" />
+<style>
+ .explore-section {
+  background-color: var({{self.background_color}});
+  box-shadow: 0px 2px 7px black;
+  border-radius: 1rem;
+  margin: 0.5rem;
+  animation: 800ms linear scale-in;
+ }
+
+ .explore-content-item {
+  margin-top: 0.5rem;
+  animation: 800ms linear scale-in;
+  animation-range: entry 0% cover 30%;
+  animation-timeline: view();
+  color: var({{self.text_color}});
+ }
+ .explore-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.5rem;
+  color: var({{self.titles_color}});
+  animation: 800ms linear scale-in;
+  animation-range: entry 0% cover 20%;
+  animation-timeline: view();
+ }
+</style>
 {% endblock extra_css %}
 <section class="explore-section">
  <div class="explore-container">
@@ -23,37 +48,29 @@
    <div class="explore-content-grid">
     {% for item in block.value.body %}
     <div class="explore-content-item">
-     <span>
-      {% image item.icon_1 width-50 height-50 format-gif class="w-8 h-8" alt="{{ item.icon_alt_text }}" %}
-     </span>
-     <h1> {{ item.subtitle_1 }}</h1>
+     <span> {% image item.icon_1 width-50 height-50 format-gif class="w-8 h-8" alt="{{ item.icon_alt_text }}" %} </span>
+     <h1>{{ item.subtitle_1 }}</h1>
      {{ item.text_1 }}
     </div>
     <div class="explore-content-item">
-     <span>
-      {% image item.icon_2 width-50 height-50 format-gif class="w-8 h-8" alt="{{ item.icon_alt_text }}" %}
-     </span>
+     <span> {% image item.icon_2 width-50 height-50 format-gif class="w-8 h-8" alt="{{ item.icon_alt_text }}" %} </span>
      <h1>{{ item.subtitle_2 }}</h1>
      {{ item.text_2 }}
     </div>
     <div class="explore-content-item">
-     <span>
-      {% image item.icon_3 width-50 height-50 format-gif class="w-8 h-8" alt="{{ item.icon_alt_text }}" %}
-     </span>
+     <span> {% image item.icon_3 width-50 height-50 format-gif class="w-8 h-8" alt="{{ item.icon_alt_text }}" %} </span>
      <h1>{{ item.subtitle_3 }}</h1>
      {{ item.text_3 }}
     </div>
     <div class="explore-content-item">
-     <span>
-      {% image item.icon_4 width-50 height-50 format-gif class="w-8 h-8" alt="{{ item.icon_alt_text }}" %}
-     </span>
+     <span> {% image item.icon_4 width-50 height-50 format-gif class="w-8 h-8" alt="{{ item.icon_alt_text }}" %} </span>
      <h1>{{ item.subtitle_4 }}</h1>
      {{ item.text_4 }}
     </div>
     {% endfor %}
     <div>
-    <a href="{% if self.image_link %} {{ self.image_link }} {% else %} {% url 'wagtail_serve' '' %} {% endif %}">
-     {% image self.image fill-312x312 format-webp webpquality-80 class="explore-image" alt="{{ self.image_alt_text }}" %}
+     <a href="{% if self.image_link %} {{ self.image_link }} {% else %} {% url 'wagtail_serve' '' %} {% endif %}">
+      {% image self.image fill-312x312 format-webp webpquality-80 class="explore-image" alt="{{ self.image_alt_text }}" %}
      </a>
     </div>
    </div>
@@ -62,76 +79,100 @@
 </section>
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        gsap.registerPlugin(ScrollTrigger, SplitText);
-        let tl = gsap.timeline({
-            scrollTrigger: ".explore-content-item",
-            scrub: 1,
-            start: "top 80%",
-        });
+ document.addEventListener('DOMContentLoaded', () => {
+  gsap.registerPlugin(ScrollTrigger, SplitText);
+  let tl = gsap.timeline({
+   scrollTrigger: '.explore-content-item',
+   scrub: 1,
+   start: 'top 80%',
+  });
 
-        tl.fromTo('.explore-content-grid div:nth-child(5) img', {
-            opacity: 0,
-            y: -300,
-            borderRadius: 0,
-        }, {
-            borderRadius: 999,
-            opacity: 1,
-            duration: 3,
-            boxShadow: '0 0 0.3rem black',
-            y: -20,
-            ease: "sine.out",
-        }, 1.5).to('.explore-content-grid div:nth-child(5) img', {
-            scale: 1.009,
-            boxShadow: '0 0 1.3rem black',
-            duration: 2,
-            repeat: -1,
-            yoyo: true,
-            ease: "power1.inOut",
-        }).from('.explore-content-item span', {
-            scale: 0,
-            x: 400,
-            stagger: 0.6,
-
-        }, 0.9);
-        document.fonts.ready.then(() => {
-            SplitText.create(".explore-content-item h1", 
-                {type: "words, chars",
-                onSplit(self) {
-                    tl.from(self.words, {
-                        autoAlpha: 0,
-                        x: "random(-20, 30)",
-                        y: "random(-120, 10)",
-                        stagger: {
-                            grid: 'auto',
-                            from: 'center',
-                            amount: 1.4,
-                        },
-                        duration: 0.9,
-                        ease: "power1.inOut",
-                    }, 0.8
-                    ).to(self.chars, {color: "rgba(49, 75, 205, 1)", x: -3, 
-                                    stagger: { grid: 'auto', axis: "x", from: 'end', each: 0.2, ease: "power3.inOut" }, 
-                                    repeat: -1, yoyo: true, repeatDelay: 2,
-                        onComplete: () => self.revert()
-                    });
-                },
-                });
-            SplitText.create(".explore-content-item p", 
-                {type: "words",
-                onSplit(self) {
-                    tl.from(self.words, {
-                        autoAlpha: 0,
-                        x: -50,
-                        y: "random(-20, 10)",
-                        stagger: { grid: 'auto', from: 'center', each: 0.2, },
-                        duration: 0.2,
-                        ease: "power2.inOut",
-                        onComplete: () => self.revert()
-                    }, 1);
-                },
-                });
-            });
-    });
+  tl
+   .fromTo(
+    '.explore-content-grid div:nth-child(5) img',
+    {
+     opacity: 0,
+     y: -300,
+     borderRadius: 0,
+    },
+    {
+     borderRadius: 999,
+     opacity: 1,
+     duration: 3,
+     boxShadow: '0 0 0.3rem black',
+     y: -20,
+     ease: 'sine.out',
+    },
+    1.5,
+   )
+   .to('.explore-content-grid div:nth-child(5) img', {
+    scale: 1.009,
+    boxShadow: '0 0 1.3rem black',
+    duration: 2,
+    repeat: -1,
+    yoyo: true,
+    ease: 'power1.inOut',
+   })
+   .from(
+    '.explore-content-item span',
+    {
+     scale: 0,
+     x: 400,
+     stagger: 0.6,
+    },
+    0.9,
+   );
+  document.fonts.ready.then(() => {
+   SplitText.create('.explore-content-item h1', {
+    type: 'words, chars',
+    onSplit(self) {
+     tl
+      .from(
+       self.words,
+       {
+        autoAlpha: 0,
+        x: 'random(-20, 30)',
+        y: 'random(-120, 10)',
+        stagger: {
+         grid: 'auto',
+         from: 'center',
+         amount: 1.4,
+        },
+        duration: 0.9,
+        ease: 'power1.inOut',
+       },
+       0.8,
+      )
+      .to(self.chars, {
+       color: 'var({{self.titles_color}})',
+       x: -3,
+       stagger: {grid: 'auto', axis: 'x', from: 'end', each: 0.2, ease: 'power3.inOut'},
+       repeat: -1,
+       yoyo: true,
+       repeatDelay: 2,
+       onComplete: () => self.revert(),
+      });
+    },
+   });
+   SplitText.create('.explore-content-item p', {
+    type: 'words',
+    onSplit(self) {
+     tl.from(
+      self.words,
+      {
+       autoAlpha: 0,
+       x: -50,
+       y: 'random(-20, 10)',
+       stagger: {grid: 'auto', from: 'center', each: 0.2},
+       duration: 0.2,
+       ease: 'power2.inOut',
+       onComplete: () => self.revert(),
+      },
+      1,
+     );
+    },
+   });
+  });
+ });
 </script>
 {% endblock extra_js %}

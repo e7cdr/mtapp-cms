@@ -11,14 +11,6 @@
 }
 
 
-.explore-section {
-    background-color: white;
-    box-shadow: 0px 2px 7px black;
-    border-radius: 1rem;
-    margin: 0.5rem;
-    animation: 800ms linear scale-in;
-}
-
 .explore-container {
     padding-inline: 1rem;
     padding-block: 1rem;
@@ -26,16 +18,6 @@
     margin-inline: 0.5rem;
     animation: 800ms linear scale-in;
     animation-range: entry 0% cover 10%;
-    animation-timeline: view();
-}
-
-.explore-title {
-    font-size: 1.5rem;
-    font-weight: 600;
-    line-height: 1.5rem;
-    color: #1e2939;
-    animation: 800ms linear scale-in;
-    animation-range: entry 0% cover 20%;
     animation-timeline: view();
 }
 
@@ -91,12 +73,6 @@
 
 }
 
-.explore-content-item {
-    margin-top: 0.5rem;
-    animation: 800ms linear scale-in;
-    animation-range: entry 0% cover 30%;
-    animation-timeline: view();
-}
 
 .explore-content-grid div:nth-child(3) {
     grid-row: 2;
