@@ -114,21 +114,18 @@
     </div>
    </div>
 
-   <!-- Desktop horizontal menu – visible ≥ lg -->
-   <ul class="navbar-menu d-none d-lg-flex ms-auto align-items-center gap-3">
-    <!-- Duplicate the menu content here for desktop (or use JS to avoid duplication if preferred) -->
-    <!-- For simplicity and reliability, duplicate the inner content (common pattern) -->
-    <!-- Language -->
+       <ul class="navbar-menu d-none d-lg-flex ms-auto align-items-center gap-3">
+    <!-- Desktop horizontal menu language toggle -->
     <form action="{% url 'set_language' %}" method="post" id="languageFormDesktop" class="lang-toggle ms-3">
-     {% csrf_token %}
-     <input type="hidden" name="language" id="languageInputDesktop" />
-     <input type="hidden" name="next" value="{{ request.get_full_path }}" />
-     <button type="button" id="languageToggle" class="btn btn-link p-0" aria-label="{% trans 'Toggle Language' %}">
-      <span id="currentLang">
-       {% get_language_info for LANGUAGE_CODE as lang %}
-       <span id="flagIcon" class="fi fi-{{ LANGUAGE_CODE|language_to_flag }}" aria-hidden="true"></span>
-      </span>
-     </button>
+    {% csrf_token %}
+    <input type="hidden" name="language" id="languageInputDesktop" />
+    <input type="hidden" name="next" value="{{ request.get_full_path }}" />
+    <button type="button" id="languageToggleDesktop" class="btn btn-link p-0" aria-label="{% trans 'Toggle Language' %}">
+    <span id="currentLangDesktop">
+    {% get_language_info for LANGUAGE_CODE as lang %}
+    <span id="flagIconDesktop" class="fi fi-{{ LANGUAGE_CODE|language_to_flag }}" aria-hidden="true"></span>
+    </span>
+    </button>
     </form>
 
     {% for navbar_page in navbar_pages %} {% with children=navbar_page.get_children.live.specific %}
@@ -169,122 +166,76 @@
  </nav>
 </header>
 <script>
- document.addEventListener('DOMContentLoaded', function() {
-     const button = document.getElementById('languageToggle');
-     const form = document.getElementById('languageForm');
-     const input = document.getElementById('languageInput');
-     const currentSpan = document.getElementById('currentLang');
-     const flagIcon = document.getElementById('flagIcon');
-     const langName = document.getElementById('langName');
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Language toggle script LOADED - v10 initialize from LANGUAGE_CODE');
 
-     // Flag mapping (mirrors your Python filter; extend as needed)
-     const flagMapping = {
-         'en-us': 'us',
-         'en-gb': 'gb',
-         'es': 'es',
-         'fr': 'fr',
-         'de': 'de',
-         'it': 'it',
-         'is': 'is',
-         'pl': 'pl',
-         'pt-br': 'br',
-         'pt-pt': 'pt',
-         'ja': 'jp',
-         'zh-hans': 'cn',  // Simplified Chinese
-         'zh-hant': 'tw',  // Traditional Chinese (Taiwan)
-         // Add more: 'ar': 'sa', etc. Default: 'gb'
-     };
+    const languages = [
+        {code: 'en', name: 'English',   flag: 'us'},
+        {code: 'es', name: 'Español',   flag: 'es'},
+        {code: 'is', name: 'Íslenska',  flag: 'is'},
+        {code: 'pl', name: 'Polski',    flag: 'pl'}
+    ];
 
-     // Current language object
-     const currentLangObj = {
-         code: '{{ LANGUAGE_CODE }}',
-         name: '{% get_language_info for LANGUAGE_CODE as lang %}{{ lang.name_local }}'
-     };
+    // Get current language directly from Django template variable
+    const currentCodeFromServer = '{{ LANGUAGE_CODE }}'.trim().toLowerCase();
 
-     // Build array from translations (all others)
-     const otherLanguages = [
-         {% if page %}
-             {% for translation in page.get_translations.live %}
-                 {
-                     code: '{{ translation.locale.language_code }}',
-                     name: '{% get_language_info for translation.locale.language_code as lang %}{{ lang.name_local }}'
-                 },
-                 {% endfor %}
-         {% endif %}
-     ];
+    // Find starting index
+    let currentIndex = languages.findIndex(lang => lang.code === currentCodeFromServer);
 
-     // Full array: Current + others (dedupe)
-     let languages = [currentLangObj, ...otherLanguages];
-     const seenCodes = new Set();
-     languages = languages.filter(lang => {
-         if (seenCodes.has(lang.code)) return false;
-         seenCodes.add(lang.code);
-         return true;
-     });
+    if (currentIndex === -1) {
+        // Fallback if code not in list (e.g. 'en-us' vs 'en')
+        const baseCode = currentCodeFromServer.split('-')[0];
+        currentIndex = languages.findIndex(lang => lang.code === baseCode);
+    }
 
-     // FIXED ORDER: Sort by language code (always [en, es, is])
-     languages.sort((a, b) => a.code.localeCompare(b.code));
+    if (currentIndex === -1) {
+        currentIndex = 0;
+        console.warn(`Server LANGUAGE_CODE '${currentCodeFromServer}' not matched - defaulting to index 0`);
+    }
 
-     // Log for debugging
-     console.log('Current LANGUAGE_CODE:', '{{ LANGUAGE_CODE }}');
-     console.log('Sorted Languages array:', languages);
+    console.log(`Server reports LANGUAGE_CODE = '${currentCodeFromServer}' → starting at index ${currentIndex}`);
 
-     if (languages.length <= 1) {
-         button.disabled = true;
-         console.log('Only one language; toggle disabled.');
-         return;
-     }
+    function attachToggleHandler(btnId, formId, inputId, flagId) {
+        const button   = document.getElementById(btnId);
+        const form     = document.getElementById(formId);
+        const input    = document.getElementById(inputId);
+        const flagIcon = document.getElementById(flagId);
 
-     // Find current index in sorted array (exact match first)
-     const currentCode = currentLangObj.code;
-     let currentIndex = languages.findIndex(lang => lang.code === currentCode);
-     if (currentIndex === -1) {
-         // Fallback: Normalized (e.g., 'en-us' -> 'en')
-         function normalizeCode(code) {
-             return code.toLowerCase().split('-')[0];
-         }
-         const normalizedCurrent = normalizeCode(currentCode);
-         currentIndex = languages.findIndex(lang => normalizeCode(lang.code) === normalizedCurrent);
-         console.log('Exact match failed; using normalized. Index:', currentIndex);
-     }
-     if (currentIndex === -1) {
-         currentIndex = 0;
-         console.log('No match found; defaulting to index 0.');
-     }
+        if (!button || !form || !input || !flagIcon) {
+            console.log(`Missing elements for ${btnId} – skipping`);
+            return;
+        }
 
-     console.log('Starting index:', currentIndex);
+        // Initial sync: make sure flag matches server language on load
+        const initialLang = languages[currentIndex];
+        flagIcon.className = `fi fi-${initialLang.flag}`;
+        console.log(`Initial flag sync to fi-${initialLang.flag} for ${btnId}`);
 
-     // Set initial hidden input
-     input.value = languages[currentIndex].code;
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
 
-   // Update display (now handles flag + name)
-   function updateDisplay() {
-       const lang = languages[currentIndex];
-       input.value = lang.code;
+            console.log(`CLICK DETECTED on: ${btnId}`);
 
-       if (langName) {  // Guard if somehow missing
-           langName.textContent = lang.name;
-       }
+            currentIndex = (currentIndex + 1) % languages.length;
+            const selected = languages[currentIndex];
 
-       // Update flag: New class format for v6+
-       const flagCode = flagMapping[lang.code] || 'gb';
-       flagIcon.className = `fi fi-${flagCode}`;
+            input.value = selected.code;
+            flagIcon.className = `fi fi-${selected.flag}`;
 
-       console.log('Previewing:', lang.name, '(Flag:', flagCode, '; Index:', currentIndex, ')');
-   }
+            console.log(`Cycling to: ${selected.code} (${selected.name})`);
 
-     // Initial display update (ensures flag/name sync on load)
-     updateDisplay();
+            const nextInput = form.querySelector('input[name="next"]');
+            console.log(`next = ${nextInput ? nextInput.value : '(missing)'}`);
 
-     // Cycle on click
-     button.addEventListener('click', function(e) {
-         e.preventDefault();
-         currentIndex = (currentIndex + 1) % languages.length;
-         updateDisplay();
+            setTimeout(() => {
+                form.submit();
+            }, 250);
+        });
+    }
 
-         setTimeout(() => {
-             form.submit();
-         }, 150);
-     });
- });
+    attachToggleHandler('languageToggle',        'languageForm',        'languageInput',        'flagIcon');
+    attachToggleHandler('languageToggleDesktop', 'languageFormDesktop', 'languageInputDesktop', 'flagIconDesktop');
+
+    console.log('Handlers attached – using server LANGUAGE_CODE for init');
+});
 </script>

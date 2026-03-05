@@ -92,19 +92,19 @@ INSTALLED_APPS = [
 ]
 
 # Important: this prevents /en/ on default language
-PREFIX_DEFAULT_LANGUAGE = False   # ← Add this (it's False by default in recent Django, but confirm)
+# PREFIX_DEFAULT_LANGUAGE = False   # ← Add this (it's False by default in recent Django, but confirm)
 
 MIDDLEWARE = [  # Order matters
     'wagtailcache.cache.UpdateCacheMiddleware',
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     'whitenoise.middleware.WhiteNoiseMiddleware',
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "django.middleware.locale.LocaleMiddleware",
     "django.contrib.sites.middleware.CurrentSiteMiddleware",  # CORRECT: Django's sites middleware
     "allauth.account.middleware.AccountMiddleware",
     "axes.middleware.AxesMiddleware",
