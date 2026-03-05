@@ -42,13 +42,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     //     e.target.setVolume(10); // Adjust volume as needed (0-10)
                     // }
                 },
-                onStateChange: (e) => {
-                    // Unmute on any state change if user has now interacted
-                    if (userHasInteracted && e.data !== YT.PlayerState.ENDED) {
-                        e.target.unMute();
-                        e.target.setVolume(10);
-                    }
-                }
+                // onStateChange: (e) => {
+                //     // Unmute on any state change if user has now interacted
+                //     if (userHasInteracted && e.data !== YT.PlayerState.ENDED) {
+                //         e.target.unMute();
+                //         e.target.setVolume(10);
+                //     }
+                // }
             }
         });
         return player;

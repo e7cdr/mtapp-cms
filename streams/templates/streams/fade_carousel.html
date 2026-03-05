@@ -1,56 +1,105 @@
-{% load static i18n dict_tags navbar_tags wagtailcore_tags wagtailimages_tags %}
+{% load static i18n dict_tags navbar_tags wagtailcore_tags wagtailimages_tags %} 
 {% block extra_css %}
 <style>
-  .fade-image, .fade-swiper-section .swiper {
-    height: {{ self.height }}rem !important;
-}
+    .fade-image,
+    .fade-swiper-section .swiper {
+        height: {{ self.height }}rem !important;
+    }
 
-  .video-stream {
-    width: 100% !important;
-    left: 0px !important;
-  }
+    video,
+    .video-stream,
+    iframe {
+        width: 100% !important;
+        height: 100% !important;
+        left: 0 !important;
+        top: 0 !important;
+        object-fit: cover;
+    }
+
+    /* New video wrapper styles */
+    .video-wrapper {
+        position: relative;
+        width: 100%;
+        height: 0;
+        padding-bottom: 56.25%;          /* 16:9 – change to 75% for 4:3, 62.5% for 16:10, etc. */
+        overflow: hidden;
+        background: #000;
+    }
+
+    .youtube-lazy {
+        position: absolute;
+        inset: 0;
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    .youtube-lazy iframe,
+    .youtube-lazy .video-stream,
+    .youtube-lazy video {
+        position: absolute !important;
+        inset: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+    }
 </style>
-{% endblock extra_css %}
+{% endblock extra_css %} 
 {% block content %}
 <section class="fade-swiper-section">
-<div class="fade-swiper-container swiper">
-      <div class="fade-title">
-    {% if self.fade_subtitle %}
-   <h2>{{ self.fade_subtitle }}</h2>
-   {% endif %}
-   <h1>{{ self.fade_title }}</h1>
-   {% if self.search_bar == True %}
-      <!--Search Bar -->
-    {% include "search/search_bar.html" %}
-    {% endif %}
-  </div>
-    <div class="swiper-wrapper">
-              {% for item in value.images %}
-                  <div class="swiper-slide">
-                {% if item.image %}
-                {% image item.image fill-1920x1080 format-webp webpquality-60 fetchpriority="high" loading="lazy" alt="{{ item.caption }}" class="fade-image" %}
-                   {% if item.link %}
-                    <a href="{{ item.link.url }}"></a>
-                {% endif %}
-                {% if item.caption %}
-                <p class="caption">{{ item.caption }}</p>
-                {% endif %}
-            {% elif item.yt_vid %}
-            <div class="youtube-lazy"
-                data-video-id="{{ item.yt_vid }}" data-volume="50"
-                style="position:absolute; inset:0; background:#000;">
-                <div style="position:absolute; inset:0; background:url('https://i.ytimg.com/vi/{{ item.yt_vid }}/maxresdefault.jpg') center/cover no-repeat; filter:brightness(0.7);"></div>
-                <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none;">
-                    <div style="width:100px; height:100px; background:rgba(255,255,255,0.2); backdrop-filter:blur(20px); border-radius:50%; border:4px solid rgba(255,255,255,0.4); box-shadow:0 20px 40px rgba(0,0,0,0.5);"></div>
-                </div>
-            </div>
+    <div class="fade-swiper-container swiper">
+        <div class="fade-title">
+            {% if self.fade_subtitle %}
+            <h2>{{ self.fade_subtitle }}</h2>
             {% endif %}
+            <h1>{{ self.fade_title }}</h1>
+            {% if self.search_bar == True %}
+            <!-- Search Bar -->
+            {% include "search/search_bar.html" %}
+            {% endif %}
+        </div>
+
+        <div class="swiper-wrapper">
+            {% for item in value.images %}
+            <div class="swiper-slide">
+                {% if item.image %}
+                    {% image item.image fill-1920x1080 format-webp webpquality-60 fetchpriority="high" loading="lazy" alt="{{ item.caption }}" class="fade-image" %}
+
+                    {% if item.link %}
+                    <a href="{{ item.link.url }}"></a>
+                    {% endif %}
+
+                    {% if item.caption %}
+                    <p class="caption">{{ item.caption }}</p>
+                    {% endif %}
+
+                {% elif item.yt_vid %}
+                <div class="video-wrapper">
+                    <div class="youtube-lazy"
+                         data-video-id="{{ item.yt_vid }}"
+                         data-volume="50"
+                         style="position: absolute; inset: 0; background: #000;">
+                        <div style="position:absolute; inset:0; background:url('https://i.ytimg.com/vi/{{ item.yt_vid }}/maxresdefault.jpg') center/cover no-repeat; filter:brightness(0.7);"></div>
+                        <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none">
+                            <div style="
+                                width: 100px;
+                                height: 100px;
+                                background: rgba(255, 255, 255, 0.2);
+                                backdrop-filter: blur(20px);
+                                border-radius: 50%;
+                                border: 4px solid rgba(255, 255, 255, 0.4);
+                                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+                            "></div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
             </div>
             {% empty %}
             <p>No images or videos found. Please go to the admin panel to add them.</p>
             {% endfor %}
+        </div>
+
+        <div class="swiper-pagination"></div>
     </div>
-<div class="swiper-pagination"></div>
-</div>
 </section>
 {% endblock content %}
