@@ -32,7 +32,7 @@
     transition: all 0.3s ease-in;
 }
 
-.post-card::after{
+.post-card::after {
     content: '';
     position: absolute;
     height: 100%;
@@ -50,18 +50,19 @@
 }
 
 @keyframes spin {
-        from {
-            --angle: 0deg;
-        }
-        to {
-            --angle: 360deg;
-        }
+    from {
+        --angle: 0deg;
     }
+
+    to {
+        --angle: 360deg;
+    }
+}
 
 .post-desc {
     position: absolute;
     color: white;
-    top: 15rem;
+    top: 11rem;
     align-self: anchor-center;
     display: flex;
     flex-wrap: wrap;
@@ -69,7 +70,7 @@
     font-family: sans-serif;
     font-weight: 100;
 
-    
+
 }
 
 .post-date {
@@ -83,17 +84,19 @@
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    
-    
+
+
 }
 
-.author-name, .post-date {
+.author-name,
+.post-date {
     font-size: small;
 }
 
 .author-pic {
     border-radius: 1rem;
 }
+
 .post-cover {
     height: 45vh;
     width: 100%;
@@ -103,14 +106,14 @@
 }
 
 .post-image-overlay {
-    background: linear-gradient(0deg,rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.697) 20%, rgba(255, 255, 255, 0) 100%);
+    background: linear-gradient(0deg, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.697) 20%, rgba(255, 255, 255, 0) 100%);
     position: absolute;
     width: 100%;
     height: 100%;
     border-radius: 2rem;
     opacity: 0.9;
-    
-   
+
+
 }
 
 .post-title {
@@ -133,13 +136,16 @@
         gap: 0.4rem;
         grid-template-columns: 1fr;
     }
+
     .post-title {
         margin: 0.6rem;
         width: 100%;
         font-size: 0.6rem;
         text-align: justify;
     }
-    .post-date, .author-name {
+
+    .post-date,
+    .author-name {
         font-size: 0.5rem;
     }
 }
