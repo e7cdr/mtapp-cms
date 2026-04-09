@@ -1,3 +1,25 @@
+.collage-grid-container {
+    position: relative;
+    /* Important: makes ::after position relative to this */
+    overflow: hidden;
+    /* Prevents any overflow issues */
+}
+
+.collage-grid-container::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 300px;
+    width: 100%;
+    height: 7%;
+    background: linear-gradient(to bottom, transparent 0%,
+            /* No fade at the top of the gradient area */
+            rgba(255, 255, 255, 0.4) 41%, rgb(255 255 255 / 87%) 73%, #efefef 100%,
+            /* Your background color */
+            #efefef 100%);
+    z-index: 2;
+    pointer-events: none;
+}
 
 .collage-grid-container .swiper h1 {
     position: absolute;
@@ -22,7 +44,7 @@
     color: white;
 }
 
-.collage-swiper1-container .swiper-wrapper  {
+.collage-swiper1-container .swiper-wrapper {
     height: 100%;
 
 }
@@ -41,68 +63,79 @@
 .collage-swiper1-container .swiper-slide img {
     width: 100%;
     height: 100%;
-    object-fit: cover;  /* Crops to fit square; use 'contain' if you prefer letterboxing */
-    border-radius: 1rem;  /* Optional: Rounded corners for collage vibe */
+    object-fit: cover;
+    /* Crops to fit square; use 'contain' if you prefer letterboxing */
+    border-radius: 1rem;
+    /* Optional: Rounded corners for collage vibe */
 }
 
 .collage-swiper2-container .swiper-wrapper {
-    display: grid !important;  /* Reinforce grid on wrapper */
-    grid-template-columns: repeat(4, 1fr);  /* 3 equal cols */
-    grid-auto-rows: 8rem;  /* Fixed row height = your square size */
-    gap: 0.5rem;  /* Matches spaceBetween */
+    display: grid !important;
+    /* Reinforce grid on wrapper */
+    grid-template-columns: repeat(4, 1fr);
+    /* 3 equal cols */
+    grid-auto-rows: 8rem;
+    /* Fixed row height = your square size */
+    gap: 0.5rem;
+    /* Matches spaceBetween */
 }
 
 @media (max-width:1000px) {
     .collage-swiper2-container .swiper-wrapper {
-        grid-template-columns: repeat(5, 1fr);  /* 3 equal cols */
-}
-    
+        grid-template-columns: repeat(5, 1fr);
+        /* 3 equal cols */
+    }
+
 }
 
 @media (max-width:700px) {
     .collage-swiper2-container .swiper-wrapper {
-        grid-template-columns: repeat(4, 1fr);  /* 3 equal cols */
-        grid-auto-rows: 5rem;  /* Fixed row height = your square size */
+        grid-template-columns: repeat(4, 1fr);
+        /* 3 equal cols */
+        grid-auto-rows: 5rem;
+        /* Fixed row height = your square size */
 
-}
-    
+    }
+
 }
 
 @media (max-width:400px) {
     .collage-swiper2-container .swiper-wrapper {
-    grid-template-columns: repeat(3, 1fr);  /* 3 equal cols */
+        grid-template-columns: repeat(3, 1fr);
+        /* 3 equal cols */
 
-}
+    }
 
-.collage-grid-container {
-    grid-template-columns: 1fr ;
-}
-    
+    .collage-grid-container {
+        grid-template-columns: 1fr;
+    }
+
 }
 
 .collage-swiper2-container .swiper-slide {
     opacity: 0.3;
     transition: all 0.4s ease;
-    
+
 }
 
 /* Images fill cells without distortion */
 .collage-swiper2-container .swiper-slide img {
     width: 100%;
     height: 100%;
-    object-fit: cover;  /* Crops to fit square; use 'contain' if you prefer letterboxing */
+    object-fit: cover;
+    /* Crops to fit square; use 'contain' if you prefer letterboxing */
     border-radius: 1rem;
 }
 
 /* Optional: Active thumb highlight */
 .collage-swiper2-container .swiper-slide-thumb-active {
     opacity: 1;
-    
+
 }
 
 .collage-swiper2-container .swiper-slide-thumb-active::after {
     content: '';
-    
+
     position: absolute;
     height: 100%;
     width: 100%;
@@ -129,6 +162,7 @@
     from {
         --angle: 0deg;
     }
+
     to {
         --angle: 360deg;
     }
@@ -139,12 +173,3 @@
     inherits: false;
     initial-value: 0deg;
 }
-
-
-
-
-
-
-
-
-

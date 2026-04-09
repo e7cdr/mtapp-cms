@@ -11,6 +11,29 @@
 
 }
 
+.fade-swiper-section {
+    position: relative;
+    /* Important: makes ::after position relative to this */
+    overflow: hidden;
+    /* Prevents any overflow issues */
+}
+
+.fade-swiper-section::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 33%;
+    background: linear-gradient(to bottom, transparent 0%,
+            /* No fade at the top of the gradient area */
+            rgba(255, 255, 255, 0.4) 32%, rgb(255 255 255 / 87%) 73%, #efefef 85%,
+            /* Your background color */
+            #efefef 100%);
+    z-index: 2;
+    pointer-events: none;
+}
+
 .fade-swiper-container h1 {
     color: white;
     z-index: 2;
@@ -73,7 +96,7 @@
 
 .fade-title {
     position: absolute;
-    top: 13rem;
+    top: 10rem;
     z-index: 2;
     text-align: center;
     opacity: 0;
@@ -96,6 +119,7 @@
 .fade-title h2 {
     font-family: lora;
     margin-top: 2rem;
+    text-shadow: 0 0 3px black;
 
 }
 

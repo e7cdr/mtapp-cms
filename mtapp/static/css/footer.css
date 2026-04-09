@@ -3,6 +3,7 @@ footer {
     position: relative;
 
 }
+
 .footer-container {
     padding-block: 2rem;
     box-shadow: 0px 2px 7px black;
@@ -12,8 +13,26 @@ footer {
     position: relative;
     box-shadow: inset 0px 0px 0px 1000px rgb(0 0 11 / 90%);
     color: white;
+    overflow: hidden;
     /* text-align: center; */
 }
+
+.footer-container::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: -1px;
+    width: 100%;
+    height: 18%;
+    background: linear-gradient(to top, transparent 0%,
+            /* No fade at the top of the gradient area */
+            rgba(255, 255, 255, 0.4) 32%, rgb(255 255 255 / 87%) 73%, #efefef 85%,
+            /* Your background color */
+            #efefef 100%);
+    z-index: 2;
+    pointer-events: none;
+}
+
 .footer-background {
     position: absolute;
     object-fit: cover;

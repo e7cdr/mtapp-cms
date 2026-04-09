@@ -35,3 +35,7 @@ color: rgba(255, 255, 255, 0.884);}
     place-self: center;
 }
 
+.search-bar-container p {
+    text-shadow: 0 0 3px black;
+}
+
